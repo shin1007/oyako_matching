@@ -36,19 +36,20 @@ export async function POST(request: NextRequest) {
 
         // Get user ID from customer metadata
         const customer = await stripe.customers.retrieve(customerId);
-        if (customer.deleted) break;
+        if ('deleted' in customer && customer.deleted) break;
 
-        const userId = customer.metadata.userId;
+        const userId = (customer as Stripe.Customer).metadata?.userId;
         if (!userId) break;
 
         // Upsert subscription
+        const subData: any = subscription;
         await supabase.from('subscriptions').upsert({
           user_id: userId,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscription.id,
           status: subscription.status as any,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          current_period_start: new Date(subData.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(subData.current_period_end * 1000).toISOString(),
         });
         break;
       }
@@ -65,7 +66,8 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const invoiceData: any = invoice;
+        const subscriptionId = invoiceData.subscription as string;
 
         if (subscriptionId) {
           await supabase

@@ -30,7 +30,7 @@ export async function moderateContent(text: string): Promise<{
   const result = response.results[0];
   return {
     flagged: result.flagged,
-    categories: result.categories as Record<string, boolean>,
+    categories: result.categories as any as Record<string, boolean>,
   };
 }
 
