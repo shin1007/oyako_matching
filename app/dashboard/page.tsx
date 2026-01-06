@@ -184,6 +184,20 @@ export default async function DashboardPage() {
               </p>
             </Link>
           )}
+
+          {/* Forum Card */}
+          {userData?.role === 'parent' && (
+            <Link
+              href="/forum"
+              className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
+            >
+              <div className="mb-4 text-4xl">💭</div>
+              <h3 className="text-lg font-semibold text-gray-900">ピアサポート掲示板</h3>
+              <p className="mt-2 text-sm text-gray-600">
+                親同士で情報交換
+              </p>
+            </Link>
+          )}
         </div>
 
         {/* Subscription Info for Parents */}
