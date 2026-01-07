@@ -50,7 +50,7 @@ export default function VerificationPage() {
         },
         body: JSON.stringify({
           userId: user.id,
-          callbackUrl: `${window.location.origin}/auth/callback`,
+          callbackUrl: `${window.location.origin}/api/auth/verify/callback`,
         }),
       });
 

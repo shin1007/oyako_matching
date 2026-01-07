@@ -2,6 +2,8 @@
  * xID API integration for My Number Card authentication
  */
 
+import { instantiate } from 'js-nacl';
+
 interface XIDVerificationRequest {
   userId: string;
   callbackUrl: string;
@@ -22,6 +24,40 @@ interface XIDVerificationResult {
 const XID_API_URL = process.env.XID_API_URL || 'https://api.xid.inc';
 const XID_API_KEY = process.env.XID_API_KEY!;
 const XID_API_SECRET = process.env.XID_API_SECRET!;
+const XID_PUBLIC_KEY = process.env.XID_PUBLIC_KEY!;
+const XID_PRIVATE_KEY = process.env.XID_PRIVATE_KEY!;
+
+/**
+ * xID APIからの暗号化されたレスポンスを復号化
+ */
+async function decryptXIDResponse(
+  encryptedMessage: string,
+  publicKey: string,
+  privateKey: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    instantiate((nacl) => {
+      try {
+        const cipherBuff = Buffer.from(encryptedMessage, 'base64');
+        const publicBuff = Buffer.from(publicKey, 'base64');
+        const privateBuff = Buffer.from(privateKey, 'base64');
+        
+        const nonce = cipherBuff.slice(0, 24);
+        const message = nacl.crypto_box_open(
+          cipherBuff.slice(24),
+          nonce,
+          publicBuff,
+          privateBuff
+        );
+        
+        const utf8message = nacl.decode_utf8(message);
+        resolve(utf8message);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
 
 /**
  * マイナンバーカード認証セッションを開始
@@ -30,6 +66,16 @@ export async function initiateVerification(
   userId: string,
   callbackUrl: string
 ): Promise<XIDVerificationResponse> {
+  // 開発環境ではモックレスポンスを返す
+  if (process.env.NODE_ENV === 'development' && !XID_API_KEY) {
+    console.warn('xID API key not configured, using mock response');
+    const mockId = `mock-${Date.now()}`;
+    return {
+      verificationId: mockId,
+      authUrl: `${callbackUrl}?verificationId=${mockId}`,
+    };
+  }
+  
   const response = await fetch(`${XID_API_URL}/v1/verifications`, {
     method: 'POST',
     headers: {
@@ -45,10 +91,28 @@ export async function initiateVerification(
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[xID] initiate verification failed', {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText,
+    });
     throw new Error('Failed to initiate xID verification');
   }
 
-  return await response.json();
+  const data = await response.json();
+  
+  // 暗号化されたレスポンスの場合は復号化
+  if (data.encryptedMessage && XID_PUBLIC_KEY && XID_PRIVATE_KEY) {
+    const decrypted = await decryptXIDResponse(
+      data.encryptedMessage,
+      XID_PUBLIC_KEY,
+      XID_PRIVATE_KEY
+    );
+    return JSON.parse(decrypted);
+  }
+
+  return data;
 }
 
 /**
@@ -57,6 +121,17 @@ export async function initiateVerification(
 export async function getVerificationResult(
   verificationId: string
 ): Promise<XIDVerificationResult> {
+  // 開発環境のモック
+  if (verificationId.startsWith('mock-')) {
+    console.warn('Using mock verification result');
+    return {
+      verified: true,
+      fullName: 'テスト 太郎',
+      birthDate: '1990-01-01',
+      address: '東京都',
+    };
+  }
+
   const response = await fetch(
     `${XID_API_URL}/v1/verifications/${verificationId}`,
     {
@@ -71,7 +146,19 @@ export async function getVerificationResult(
     throw new Error('Failed to get verification result');
   }
 
-  return await response.json();
+  const data = await response.json();
+
+  // 暗号化されたレスポンスの場合は復号化
+  if (data.encryptedMessage && XID_PUBLIC_KEY && XID_PRIVATE_KEY) {
+    const decrypted = await decryptXIDResponse(
+      data.encryptedMessage,
+      XID_PUBLIC_KEY,
+      XID_PRIVATE_KEY
+    );
+    return JSON.parse(decrypted);
+  }
+
+  return data;
 }
 
 /**

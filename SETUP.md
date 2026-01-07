@@ -93,12 +93,13 @@ Webhook 署名シークレットを取得してください。
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_default_key
+NEXT_PUBLIC_SUPABASE_ANON_KEYanon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # xID API (マイナンバーカード認証)
-XID_API_KEY=your_xid_api_key
-XID_API_SECRET=your_xid_api_secret
+XID_API_KEY=jJXw/gLhxZ+F2H3Bh3nRBOpJzNzpK3BsVv6QvG0Umgg=
+XID_API_SECRET=g+C4yQO/9dC5Otdrx7v56q0tUei/b0h0ayYnfoBvksE=
 XID_API_URL=https://api.xid.inc
 
 # Stripe
