@@ -9,6 +9,9 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [bio, setBio] = useState('');
+  const [searchingChildBirthDate, setSearchingChildBirthDate] = useState('');
+  const [searchingChildNameHiragana, setSearchingChildNameHiragana] = useState('');
+  const [searchingChildNameKanji, setSearchingChildNameKanji] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -44,6 +47,9 @@ export default function ProfilePage() {
         setFullName(data.full_name || '');
         setBirthDate(data.birth_date || '');
         setBio(data.bio || '');
+        setSearchingChildBirthDate(data.searching_child_birth_date || '');
+        setSearchingChildNameHiragana(data.searching_child_name_hiragana || '');
+        setSearchingChildNameKanji(data.searching_child_name_kanji || '');
       }
     } catch (err: any) {
       // Profile might not exist yet
@@ -68,6 +74,9 @@ export default function ProfilePage() {
         full_name: fullName,
         birth_date: birthDate,
         bio: bio,
+        searching_child_birth_date: searchingChildBirthDate || null,
+        searching_child_name_hiragana: searchingChildNameHiragana || null,
+        searching_child_name_kanji: searchingChildNameKanji || null,
       });
 
       if (error) throw error;
@@ -159,6 +168,58 @@ export default function ProfilePage() {
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="簡単な自己紹介を記入してください"
                 />
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  探している子どもの情報
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  親子マッチングのための情報です。任意項目です。
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="searchingChildBirthDate" className="block text-sm font-medium text-gray-700">
+                      探している子どもの生年月日
+                    </label>
+                    <input
+                      id="searchingChildBirthDate"
+                      type="date"
+                      value={searchingChildBirthDate}
+                      onChange={(e) => setSearchingChildBirthDate(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="searchingChildNameHiragana" className="block text-sm font-medium text-gray-700">
+                      探している子どもの名前（ひらがな）
+                    </label>
+                    <input
+                      id="searchingChildNameHiragana"
+                      type="text"
+                      value={searchingChildNameHiragana}
+                      onChange={(e) => setSearchingChildNameHiragana(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="例: たろう"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="searchingChildNameKanji" className="block text-sm font-medium text-gray-700">
+                      探している子どもの名前（漢字）
+                    </label>
+                    <input
+                      id="searchingChildNameKanji"
+                      type="text"
+                      value={searchingChildNameKanji}
+                      onChange={(e) => setSearchingChildNameKanji(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="例: 太郎"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
