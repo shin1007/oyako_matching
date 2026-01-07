@@ -39,6 +39,9 @@ export interface Database {
           birth_date: string;
           profile_image_url: string | null;
           bio: string | null;
+          searching_child_birth_date: string | null;
+          searching_child_name_hiragana: string | null;
+          searching_child_name_kanji: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -48,12 +51,18 @@ export interface Database {
           birth_date: string;
           profile_image_url?: string | null;
           bio?: string | null;
+          searching_child_birth_date?: string | null;
+          searching_child_name_hiragana?: string | null;
+          searching_child_name_kanji?: string | null;
         };
         Update: {
           full_name?: string;
           birth_date?: string;
           profile_image_url?: string | null;
           bio?: string | null;
+          searching_child_birth_date?: string | null;
+          searching_child_name_hiragana?: string | null;
+          searching_child_name_kanji?: string | null;
         };
       };
       episodes: {
@@ -186,6 +195,9 @@ export interface Profile {
   birthDate: string;
   profileImageUrl?: string;
   bio?: string;
+  searchingChildBirthDate?: string;
+  searchingChildNameHiragana?: string;
+  searchingChildNameKanji?: string;
 }
 
 export interface Episode {
