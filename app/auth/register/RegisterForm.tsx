@@ -45,6 +45,7 @@ export default function RegisterForm() {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/verify-email`,
           data: {
             role,
           },
@@ -63,7 +64,9 @@ export default function RegisterForm() {
         });
 
         if (insertError) throw insertError;
-        router.push('/auth/verification');
+        
+        // Redirect to email verification pending page
+        router.push('/auth/verify-email-pending');
       }
     } catch (err: any) {
       setError(err.message || '登録に失敗しました');
