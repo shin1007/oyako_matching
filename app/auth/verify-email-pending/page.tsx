@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
-export default function VerifyEmailPendingPage() {
+function VerifyEmailPendingContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -276,5 +276,21 @@ export default function VerifyEmailPendingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPendingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md">
+          <div className="rounded-lg bg-white p-8 shadow-lg text-center text-gray-600">
+            読み込み中...
+          </div>
+        </div>
+      </div>
+    }>
+      <VerifyEmailPendingContent />
+    </Suspense>
   );
 }
