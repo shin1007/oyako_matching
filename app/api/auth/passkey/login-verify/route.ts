@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', passkey.id);
 
-    // Get user information
+    // Get user information from public.users table
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('email')
@@ -86,19 +86,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sign in the user using Supabase Auth
-    // Note: We need to create a session for the user
-    // Since we can't directly create a session, we'll use a magic link approach
-    // or return user info for the client to handle
+    // TODO: Implement proper session creation
+    // Currently, this endpoint only verifies the passkey but doesn't create a Supabase session
+    // For a production implementation, consider one of these approaches:
+    // 1. Use Supabase Auth hooks to create a session after passkey verification
+    // 2. Implement a custom JWT token exchange mechanism
+    // 3. Use Supabase's custom auth flow with a verified token
+    // For now, return success and let the client handle the limitation
 
-    // For now, return success with user ID
-    // The client should handle the session creation
     const response = NextResponse.json({
       success: true,
       user: {
         id: passkey.user_id,
         email: userData.email,
       },
+      // TODO: Include session token when proper session creation is implemented
     });
 
     // Clear the challenge cookie

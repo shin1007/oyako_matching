@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   isWebAuthnSupported,
   isPlatformAuthenticatorAvailable,
@@ -23,13 +23,13 @@ export default function PasskeyRegister({
   const [supported, setSupported] = useState<boolean | null>(null);
 
   // Check browser support on mount
-  useState(() => {
+  useEffect(() => {
     (async () => {
       const isSupported = isWebAuthnSupported();
       const hasPlatform = await isPlatformAuthenticatorAvailable();
       setSupported(isSupported && hasPlatform);
     })();
-  });
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
