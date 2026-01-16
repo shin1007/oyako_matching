@@ -3,6 +3,7 @@ export type UserRole = 'parent' | 'child';
 export type MatchStatus = 'pending' | 'accepted' | 'rejected' | 'blocked';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplete';
 export type VerificationStatus = 'pending' | 'verified' | 'failed';
+export type SearchingChildGender = 'male' | 'female' | 'other';
 
 export interface Database {
   public: {
@@ -175,6 +176,34 @@ export interface Database {
           current_period_end?: string;
         };
       };
+      searching_children: {
+        Row: {
+          id: string;
+          user_id: string;
+          birth_date: string | null;
+          name_hiragana: string | null;
+          name_kanji: string | null;
+          gender: SearchingChildGender | null;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          birth_date?: string | null;
+          name_hiragana?: string | null;
+          name_kanji?: string | null;
+          gender?: SearchingChildGender | null;
+          display_order?: number;
+        };
+        Update: {
+          birth_date?: string | null;
+          name_hiragana?: string | null;
+          name_kanji?: string | null;
+          gender?: SearchingChildGender | null;
+          display_order?: number;
+        };
+      };
     };
   };
 }
@@ -244,4 +273,16 @@ export interface Subscription {
   status: SubscriptionStatus;
   currentPeriodStart: string;
   currentPeriodEnd: string;
+}
+
+export interface SearchingChild {
+  id: string;
+  userId: string;
+  birthDate?: string;
+  nameHiragana?: string;
+  nameKanji?: string;
+   gender?: SearchingChildGender;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }

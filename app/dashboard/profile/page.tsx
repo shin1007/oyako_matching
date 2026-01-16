@@ -5,13 +5,22 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
+interface SearchingChild {
+  id?: string;
+  birthDate: string;
+  nameHiragana: string;
+  nameKanji: string;
+   gender: 'male' | 'female' | 'other' | '';
+  displayOrder: number;
+}
+
 export default function ProfilePage() {
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [bio, setBio] = useState('');
-  const [searchingChildBirthDate, setSearchingChildBirthDate] = useState('');
-  const [searchingChildNameHiragana, setSearchingChildNameHiragana] = useState('');
-  const [searchingChildNameKanji, setSearchingChildNameKanji] = useState('');
+  const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
+    { birthDate: '', nameHiragana: '', nameKanji: '', gender: '', displayOrder: 0 }
+  ]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -37,6 +46,7 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Load profile
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -47,9 +57,24 @@ export default function ProfilePage() {
         setFullName(data.full_name || '');
         setBirthDate(data.birth_date || '');
         setBio(data.bio || '');
-        setSearchingChildBirthDate(data.searching_child_birth_date || '');
-        setSearchingChildNameHiragana(data.searching_child_name_hiragana || '');
-        setSearchingChildNameKanji(data.searching_child_name_kanji || '');
+      }
+
+      // Load searching children
+      const { data: childrenData, error: childrenError } = await supabase
+        .from('searching_children')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('display_order', { ascending: true });
+
+      if (childrenData && childrenData.length > 0) {
+        setSearchingChildren(childrenData.map(child => ({
+          id: child.id,
+          birthDate: child.birth_date || '',
+          nameHiragana: child.name_hiragana || '',
+          nameKanji: child.name_kanji || '',
+          gender: child.gender || '',
+          displayOrder: child.display_order
+        })));
       }
     } catch (err: any) {
       // Profile might not exist yet or table is missing
@@ -73,30 +98,91 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('ログインが必要です');
 
-      const { error } = await supabase.from('profiles').upsert({
+      // Save profile
+      const { error: profileError } = await supabase.from('profiles').upsert({
         user_id: user.id,
         full_name: fullName,
         birth_date: birthDate,
         bio: bio,
-        searching_child_birth_date: searchingChildBirthDate || null,
-        searching_child_name_hiragana: searchingChildNameHiragana || null,
-        searching_child_name_kanji: searchingChildNameKanji || null,
       });
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Delete all existing searching children
+      await supabase
+        .from('searching_children')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Insert new searching children (only non-empty ones)
+      const childrenToInsert = searchingChildren
+        .filter(child => child.birthDate || child.nameHiragana || child.nameKanji || child.gender)
+        .map((child, index) => ({
+          user_id: user.id,
+          birth_date: child.birthDate || null,
+          name_hiragana: child.nameHiragana || null,
+          name_kanji: child.nameKanji || null,
+          gender: child.gender || null,
+          display_order: index
+        }));
+
+      if (childrenToInsert.length > 0) {
+        const { error: childrenError } = await supabase
+          .from('searching_children')
+          .insert(childrenToInsert);
+
+        if (childrenError) throw childrenError;
+      }
 
       setSuccess('プロフィールを保存しました');
       setTimeout(() => setSuccess(''), 3000);
+      
+      // Reload to get IDs
+      await loadProfile();
     } catch (err: any) {
       const message = String(err?.message || 'プロフィールの保存に失敗しました');
-      if (message.includes("Could not find the table 'public.profiles'")) {
-        setError('プロフィールテーブルがありません。Supabaseのマイグレーション（001_initial_schema.sql）を実行してから再試行してください。');
+      if (message.includes("Could not find the table")) {
+        setError('必要なテーブルがありません。Supabaseのマイグレーション（001_initial_schema.sql, 006_multiple_searching_children.sql）を実行してから再試行してください。');
       } else {
         setError(message);
       }
     } finally {
       setSaving(false);
     }
+  };
+
+  const addSearchingChild = () => {
+    if (searchingChildren.length >= 5) {
+      setError('探している子どもは最大5人までです');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    setSearchingChildren([
+      ...searchingChildren,
+      { 
+        birthDate: '', 
+        nameHiragana: '', 
+        nameKanji: '', 
+        gender: '',
+        displayOrder: searchingChildren.length 
+      }
+    ]);
+  };
+
+  const removeSearchingChild = (index: number) => {
+    if (searchingChildren.length <= 1) return;
+    const newChildren = searchingChildren.filter((_, i) => i !== index);
+    // Update display orders
+    setSearchingChildren(newChildren.map((child, i) => ({
+      ...child,
+      displayOrder: i
+    })));
+  };
+
+  const updateSearchingChild = (index: number, field: keyof SearchingChild, value: string) => {
+    const newChildren = [...searchingChildren];
+    newChildren[index] = { ...newChildren[index], [field]: value };
+    setSearchingChildren(newChildren);
   };
 
   return (
@@ -184,50 +270,98 @@ export default function ProfilePage() {
                   探している子どもの情報
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  親子マッチングのための情報です。任意項目です。
+                  親子マッチングのための情報です。任意項目です。最大5人まで登録できます。
                 </p>
 
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="searchingChildBirthDate" className="block text-sm font-medium text-gray-700">
-                      探している子どもの生年月日
-                    </label>
-                    <input
-                      id="searchingChildBirthDate"
-                      type="date"
-                      value={searchingChildBirthDate}
-                      onChange={(e) => setSearchingChildBirthDate(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
+                <div className="space-y-6">
+                  {searchingChildren.map((child, index) => (
+                    <div key={index} className="p-4 border border-gray-200 rounded-lg relative">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-sm font-medium text-gray-700">
+                          子ども {index + 1}
+                        </h4>
+                        {searchingChildren.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeSearchingChild(index)}
+                            className="text-sm text-red-600 hover:text-red-700"
+                          >
+                            削除
+                          </button>
+                        )}
+                      </div>
 
-                  <div>
-                    <label htmlFor="searchingChildNameHiragana" className="block text-sm font-medium text-gray-700">
-                      探している子どもの名前（ひらがな）
-                    </label>
-                    <input
-                      id="searchingChildNameHiragana"
-                      type="text"
-                      value={searchingChildNameHiragana}
-                      onChange={(e) => setSearchingChildNameHiragana(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="例: たろう"
-                    />
-                  </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor={`searchingChildBirthDate-${index}`} className="block text-sm font-medium text-gray-700">
+                            生年月日
+                          </label>
+                          <input
+                            id={`searchingChildBirthDate-${index}`}
+                            type="date"
+                            value={child.birthDate}
+                            onChange={(e) => updateSearchingChild(index, 'birthDate', e.target.value)}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
 
-                  <div>
-                    <label htmlFor="searchingChildNameKanji" className="block text-sm font-medium text-gray-700">
-                      探している子どもの名前（漢字）
-                    </label>
-                    <input
-                      id="searchingChildNameKanji"
-                      type="text"
-                      value={searchingChildNameKanji}
-                      onChange={(e) => setSearchingChildNameKanji(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="例: 太郎"
-                    />
-                  </div>
+                        <div>
+                          <label htmlFor={`searchingChildGender-${index}`} className="block text-sm font-medium text-gray-700">
+                            性別
+                          </label>
+                          <select
+                            id={`searchingChildGender-${index}`}
+                            value={child.gender}
+                            onChange={(e) => updateSearchingChild(index, 'gender', e.target.value as SearchingChild['gender'])}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          >
+                            <option value="">未選択</option>
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                            <option value="other">その他</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label htmlFor={`searchingChildNameHiragana-${index}`} className="block text-sm font-medium text-gray-700">
+                            名前（ひらがな）
+                          </label>
+                          <input
+                            id={`searchingChildNameHiragana-${index}`}
+                            type="text"
+                            value={child.nameHiragana}
+                            onChange={(e) => updateSearchingChild(index, 'nameHiragana', e.target.value)}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="例: たろう"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor={`searchingChildNameKanji-${index}`} className="block text-sm font-medium text-gray-700">
+                            名前（漢字）
+                          </label>
+                          <input
+                            id={`searchingChildNameKanji-${index}`}
+                            type="text"
+                            value={child.nameKanji}
+                            onChange={(e) => updateSearchingChild(index, 'nameKanji', e.target.value)}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="例: 太郎"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {searchingChildren.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={addSearchingChild}
+                      className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                    >
+                      + 子どもを追加
+                    </button>
+                  )}
                 </div>
               </div>
 
