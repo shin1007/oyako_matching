@@ -130,18 +130,26 @@ export async function POST() {
 
       // Note: The users table row is automatically deleted by CASCADE,
       // but we verify it's gone to ensure clean state
-      const { data: remainingUser } = await supabaseAdmin
+      const { data: remainingUser, error: checkError } = await supabaseAdmin
         .from('users')
         .select('id')
         .eq('id', userId)
         .maybeSingle();
 
-      if (remainingUser) {
+      if (checkError) {
+        console.error('Failed to verify users table cleanup:', checkError);
+        // Continue anyway - the CASCADE should have worked
+      } else if (remainingUser) {
         // Manually delete if CASCADE didn't work for some reason
-        await supabaseAdmin
+        const { error: manualDeleteError } = await supabaseAdmin
           .from('users')
           .delete()
           .eq('id', userId);
+
+        if (manualDeleteError) {
+          console.error('Failed to manually delete users table row:', manualDeleteError);
+          // Log but don't fail - auth user is already deleted
+        }
       }
 
       return NextResponse.json({
