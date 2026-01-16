@@ -218,8 +218,9 @@ export default function ProfilePage() {
 
       // Success - redirect to home page
       router.push('/?deleted=true');
-    } catch (err: any) {
-      setError(err.message || 'アカウントの削除に失敗しました');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'アカウントの削除に失敗しました';
+      setError(errorMessage);
       setShowDeleteConfirm(false);
       setShowDeleteWarning(false);
     } finally {

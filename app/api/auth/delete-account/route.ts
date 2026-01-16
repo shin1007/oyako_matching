@@ -46,9 +46,15 @@ export async function POST() {
 
     // Delete related data in order (respecting foreign key constraints)
     // Using service role to bypass RLS policies
+    // Note: Most tables have ON DELETE CASCADE from users table, but we delete
+    // explicitly to ensure data is removed even if cascade fails
     
     try {
-      // Delete messages (references matches and users via sender_id)
+      // Sign out the user session first (before deleting auth user)
+      await supabase.auth.signOut();
+
+      // Delete in order to respect foreign key relationships
+      // Messages reference matches, so delete them first
       await supabaseAdmin
         .from('messages')
         .delete()
@@ -60,7 +66,7 @@ export async function POST() {
         .delete()
         .or(`parent_id.eq.${userId},child_id.eq.${userId}`);
 
-      // Delete forum comments
+      // Delete forum comments (may reference posts)
       await supabaseAdmin
         .from('forum_comments')
         .delete()
@@ -108,7 +114,7 @@ export async function POST() {
         .delete()
         .eq('user_id', userId);
 
-      // Delete from users table
+      // Delete from users table (this should cascade delete remaining references)
       await supabaseAdmin
         .from('users')
         .delete()
@@ -123,9 +129,6 @@ export async function POST() {
         console.error('Failed to delete auth user:', deleteAuthError);
         throw new Error('認証ユーザーの削除に失敗しました');
       }
-
-      // Sign out the user session
-      await supabase.auth.signOut();
 
       return NextResponse.json({
         success: true,

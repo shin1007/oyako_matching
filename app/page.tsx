@@ -12,7 +12,9 @@ export default function Home() {
     if (searchParams.get('deleted') === 'true') {
       setShowDeletedMessage(true);
       // Hide message after 5 seconds
-      setTimeout(() => setShowDeletedMessage(false), 5000);
+      const timeoutId = setTimeout(() => setShowDeletedMessage(false), 5000);
+      // Cleanup timeout on unmount
+      return () => clearTimeout(timeoutId);
     }
   }, [searchParams]);
 
