@@ -45,6 +45,11 @@ STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 
 # OpenAI
 OPENAI_API_KEY=your_openai_api_key
+
+# WebAuthn/Passkey (パスキー認証)
+RP_NAME=親子マッチング
+RP_ID=localhost  # 本番環境ではドメイン名
+NEXT_PUBLIC_ORIGIN=http://localhost:3000  # 本番環境では https://your-domain.com
 ```
 
 ### インストールと起動
@@ -64,26 +69,58 @@ npm run dev
 ```
 /app                 # Next.js App Router
   /api               # APIルート
+    /auth            # 認証API
+      /passkey       # パスキー認証エンドポイント
   /auth              # 認証ページ
+    /login           # ログインページ
+    /passkey-login   # パスキーログインページ
+    /register        # 新規登録ページ
+  /components        # Reactコンポーネント
+    /passkey         # パスキー関連コンポーネント
   /dashboard         # ダッシュボード
+    /security        # セキュリティ設定（パスキー管理）
   /matching          # マッチング機能
   /messages          # メッセージ機能
   /payments          # 決済ページ
-/components          # Reactコンポーネント
 /lib                 # ユーティリティとヘルパー
   /supabase          # Supabase設定
   /stripe            # Stripe設定
   /openai            # OpenAI設定
+  /webauthn          # WebAuthn/パスキー設定
 /types               # TypeScript型定義
 /supabase            # Supabaseマイグレーション
+/docs                # ドキュメント
+  WEBAUTHN_PASSKEY.md # パスキー機能ドキュメント
 ```
+
+## 主要機能
+
+### 認証機能
+- **メール/パスワード認証**: 従来の認証方式
+- **パスキー認証**: 生体認証（指紋、顔認証）による安全なログイン
+  - パスワード不要でフィッシング攻撃に強い
+  - Chrome、Safari、Firefox、Edgeに対応
+  - 詳細は [WebAuthnドキュメント](docs/WEBAUTHN_PASSKEY.md) を参照
+- **マイナンバーカード認証**: xID APIによる厳格な本人確認
+
+### マッチング機能
+- 生年月日による絞り込み
+- エピソード類似度検索（OpenAI embeddings + pgvector）
+- AIによる成長写真生成
+
+### その他の機能
+- メッセージング
+- タイムカプセル
+- サブスクリプション決済（Stripe）
 
 ## セキュリティとコンプライアンス
 
 - Row Level Security (RLS) による厳格なデータアクセス制御
+- WebAuthn/パスキーによるフィッシング耐性のある認証
 - マイナンバーカードによる本人確認
 - ストーカー規制法に準拠した非公開照合
 - AIによる投稿コンテンツのモデレーション
+- HTTPS強制（本番環境）
 
 ## License
 
