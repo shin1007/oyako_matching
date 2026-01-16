@@ -132,15 +132,17 @@ export async function POST() {
       // but we verify it's gone to ensure clean state
       const { data: remainingUser, error: checkError } = await supabaseAdmin
         .from('users')
-        .select('id')
+        .select()
         .eq('id', userId)
         .maybeSingle();
 
       if (checkError) {
         console.error('Failed to verify users table cleanup:', checkError);
-        // Continue anyway - the CASCADE should have worked
+        console.warn('Cannot verify CASCADE deletion worked, but auth user was deleted successfully');
+        // Continue - the CASCADE should have worked even if verification failed
       } else if (remainingUser) {
         // Manually delete if CASCADE didn't work for some reason
+        console.warn('CASCADE deletion did not remove users table row, attempting manual cleanup');
         const { error: manualDeleteError } = await supabaseAdmin
           .from('users')
           .delete()
