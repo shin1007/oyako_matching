@@ -216,6 +216,12 @@ export default function ProfilePage() {
         throw new Error(data.error || 'アカウントの削除に失敗しました');
       }
 
+      // Ensure session is signed out on client side
+      await supabase.auth.signOut();
+      
+      // Small delay to ensure session is fully cleared
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Success - redirect to home page
       router.push('/?deleted=true');
     } catch (err) {
