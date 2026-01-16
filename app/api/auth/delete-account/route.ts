@@ -47,10 +47,10 @@ export async function POST() {
     // Delete related data in order (respecting foreign key constraints)
     // Using service role to bypass RLS policies
     // Note: Most tables have ON DELETE CASCADE from users table, but we delete
-    // explicitly to ensure data is removed even if cascade fails
+    // explicitly first to ensure clean deletion and avoid cascade timing issues
     
     try {
-      // Sign out the user session first (before deleting auth user)
+      // Sign out the user session first (before deleting any data)
       await supabase.auth.signOut();
 
       // Delete in order to respect foreign key relationships
@@ -114,13 +114,11 @@ export async function POST() {
         .delete()
         .eq('user_id', userId);
 
-      // Delete from users table (this should cascade delete remaining references)
-      await supabaseAdmin
-        .from('users')
-        .delete()
-        .eq('id', userId);
-
-      // Finally, delete the auth user
+      // Delete the auth user first
+      // This will CASCADE delete the users table row automatically due to
+      // the foreign key constraint: users(id) REFERENCES auth.users(id) ON DELETE CASCADE
+      // We delete auth user BEFORE manually deleting from users table to avoid
+      // "duplicate key value" errors when recreating accounts
       const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(
         userId
       );
@@ -128,6 +126,22 @@ export async function POST() {
       if (deleteAuthError) {
         console.error('Failed to delete auth user:', deleteAuthError);
         throw new Error('認証ユーザーの削除に失敗しました');
+      }
+
+      // Note: The users table row is automatically deleted by CASCADE,
+      // but we verify it's gone to ensure clean state
+      const { data: remainingUser } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (remainingUser) {
+        // Manually delete if CASCADE didn't work for some reason
+        await supabaseAdmin
+          .from('users')
+          .delete()
+          .eq('id', userId);
       }
 
       return NextResponse.json({
