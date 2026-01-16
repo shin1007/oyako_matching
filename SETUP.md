@@ -93,8 +93,7 @@ Webhook 署名シークレットを取得してください。
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_default_key
-NEXT_PUBLIC_SUPABASE_ANON_KEYanon_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # xID API (マイナンバーカード認証)

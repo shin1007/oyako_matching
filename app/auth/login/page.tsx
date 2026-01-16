@@ -19,10 +19,13 @@ export default function LoginPage() {
     setError('');
 
     try {
+      console.log('Attempting login...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      console.log('Login response:', { data, error });
 
       if (error) throw error;
 
@@ -31,7 +34,15 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message || 'ログインに失敗しました');
+      console.error('Login error:', err);
+      let errorMessage = err.message || 'ログインに失敗しました';
+      
+      // Check for network/fetch errors
+      if (err.name === 'TypeError' && err.message?.includes('fetch')) {
+        errorMessage = 'Supabaseサーバーに接続できません。ネットワーク接続とSupabase URL設定を確認してください。';
+      }
+      
+      setError(`${errorMessage} (詳細: ${err.name || 'Unknown'})`);
     } finally {
       setLoading(false);
     }
