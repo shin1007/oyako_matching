@@ -42,6 +42,7 @@ export interface Database {
           profile_image_url: string | null;
           bio: string | null;
           parent_gender: ParentGender | null;
+          forum_display_name: string | null;
           searching_child_birth_date: string | null;
           searching_child_name_hiragana: string | null;
           searching_child_name_kanji: string | null;
@@ -55,6 +56,7 @@ export interface Database {
           profile_image_url?: string | null;
           bio?: string | null;
           parent_gender?: ParentGender | null;
+          forum_display_name?: string | null;
           searching_child_birth_date?: string | null;
           searching_child_name_hiragana?: string | null;
           searching_child_name_kanji?: string | null;
@@ -65,6 +67,7 @@ export interface Database {
           profile_image_url?: string | null;
           bio?: string | null;
           parent_gender?: ParentGender | null;
+          forum_display_name?: string | null;
           searching_child_birth_date?: string | null;
           searching_child_name_hiragana?: string | null;
           searching_child_name_kanji?: string | null;

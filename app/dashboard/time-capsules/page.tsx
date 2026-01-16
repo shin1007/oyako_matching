@@ -21,12 +21,16 @@ interface TimeCapsule {
   unlock_date: string;
   created_at: string;
   opened_at: string | null;
+  child_info?: {
+    name_kanji?: string;
+    name_hiragana?: string;
+  };
 }
 
 interface ChildOption {
   id: string;
   full_name?: string;
-  birth_date: string;
+  birth_date: string | null;
 }
 
 export default function TimeCapsulesPage() {
@@ -38,10 +42,14 @@ export default function TimeCapsulesPage() {
   const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [children, setChildren] = useState<ChildOption[]>([]);
   const [selectedChildId, setSelectedChildId] = useState("");
-  const [unlockDate, setUnlockDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+  const [unlockDate, setUnlockDate] = useState(today);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [capsuleToDelete, setCapsuleToDelete] = useState<TimeCapsule | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -78,38 +86,23 @@ export default function TimeCapsulesPage() {
       setProfile(profileRow || null);
 
       if (userRole === "parent") {
-        const { data: matchesData, error: matchesError } = await supabase
-          .from("matches")
-          .select("child_id")
-          .eq("parent_id", user.id)
-          .eq("status", "accepted");
-        if (matchesError) throw matchesError;
+        const { data: childrenData, error: childrenError } = await supabase
+          .from("searching_children")
+          .select("id, birth_date, name_kanji, name_hiragana")
+          .eq("user_id", user.id)
+          .order("display_order", { ascending: true });
+        if (childrenError) throw childrenError;
 
-        const childIds = (matchesData || [])
-          .map((m) => m.child_id)
-          .filter(Boolean);
-
-        if (childIds.length > 0) {
-          const { data: childProfiles, error: childProfilesError } = await supabase
-            .from("profiles")
-            .select("user_id, full_name, birth_date")
-            .in("user_id", childIds);
-          if (childProfilesError) throw childProfilesError;
-
-          const options: ChildOption[] = (childProfiles || []).map((child) => ({
-            id: child.user_id,
-            full_name: child.full_name || "お子さま",
+        const options: ChildOption[] = (childrenData || [])
+          .map((child) => ({
+            id: child.id,
+            full_name: child.name_kanji || child.name_hiragana || "お子さま",
             birth_date: child.birth_date,
           }));
 
-          setChildren(options);
-          if (options.length > 0) {
-            setSelectedChildId(options[0].id);
-          }
-        } else {
-          setChildren([]);
-          setSelectedChildId("");
-        }
+        setChildren(options);
+        const firstWithBirthDate = options.find((child) => child.birth_date);
+        setSelectedChildId(firstWithBirthDate?.id ?? options[0]?.id ?? "");
 
         const { data, error } = await supabase
           .from("time_capsules")
@@ -117,7 +110,23 @@ export default function TimeCapsulesPage() {
           .eq("parent_id", user.id)
           .order("unlock_date", { ascending: true });
         if (error) throw error;
-        setCapsules(data || []);
+        
+        // 子どもの情報を取得して結合
+        const capsulesWithChildren = await Promise.all((data || []).map(async (capsule) => {
+          const { data: childData } = await supabase
+            .from("searching_children")
+            .select("name_kanji, name_hiragana")
+            .eq("user_id", user.id)
+            .eq("birth_date", capsule.child_birth_date)
+            .single();
+          
+          return {
+            ...capsule,
+            child_info: childData || undefined
+          };
+        }));
+        
+        setCapsules(capsulesWithChildren);
       } else {
         if (!profileRow?.birth_date) {
           setError("お子さまの生年月日がプロフィールに登録されていません。");
@@ -129,7 +138,23 @@ export default function TimeCapsulesPage() {
             .eq("child_birth_date", profileRow.birth_date)
             .order("unlock_date", { ascending: true });
           if (error) throw error;
-          setCapsules(data || []);
+          
+          // 子どもの情報を取得して結合
+          const capsulesWithChildren = await Promise.all((data || []).map(async (capsule) => {
+            const { data: childData } = await supabase
+              .from("searching_children")
+              .select("name_kanji, name_hiragana")
+              .eq("user_id", capsule.parent_id)
+              .eq("birth_date", capsule.child_birth_date)
+              .single();
+            
+            return {
+              ...capsule,
+              child_info: childData || undefined
+            };
+          }));
+          
+          setCapsules(capsulesWithChildren);
         }
       }
     } catch (err: any) {
@@ -171,7 +196,68 @@ export default function TimeCapsulesPage() {
     });
   };
 
+  const calculateAge = (birthDate: string, referenceDate: string) => {
+    const birth = new Date(birthDate);
+    const reference = new Date(referenceDate);
+    let age = reference.getFullYear() - birth.getFullYear();
+    const monthDiff = reference.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && reference.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const selectedChild = children.find((child) => child.id === selectedChildId);
+
+  const handleDeleteClick = (capsule: TimeCapsule) => {
+    setCapsuleToDelete(capsule);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!capsuleToDelete) return;
+
+    setDeleting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("ログインが必要です");
+
+      console.log("Deleting capsule:", capsuleToDelete.id, "for user:", user.id);
+
+      const { error, data } = await supabase
+        .from("time_capsules")
+        .delete()
+        .eq("id", capsuleToDelete.id)
+        .eq("parent_id", user.id)
+        .select();
+
+      console.log("Delete result:", { error, data });
+
+      if (error) throw error;
+
+      setSuccess("タイムカプセルを削除しました");
+      setDeleteModalOpen(false);
+      setCapsuleToDelete(null);
+      await bootstrap();
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      setError(err.message || "タイムカプセルの削除に失敗しました");
+      setDeleteModalOpen(false);
+      setCapsuleToDelete(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setCapsuleToDelete(null);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,6 +274,10 @@ export default function TimeCapsulesPage() {
 
       if (!selectedChild) {
         throw new Error("登録済みのお子さまを選択してください");
+      }
+
+      if (!selectedChild.birth_date) {
+        throw new Error("選択したお子さまの生年月日をプロフィールで入力してください");
       }
 
       if (!unlockDate || !message.trim()) {
@@ -307,8 +397,9 @@ export default function TimeCapsulesPage() {
                     {children.length === 0 ? "登録済みのお子さまがいません" : "選択してください"}
                   </option>
                   {children.map((child) => (
-                    <option key={child.id} value={child.id}>
-                      {child.full_name || "お子さま"} / {formatDate(child.birth_date)}
+                    <option key={child.id} value={child.id} disabled={!child.birth_date}>
+                      {child.full_name || "お子さま"}
+                      {child.birth_date ? ` / ${formatDate(child.birth_date)}` : "（生年月日未登録）"}
                     </option>
                   ))}
                 </select>
@@ -350,7 +441,7 @@ export default function TimeCapsulesPage() {
                 <p className="text-xs text-gray-500">保存後も開封日までメッセージは非公開のまま保管されます。</p>
                 <button
                   type="submit"
-                  disabled={submitting || !selectedChild}
+                  disabled={submitting || !selectedChild || !selectedChild.birth_date}
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {submitting ? "保存中..." : "タイムカプセルを保存"}
@@ -359,7 +450,7 @@ export default function TimeCapsulesPage() {
             </form>
             {children.length === 0 && (
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                登録済みのお子さまがいません。マッチング済みの子どもアカウントを作成または紐付けすると選択できるようになります。
+                プロフィールでお子さま情報（生年月日必須）を登録すると、ここから選択できるようになります。
               </div>
             )}
           </section>
@@ -388,7 +479,7 @@ export default function TimeCapsulesPage() {
               <h3 className="mt-3 text-lg font-semibold text-gray-900">まだタイムカプセルがありません</h3>
               <p className="mt-2 max-w-xl text-sm text-gray-600">
                 {role === "parent"
-                  ? "節目の日付とメッセージを登録すると、開封日まで大切に保管されます。"
+                  ? "プロフィールで登録したお子さまを選んで、節目の日付とメッセージを残せます。"
                   : "解禁日になると、ここにメッセージが届きます。"}
               </p>
             </div>
@@ -402,14 +493,35 @@ export default function TimeCapsulesPage() {
                 return (
                   <div key={capsule.id} className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="flex-1">
                         <p className="text-xs uppercase tracking-wide text-gray-500">開封予定日</p>
-                        <p className="text-lg font-semibold text-gray-900">{formatDate(capsule.unlock_date)}</p>
-                        <p className="text-xs text-gray-500">作成日: {formatDate(capsule.created_at)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-semibold text-gray-900">{formatDate(capsule.unlock_date)}</p>
+                          {capsule.child_info && (
+                            <span className="text-base text-gray-600">
+                              ・ {capsule.child_info.name_kanji || capsule.child_info.name_hiragana || "お子さま"}
+                              ({calculateAge(capsule.child_birth_date, capsule.created_at)}歳)
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">作成日: {formatDate(capsule.created_at)}</p>
                       </div>
-                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${status.tone}`}>
-                        {status.label}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${status.tone}`}>
+                          {status.label}
+                        </span>
+                        {role === "parent" && (
+                          <button
+                            onClick={() => handleDeleteClick(capsule)}
+                            className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            title="削除"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4 rounded-lg bg-gray-50 px-4 py-3">
@@ -417,10 +529,7 @@ export default function TimeCapsulesPage() {
                       <p className="mt-2 whitespace-pre-wrap text-gray-900">{capsule.message}</p>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
-                      <span>
-                        お子さまの誕生日: {formatDate(capsule.child_birth_date)}
-                      </span>
+                    <div className="mt-4 flex flex-wrap items-center justify-end gap-3 text-xs text-gray-600">
                       {!capsule.opened_at && !unlockReady && (
                         <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">
                           開封まであと {diff} 日
@@ -439,6 +548,52 @@ export default function TimeCapsulesPage() {
           )}
         </section>
       </main>
+
+      {/* 削除確認モーダル */}
+      {deleteModalOpen && capsuleToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">タイムカプセルの削除</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              このタイムカプセルを削除してもよろしいですか？この操作は取り消せません。
+            </p>
+            
+            {error && (
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            
+            <div className="mt-4 rounded-lg bg-gray-50 p-4">
+              <p className="text-xs text-gray-500">開封予定日</p>
+              <p className="text-sm font-medium text-gray-900">{formatDate(capsuleToDelete.unlock_date)}</p>
+              {capsuleToDelete.child_info && (
+                <p className="mt-1 text-sm text-gray-600">
+                  {capsuleToDelete.child_info.name_kanji || capsuleToDelete.child_info.name_hiragana || "お子さま"}
+                  ({calculateAge(capsuleToDelete.child_birth_date, capsuleToDelete.created_at)}歳)
+                </p>
+              )}
+              <p className="mt-2 text-xs text-gray-700 line-clamp-2">{capsuleToDelete.message}</p>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleting}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "削除中..." : "削除する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

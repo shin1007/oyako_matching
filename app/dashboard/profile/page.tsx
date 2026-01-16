@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [birthDate, setBirthDate] = useState('');
   const [bio, setBio] = useState('');
   const [parentGender, setParentGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
+  const [forumDisplayName, setForumDisplayName] = useState('');
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
     { birthDate: '', nameHiragana: '', nameKanji: '', gender: '', displayOrder: 0 }
   ]);
@@ -59,6 +60,7 @@ export default function ProfilePage() {
         setBirthDate(data.birth_date || '');
         setBio(data.bio || '');
         setParentGender((data as any).parent_gender || '');
+        setForumDisplayName((data as any).forum_display_name || '');
       }
 
       // Load searching children
@@ -109,6 +111,7 @@ export default function ProfilePage() {
           birth_date: birthDate,
           bio: bio,
           parent_gender: parentGender || null,
+          forum_display_name: forumDisplayName || null,
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
@@ -272,6 +275,23 @@ export default function ProfilePage() {
                   <option value="other">その他</option>
                   <option value="prefer_not_to_say">回答しない</option>
                 </select>
+              </div>
+
+              <div>
+                <label htmlFor="forumDisplayName" className="block text-sm font-medium text-gray-700">
+                  掲示板での表示名
+                </label>
+                <input
+                  id="forumDisplayName"
+                  type="text"
+                  value={forumDisplayName}
+                  onChange={(e) => setForumDisplayName(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  placeholder="例: ゆうこママ、たろうパパ"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  ピアサポート掲示板で表示される名前です。本名を避け、ニックネームを設定することをお勧めします。
+                </p>
               </div>
 
               <div>
