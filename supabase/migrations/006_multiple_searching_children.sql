@@ -15,6 +15,21 @@ CREATE TABLE IF NOT EXISTS public.searching_children (
 );
 
 -- Add comments
+-- Ensure gender column exists even if the table was created before this migration
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public'
+      AND table_name = 'searching_children'
+      AND column_name = 'gender'
+  ) THEN
+    ALTER TABLE public.searching_children
+    ADD COLUMN gender TEXT CHECK (gender IN ('male', 'female', 'other') OR gender IS NULL);
+  END IF;
+END $$;
+
+-- Add comments
 COMMENT ON TABLE public.searching_children IS 'Stores information about children that users are searching for (up to 5 per user)';
 COMMENT ON COLUMN public.searching_children.user_id IS 'Reference to the user who is searching for this child';
 COMMENT ON COLUMN public.searching_children.birth_date IS 'Birth date of the child being searched for';
@@ -23,9 +38,9 @@ COMMENT ON COLUMN public.searching_children.name_kanji IS 'Child name in kanji';
 COMMENT ON COLUMN public.searching_children.gender IS 'Gender of the child being searched for (male/female/other)';
 COMMENT ON COLUMN public.searching_children.display_order IS 'Display order for sorting (0-4)';
 
--- Create indexes
-CREATE INDEX idx_searching_children_user_id ON public.searching_children(user_id);
-CREATE INDEX idx_searching_children_birth_date ON public.searching_children(birth_date);
+-- Create indexes (safe if already exist)
+CREATE INDEX IF NOT EXISTS idx_searching_children_user_id ON public.searching_children(user_id);
+CREATE INDEX IF NOT EXISTS idx_searching_children_birth_date ON public.searching_children(birth_date);
 
 -- Migrate existing data from profiles table (only if columns exist)
 DO $$
@@ -66,6 +81,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Recreate trigger safely
+DROP TRIGGER IF EXISTS enforce_searching_children_limit ON public.searching_children;
 CREATE TRIGGER enforce_searching_children_limit
 BEFORE INSERT ON public.searching_children
 FOR EACH ROW
@@ -80,6 +97,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Recreate trigger safely
+DROP TRIGGER IF EXISTS searching_children_updated_at ON public.searching_children;
 CREATE TRIGGER searching_children_updated_at
 BEFORE UPDATE ON public.searching_children
 FOR EACH ROW

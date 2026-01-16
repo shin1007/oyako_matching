@@ -18,6 +18,7 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [bio, setBio] = useState('');
+  const [parentGender, setParentGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
     { birthDate: '', nameHiragana: '', nameKanji: '', gender: '', displayOrder: 0 }
   ]);
@@ -57,6 +58,7 @@ export default function ProfilePage() {
         setFullName(data.full_name || '');
         setBirthDate(data.birth_date || '');
         setBio(data.bio || '');
+        setParentGender((data as any).parent_gender || '');
       }
 
       // Load searching children
@@ -99,12 +101,15 @@ export default function ProfilePage() {
       if (!user) throw new Error('ログインが必要です');
 
       // Save profile
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        user_id: user.id,
-        full_name: fullName,
-        birth_date: birthDate,
-        bio: bio,
-      });
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          full_name: fullName,
+          birth_date: birthDate,
+          bio: bio,
+          parent_gender: parentGender || null,
+        }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 
@@ -249,6 +254,24 @@ export default function ProfilePage() {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="parentGender" className="block text-sm font-medium text-gray-700">
+                  性別（親）
+                </label>
+                <select
+                  id="parentGender"
+                  value={parentGender}
+                  onChange={(e) => setParentGender(e.target.value as typeof parentGender)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">未選択</option>
+                  <option value="male">男性</option>
+                  <option value="female">女性</option>
+                  <option value="other">その他</option>
+                  <option value="prefer_not_to_say">回答しない</option>
+                </select>
               </div>
 
               <div>
