@@ -101,8 +101,26 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
-            <p className="text-gray-600">
+          <div className="mt-6 space-y-4">
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">または</span>
+              </div>
+            </div>
+
+            {/* Passkey Login Button */}
+            <Link
+              href="/auth/passkey-login"
+              className="block w-full rounded-lg border-2 border-blue-600 bg-white px-4 py-2 text-center font-medium text-blue-600 hover:bg-blue-50"
+            >
+              🔐 パスキーでログイン
+            </Link>
+
+            <p className="text-center text-sm text-gray-600">
               アカウントをお持ちでない方は{' '}
               <Link href="/auth/register" className="text-blue-600 hover:underline">
                 新規登録
