@@ -30,6 +30,13 @@ export default function LoginPage() {
       if (error) throw error;
 
       if (data.user) {
+        // Check if email is verified
+        if (!data.user.email_confirmed_at) {
+          // Email not verified, redirect to verification pending page
+          router.push('/auth/verify-email-pending');
+          return;
+        }
+        
         router.push('/dashboard');
         router.refresh();
       }
@@ -124,6 +131,13 @@ export default function LoginPage() {
               アカウントをお持ちでない方は{' '}
               <Link href="/auth/register" className="text-blue-600 hover:underline">
                 新規登録
+              </Link>
+            </p>
+            
+            <p className="text-center text-sm text-gray-600">
+              メール確認がまだの方は{' '}
+              <Link href="/auth/verify-email-pending" className="text-blue-600 hover:underline">
+                こちら
               </Link>
             </p>
           </div>
