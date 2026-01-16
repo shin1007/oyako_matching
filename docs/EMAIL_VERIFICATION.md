@@ -374,10 +374,73 @@ To apply this feature to an existing project:
    NEXT_PUBLIC_ORIGIN=http://localhost:3000
    ```
 
-4. **Configure Supabase:**
-   - Enable email authentication
-   - Set redirect URLs in Supabase Dashboard
-   - Test email delivery
+4. **Supabase の設定（詳細手順）:**
+
+   **4.1. メール認証を有効化:**
+   1. [Supabase Dashboard](https://supabase.com/dashboard) にアクセス
+   2. 対象プロジェクトを選択
+   3. 左サイドバーから **Authentication** をクリック
+   4. **Providers** タブを選択
+   5. **Email** プロバイダーを探す
+   6. **Enabled** のトグルをオンにする
+   7. **Confirm email** オプションを **有効** にする（重要！）
+      - これにより、登録時に自動的に確認メールが送信されます
+   8. **Save** をクリック
+
+   **4.2. リダイレクト URL を設定:**
+   1. **Authentication** → **URL Configuration** に移動
+   2. **Redirect URLs** セクションを探す
+   3. 以下の URL を追加:
+      ```
+      http://localhost:3000/api/auth/verify-email
+      http://localhost:3000/auth/verify-email-pending
+      ```
+   4. 本番環境用の URL も追加:
+      ```
+      https://your-production-domain.com/api/auth/verify-email
+      https://your-production-domain.com/auth/verify-email-pending
+      ```
+   5. **Save** をクリック
+
+   **4.3. メールテンプレートの確認（オプション）:**
+   1. **Authentication** → **Email Templates** に移動
+   2. **Confirm signup** テンプレートを選択
+   3. テンプレートの確認:
+      - 件名とメール本文をカスタマイズ可能
+      - `{{ .ConfirmationURL }}` がメール確認用のリンク
+      - デフォルトのテンプレートでも動作します
+   4. カスタマイズした場合は **Save** をクリック
+
+   **4.4. メール配信のテスト:**
+   1. アプリケーションで新規ユーザー登録を実行
+   2. 登録したメールアドレスの受信トレイを確認
+   3. Supabase からの確認メールが届いているか確認
+   4. 届かない場合:
+      - 迷惑メールフォルダを確認
+      - Supabase Dashboard の **Logs** → **Auth Logs** でエラーを確認
+      - **Settings** → **API** でメール送信の制限に達していないか確認
+   
+   **4.5. 本番環境用のメール設定（推奨）:**
+   
+   Supabase の無料メールサービスには制限があるため、本番環境では専用のメールサービスの使用を推奨:
+   
+   1. **Authentication** → **Settings** に移動
+   2. **SMTP Settings** セクションまでスクロール
+   3. **Enable Custom SMTP** をオンにする
+   4. 以下の情報を入力:
+      - **SMTP Host**: 例 `smtp.sendgrid.net` (SendGrid使用時)
+      - **SMTP Port**: 通常は `587` (TLS) または `465` (SSL)
+      - **SMTP User**: メールサービスのユーザー名
+      - **SMTP Pass**: メールサービスのパスワード/APIキー
+      - **SMTP Sender Email**: 送信元メールアドレス（例: `noreply@yourdomain.com`）
+      - **SMTP Sender Name**: 送信元表示名（例: `親子マッチング`）
+   5. **Save** をクリック
+   6. テストメールを送信して動作確認
+
+   **推奨メールサービス:**
+   - **SendGrid**: 無料で月100通まで、設定が簡単
+   - **AWS SES**: 大量送信に適している、コストパフォーマンスが高い
+   - **Resend**: 開発者フレンドリー、Next.js との相性が良い
 
 5. **Deploy:**
    - Build and test locally
