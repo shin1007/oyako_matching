@@ -132,7 +132,7 @@ export async function POST() {
       // but we verify it's gone to ensure clean state
       const { data: remainingUser, error: checkError } = await supabaseAdmin
         .from('users')
-        .select()
+        .select('id')
         .eq('id', userId)
         .maybeSingle();
 
@@ -151,6 +151,8 @@ export async function POST() {
         if (manualDeleteError) {
           console.error('Failed to manually delete users table row:', manualDeleteError);
           // Log but don't fail - auth user is already deleted
+        } else {
+          console.info('Successfully manually deleted users table row after CASCADE cleanup');
         }
       }
 
