@@ -220,7 +220,7 @@ export default function PostDetailPage() {
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="コメントを入力..."
                 rows={4}
-                className="mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
               />
               <button
                 type="submit"

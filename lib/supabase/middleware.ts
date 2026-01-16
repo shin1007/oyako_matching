@@ -6,9 +6,18 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  // Optional: bypass Supabase session refresh in dev when networking issues occur
+  if (process.env.DISABLE_SUPABASE_MIDDLEWARE === 'true') {
+    return supabaseResponse;
+  }
+
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -33,9 +42,16 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+  } catch (e) {
+    // In development, avoid crashing on network/auth fetch failures
+    // Edge sandbox may intermittently fail to reach external services
+    // Proceed without user to keep dev server running
+    console.warn('Supabase auth.getUser failed in middleware:', e);
+  }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:

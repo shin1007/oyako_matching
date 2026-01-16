@@ -46,8 +46,12 @@ export default function ProfilePage() {
         setBio(data.bio || '');
       }
     } catch (err: any) {
-      // Profile might not exist yet
+      // Profile might not exist yet or table is missing
       console.error(err);
+      const message = String(err?.message || err);
+      if (message.includes("Could not find the table 'public.profiles'")) {
+        setError('プロフィールテーブルがデータベースに存在しません。Supabaseマイグレーションを適用してください（001_initial_schema.sql など）。');
+      }
     } finally {
       setLoading(false);
     }
@@ -75,7 +79,12 @@ export default function ProfilePage() {
       setSuccess('プロフィールを保存しました');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.message || 'プロフィールの保存に失敗しました');
+      const message = String(err?.message || 'プロフィールの保存に失敗しました');
+      if (message.includes("Could not find the table 'public.profiles'")) {
+        setError('プロフィールテーブルがありません。Supabaseのマイグレーション（001_initial_schema.sql）を実行してから再試行してください。');
+      } else {
+        setError(message);
+      }
     } finally {
       setSaving(false);
     }
@@ -129,7 +138,7 @@ export default function ProfilePage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                 />
               </div>
 
@@ -143,7 +152,7 @@ export default function ProfilePage() {
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                 />
               </div>
 
@@ -156,7 +165,7 @@ export default function ProfilePage() {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={4}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                   placeholder="簡単な自己紹介を記入してください"
                 />
               </div>

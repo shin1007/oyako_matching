@@ -182,7 +182,7 @@ export default function EpisodesPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                   placeholder="例: 公園での思い出"
                 />
               </div>
@@ -197,7 +197,7 @@ export default function EpisodesPage() {
                   onChange={(e) => setContent(e.target.value)}
                   required
                   rows={6}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                   placeholder="できるだけ詳しく、具体的なエピソードを記入してください。日時、場所、会話の内容など..."
                 />
               </div>
