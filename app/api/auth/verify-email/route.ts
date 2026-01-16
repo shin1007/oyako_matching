@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// Supabase OTP types
+type OtpType = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email' | 'sms' | 'phone_change';
+
+function isValidOtpType(type: string): type is OtpType {
+  return ['signup', 'magiclink', 'recovery', 'invite', 'email', 'sms', 'phone_change'].includes(type);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);
@@ -8,13 +15,13 @@ export async function GET(request: NextRequest) {
     const type = requestUrl.searchParams.get('type');
     const next = requestUrl.searchParams.get('next') ?? '/dashboard';
 
-    if (token_hash && type) {
+    if (token_hash && type && isValidOtpType(type)) {
       const supabase = await createClient();
 
       // Verify the email using the token
       const { data, error } = await supabase.auth.verifyOtp({
         token_hash,
-        type: type as any,
+        type,
       });
 
       if (error) {

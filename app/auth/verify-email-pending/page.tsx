@@ -146,8 +146,9 @@ function VerifyEmailPendingContent() {
         // Refresh status after sending
         setTimeout(() => checkUserStatus(), 1000);
       }
-    } catch (err: any) {
-      setError(err.message || '認証メールの送信に失敗しました');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('認証メールの送信に失敗しました');
+      setError(error.message);
     } finally {
       setLoading(false);
     }
