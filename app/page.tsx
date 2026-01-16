@@ -1,6 +1,23 @@
+'use client';
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const [showDeletedMessage, setShowDeletedMessage] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('deleted') === 'true') {
+      setShowDeletedMessage(true);
+      // Hide message after 5 seconds
+      const timeoutId = setTimeout(() => setShowDeletedMessage(false), 5000);
+      // Cleanup timeout on unmount
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchParams]);
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
@@ -26,6 +43,14 @@ export default function Home() {
 
       {/* Hero Section */}
       <main className="container mx-auto flex-1 px-4 py-16">
+        {/* Account Deleted Success Message */}
+        {showDeletedMessage && (
+          <div className="mx-auto max-w-4xl mb-8">
+            <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800 border border-green-200">
+              ✓ アカウントが正常に削除されました。ご利用ありがとうございました。
+            </div>
+          </div>
+        )}
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="mb-6 text-5xl font-bold text-gray-900">
             親子の再会を支援する
