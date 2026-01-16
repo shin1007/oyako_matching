@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPasskeyRegistration } from '@/lib/webauthn/server';
-import type { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
+import type { RegistrationResponseJSON } from '@simplewebauthn/types';
 
 /**
  * POST /api/auth/passkey/register-verify

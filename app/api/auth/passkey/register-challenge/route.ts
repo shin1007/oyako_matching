@@ -6,7 +6,7 @@ import { generatePasskeyRegistrationOptions } from '@/lib/webauthn/server';
  * POST /api/auth/passkey/register-challenge
  * Generate registration options for a new passkey
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = await createClient();
 

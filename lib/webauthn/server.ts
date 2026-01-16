@@ -15,7 +15,7 @@ import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
   AuthenticatorTransportFuture,
-} from '@simplewebauthn/server/script/deps';
+} from '@simplewebauthn/types';
 
 // Configuration
 export const rpName = process.env.RP_NAME || '親子マッチング';
@@ -52,15 +52,13 @@ export async function generatePasskeyRegistrationOptions(
   options: RegistrationOptions
 ) {
   const excludeCredentials = options.excludeCredentials?.map((cred) => ({
-    id: Buffer.from(cred.credential_id, 'base64url'),
-    type: 'public-key' as const,
+    id: cred.credential_id,
     transports: cred.transports,
   }));
 
   return await generateRegistrationOptions({
     rpName,
     rpID,
-    userID: Buffer.from(options.userId),
     userName: options.userName,
     userDisplayName: options.userDisplayName,
     attestationType: 'none',
@@ -95,8 +93,7 @@ export async function generatePasskeyAuthenticationOptions(
   params: AuthenticationOptionsParams = {}
 ) {
   const allowCredentials = params.allowCredentials?.map((cred) => ({
-    id: Buffer.from(cred.credential_id, 'base64url'),
-    type: 'public-key' as const,
+    id: cred.credential_id,
     transports: cred.transports,
   }));
 
@@ -115,15 +112,19 @@ export async function verifyPasskeyAuthentication(
   expectedChallenge: string,
   credential: PasskeyCredential
 ): Promise<VerifiedAuthenticationResponse> {
+  // Convert base64url strings to Uint8Array for publicKey
+  const publicKeyBytes = Buffer.from(credential.public_key, 'base64url');
+  
   return await verifyAuthenticationResponse({
     response,
     expectedChallenge,
     expectedOrigin: origin,
     expectedRPID: rpID,
     credential: {
-      id: Buffer.from(credential.credential_id, 'base64url'),
-      publicKey: Buffer.from(credential.public_key, 'base64url'),
+      id: credential.credential_id,
+      publicKey: publicKeyBytes,
       counter: credential.counter,
+      transports: credential.transports,
     },
   });
 }

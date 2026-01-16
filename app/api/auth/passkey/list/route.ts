@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
  * GET /api/auth/passkey/list
  * Get list of user's registered passkeys
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
 

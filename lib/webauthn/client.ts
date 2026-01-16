@@ -12,7 +12,7 @@ import type {
   PublicKeyCredentialRequestOptionsJSON,
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
-} from '@simplewebauthn/browser';
+} from '@simplewebauthn/types';
 
 export type { RegistrationResponseJSON, AuthenticationResponseJSON };
 
@@ -48,7 +48,7 @@ export async function registerPasskey(
   options: PublicKeyCredentialCreationOptionsJSON
 ): Promise<RegistrationResponseJSON> {
   try {
-    return await startRegistration(options);
+    return await startRegistration({ optionsJSON: options });
   } catch (error) {
     console.error('Passkey registration failed:', error);
     throw new Error(
@@ -64,7 +64,7 @@ export async function authenticateWithPasskey(
   options: PublicKeyCredentialRequestOptionsJSON
 ): Promise<AuthenticationResponseJSON> {
   try {
-    return await startAuthentication(options);
+    return await startAuthentication({ optionsJSON: options });
   } catch (error) {
     console.error('Passkey authentication failed:', error);
     throw new Error(
