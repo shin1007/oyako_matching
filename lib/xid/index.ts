@@ -2,7 +2,8 @@
  * xID API integration for My Number Card authentication
  */
 
-import { instantiate } from 'js-nacl';
+// Lazy import js-nacl to avoid bundler/minifier conflicts in Turbopack
+// and only load crypto on demand in server runtime
 
 interface XIDVerificationRequest {
   userId: string;
@@ -35,27 +36,32 @@ async function decryptXIDResponse(
   publicKey: string,
   privateKey: string
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    instantiate((nacl) => {
-      try {
-        const cipherBuff = Buffer.from(encryptedMessage, 'base64');
-        const publicBuff = Buffer.from(publicKey, 'base64');
-        const privateBuff = Buffer.from(privateKey, 'base64');
-        
-        const nonce = cipherBuff.slice(0, 24);
-        const message = nacl.crypto_box_open(
-          cipherBuff.slice(24),
-          nonce,
-          publicBuff,
-          privateBuff
-        );
-        
-        const utf8message = nacl.decode_utf8(message);
-        resolve(utf8message);
-      } catch (error) {
-        reject(error);
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const { instantiate } = await import('js-nacl');
+      instantiate((nacl) => {
+        try {
+          const cipherBuff = Buffer.from(encryptedMessage, 'base64');
+          const publicBuff = Buffer.from(publicKey, 'base64');
+          const privateBuff = Buffer.from(privateKey, 'base64');
+
+          const nonce = cipherBuff.slice(0, 24);
+          const message = nacl.crypto_box_open(
+            cipherBuff.slice(24),
+            nonce,
+            publicBuff,
+            privateBuff
+          );
+
+          const utf8message = nacl.decode_utf8(message);
+          resolve(utf8message);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    } catch (e) {
+      reject(e);
+    }
   });
 }
 
