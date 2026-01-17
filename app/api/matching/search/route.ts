@@ -164,6 +164,13 @@ export async function GET(request: NextRequest) {
           .eq('id', match.matched_user_id)
           .single();
 
+        // Get current user's profile for reverse matching
+        const { data: currentUserProfile } = await admin
+          .from('profiles')
+          .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality')
+          .eq('user_id', user.id)
+          .single();
+
         // For parents, calculate scores per child
         let scorePerChild: Record<string, number> = {};
         if (userData.role === 'parent' && searchingChildren.length > 0 && profile?.birth_date) {
@@ -265,6 +272,78 @@ export async function GET(request: NextRequest) {
 
               // Cap at 1.0 (100%)
               score = Math.min(1.0, score);
+
+              // Calculate reverse matching score (child → parent)
+              // Get what the matched child is looking for
+              if (targetUserData?.role === 'child' && currentUserProfile) {
+                const { data: matchedChildSearchingParent } = await admin
+                  .from('searching_children')
+                  .select('gender, birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture')
+                  .eq('id', match.matched_user_id)
+                  .single();
+
+                if (matchedChildSearchingParent) {
+                  // Gender check - REQUIRED for child→parent matching
+                  if (matchedChildSearchingParent.gender && currentUserProfile.gender) {
+                    if (matchedChildSearchingParent.gender !== currentUserProfile.gender) {
+                      // Gender mismatch - exclude this candidate
+                      score = 0;
+                      console.log(
+                        `[Matching] Gender mismatch - Child ${child.id} looking for ${matchedChildSearchingParent.gender}, parent is ${currentUserProfile.gender}. Score set to 0.`
+                      );
+                    } else {
+                      // Gender match - calculate reverse score
+                      let reverseScore = 0.20; // Base score for gender match
+
+                      // Birth year proximity (lenient)
+                      if (matchedChildSearchingParent.birth_date && currentUserProfile.birth_date) {
+                        const searchingYear = new Date(matchedChildSearchingParent.birth_date).getFullYear();
+                        const parentYear = new Date(currentUserProfile.birth_date).getFullYear();
+                        const yearDiff = Math.abs(searchingYear - parentYear);
+
+                        if (yearDiff <= 5) {
+                          reverseScore += 0.30;
+                        } else if (yearDiff <= 10) {
+                          reverseScore += 0.20;
+                        }
+                      } else {
+                        reverseScore += 0.10; // No data penalty is mild
+                      }
+
+                      // Hiragana name match (lenient)
+                      if (matchedChildSearchingParent.last_name_hiragana && currentUserProfile.last_name_hiragana) {
+                        const searchingHiragana = (matchedChildSearchingParent.last_name_hiragana + (matchedChildSearchingParent.first_name_hiragana || '')).trim();
+                        const parentHiragana = (currentUserProfile.last_name_hiragana + (currentUserProfile.first_name_hiragana || '')).trim();
+                        
+                        if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
+                          reverseScore += 0.15;
+                        }
+                      }
+
+                      // Birthplace match (lenient)
+                      if (matchedChildSearchingParent.birthplace_prefecture && currentUserProfile.birthplace_prefecture) {
+                        if (matchedChildSearchingParent.birthplace_prefecture === currentUserProfile.birthplace_prefecture) {
+                          reverseScore += 0.15;
+                        }
+                      } else if (!matchedChildSearchingParent.birthplace_prefecture) {
+                        reverseScore += 0.05; // Mild bonus for no data
+                      }
+
+                      reverseScore = Math.min(0.80, reverseScore); // Cap reverse score at 80%
+
+                      // Final score = weighted average (parent→child: 60%, child→parent: 40%)
+                      const originalScore = score;
+                      score = (originalScore * 0.60) + (reverseScore * 0.40);
+
+                      console.log(
+                        `[Matching] Bidirectional score - Child ${child.id}: ` +
+                        `parent→child=${originalScore.toFixed(2)}, child→parent=${reverseScore.toFixed(2)}, ` +
+                        `final=${score.toFixed(2)}`
+                      );
+                    }
+                  }
+                }
+              }
             }
             scorePerChild[child.id] = score;
           });
@@ -310,7 +389,16 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ candidates: matchDetails, userRole: userData.role, searchingChildren });
+    // Filter out candidates with 0 score (e.g., gender mismatch in child→parent matching)
+    const filteredMatchDetails = matchDetails.filter(match => {
+      if (userData.role === 'parent' && match.scorePerChild) {
+        // Check if any child has non-zero score
+        return Object.values(match.scorePerChild).some((score: any) => score > 0);
+      }
+      return true;
+    });
+
+    return NextResponse.json({ candidates: filteredMatchDetails, userRole: userData.role, searchingChildren });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(
