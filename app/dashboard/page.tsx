@@ -75,7 +75,10 @@ export default async function DashboardPage() {
                   {/* Profile Image */}
                   <div className="flex justify-center">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-3xl font-bold">
-                      {profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0) || '👤'}
+                      {(profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) ? 
+                        (profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) : 
+                        <span className="text-5xl">👤</span>
+                      }
                     </div>
                   </div>
 
@@ -113,9 +116,15 @@ export default async function DashboardPage() {
                     <div>
                       <p className="text-sm text-gray-600">性別</p>
                       <p className="text-gray-900">
-                        {profile.gender === 'male' ? '男性' : 
-                         profile.gender === 'female' ? '女性' : 
-                         profile.gender === 'other' ? 'その他' : '回答しない'}
+                        {(() => {
+                          const genderMap: Record<string, string> = {
+                            'male': '男性',
+                            'female': '女性',
+                            'other': 'その他',
+                            'prefer_not_to_say': '回答しない'
+                          };
+                          return genderMap[profile.gender] || '未設定';
+                        })()}
                       </p>
                     </div>
                   )}
