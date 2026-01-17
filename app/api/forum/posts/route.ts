@@ -11,27 +11,86 @@ export async function GET(request: NextRequest) {
     const perPage = 20;
     const offset = (page - 1) * perPage;
 
-    let query = supabase
+    // 投稿データを取得
+    let postsQuery = supabase
       .from('forum_posts')
-      .select(`
-        *,
-        author:users!forum_posts_author_id_fkey(id, role),
-        author_profile:profiles!forum_posts_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url),
-        category:forum_categories(id, name, icon),
-        comment_count:forum_comments(count)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .eq('moderation_status', 'approved')
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + perPage - 1);
 
     if (categoryId) {
-      query = query.eq('category_id', categoryId);
+      postsQuery = postsQuery.eq('category_id', categoryId);
     }
 
-    const { data: posts, error, count } = await query;
+    const { data: postsData, error: postsError, count } = await postsQuery;
+    if (postsError) throw postsError;
 
-    if (error) throw error;
+    // 投稿がない場合は空の結果を返す
+    if (!postsData || postsData.length === 0) {
+      return NextResponse.json({ 
+        posts: [],
+        pagination: {
+          page,
+          perPage,
+          total: 0,
+          totalPages: 0
+        }
+      });
+    }
+
+    // 著者IDを取得してプロフィールをフェッチ
+    const authorIds = [...new Set(postsData.map(post => post.author_id))];
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('user_id, last_name_kanji, first_name_kanji, profile_image_url')
+      .in('user_id', authorIds);
+
+    if (profilesError) throw profilesError;
+
+    // カテゴリIDを取得してカテゴリをフェッチ
+    const categoryIds = [...new Set(postsData.map(post => post.category_id).filter(Boolean))];
+    const { data: categories, error: categoriesError } = await supabase
+      .from('forum_categories')
+      .select('id, name, icon')
+      .in('id', categoryIds);
+
+    if (categoriesError) throw categoriesError;
+
+    // 各投稿のコメント数をフェッチ
+    const postIds = postsData.map(post => post.id);
+    const { data: commentCounts, error: commentsError } = await supabase
+      .from('forum_comments')
+      .select('post_id')
+      .in('post_id', postIds);
+
+    if (commentsError) throw commentsError;
+
+    // コメント数を集計
+    const commentCountMap = commentCounts?.reduce((acc, comment) => {
+      acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    // プロフィールとカテゴリをマップに変換
+    const profileMap = profiles?.reduce((acc, profile) => {
+      acc[profile.user_id] = profile;
+      return acc;
+    }, {} as Record<string, any>) || {};
+
+    const categoryMap = categories?.reduce((acc, category) => {
+      acc[category.id] = category;
+      return acc;
+    }, {} as Record<string, any>) || {};
+
+    // データを結合
+    const posts = postsData.map(post => ({
+      ...post,
+      author_profile: profileMap[post.author_id] || null,
+      category: categoryMap[post.category_id] || null,
+      comment_count: [{ count: commentCountMap[post.id] || 0 }]
+    }));
 
     return NextResponse.json({ 
       posts,
