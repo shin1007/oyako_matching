@@ -362,58 +362,62 @@ export default function ProfilePage() {
 
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="lastNameKanji" className="block text-sm font-medium text-gray-700">
-                      苗字（漢字）
-                    </label>
-                    <input
-                      id="lastNameKanji"
-                      type="text"
-                      value={lastNameKanji}
-                      onChange={(e) => setLastNameKanji(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                      placeholder="例: 山田"
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="lastNameKanji" className="block text-sm font-medium text-gray-700">
+                        苗字（漢字）
+                      </label>
+                      <input
+                        id="lastNameKanji"
+                        type="text"
+                        value={lastNameKanji}
+                        onChange={(e) => setLastNameKanji(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: 山田"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="firstNameKanji" className="block text-sm font-medium text-gray-700">
+                        名前（漢字）
+                      </label>
+                      <input
+                        id="firstNameKanji"
+                        type="text"
+                        value={firstNameKanji}
+                        onChange={(e) => setFirstNameKanji(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: 太郎"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="lastNameHiragana" className="block text-sm font-medium text-gray-700">
-                      苗字（ひらがな）
-                    </label>
-                    <input
-                      id="lastNameHiragana"
-                      type="text"
-                      value={lastNameHiragana}
-                      onChange={(e) => setLastNameHiragana(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                      placeholder="例: やまだ"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="firstNameKanji" className="block text-sm font-medium text-gray-700">
-                      名前（漢字）
-                    </label>
-                    <input
-                      id="firstNameKanji"
-                      type="text"
-                      value={firstNameKanji}
-                      onChange={(e) => setFirstNameKanji(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                      placeholder="例: 太郎"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
-                      名前（ひらがな）
-                    </label>
-                    <input
-                      id="firstNameHiragana"
-                      type="text"
-                      value={firstNameHiragana}
-                      onChange={(e) => setFirstNameHiragana(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                      placeholder="例: たろう"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="lastNameHiragana" className="block text-sm font-medium text-gray-700">
+                        苗字（ひらがな）
+                      </label>
+                      <input
+                        id="lastNameHiragana"
+                        type="text"
+                        value={lastNameHiragana}
+                        onChange={(e) => setLastNameHiragana(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: やまだ"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
+                        名前（ひらがな）
+                      </label>
+                      <input
+                        id="firstNameHiragana"
+                        type="text"
+                        value={firstNameHiragana}
+                        onChange={(e) => setFirstNameHiragana(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: たろう"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -613,58 +617,62 @@ export default function ProfilePage() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">新形式：詳細な氏名</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label htmlFor={`searchingChildLastNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
-                                苗字（漢字）
-                              </label>
-                              <input
-                                id={`searchingChildLastNameKanji-${index}`}
-                                type="text"
-                                value={child.lastNameKanji}
-                                onChange={(e) => updateSearchingChild(index, 'lastNameKanji', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                placeholder="例: 山田"
-                              />
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label htmlFor={`searchingChildLastNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
+                                  苗字（漢字）
+                                </label>
+                                <input
+                                  id={`searchingChildLastNameKanji-${index}`}
+                                  type="text"
+                                  value={child.lastNameKanji}
+                                  onChange={(e) => updateSearchingChild(index, 'lastNameKanji', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: 山田"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor={`searchingChildFirstNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
+                                  名前（漢字）
+                                </label>
+                                <input
+                                  id={`searchingChildFirstNameKanji-${index}`}
+                                  type="text"
+                                  value={child.firstNameKanji}
+                                  onChange={(e) => updateSearchingChild(index, 'firstNameKanji', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: 太郎"
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <label htmlFor={`searchingChildLastNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
-                                苗字（ひらがな）
-                              </label>
-                              <input
-                                id={`searchingChildLastNameHiragana-${index}`}
-                                type="text"
-                                value={child.lastNameHiragana}
-                                onChange={(e) => updateSearchingChild(index, 'lastNameHiragana', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                placeholder="例: やまだ"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor={`searchingChildFirstNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
-                                名前（漢字）
-                              </label>
-                              <input
-                                id={`searchingChildFirstNameKanji-${index}`}
-                                type="text"
-                                value={child.firstNameKanji}
-                                onChange={(e) => updateSearchingChild(index, 'firstNameKanji', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                placeholder="例: 太郎"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor={`searchingChildFirstNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
-                                名前（ひらがな）
-                              </label>
-                              <input
-                                id={`searchingChildFirstNameHiragana-${index}`}
-                                type="text"
-                                value={child.firstNameHiragana}
-                                onChange={(e) => updateSearchingChild(index, 'firstNameHiragana', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                placeholder="例: たろう"
-                              />
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label htmlFor={`searchingChildLastNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
+                                  苗字（ひらがな）
+                                </label>
+                                <input
+                                  id={`searchingChildLastNameHiragana-${index}`}
+                                  type="text"
+                                  value={child.lastNameHiragana}
+                                  onChange={(e) => updateSearchingChild(index, 'lastNameHiragana', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: やまだ"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor={`searchingChildFirstNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
+                                  名前（ひらがな）
+                                </label>
+                                <input
+                                  id={`searchingChildFirstNameHiragana-${index}`}
+                                  type="text"
+                                  value={child.firstNameHiragana}
+                                  onChange={(e) => updateSearchingChild(index, 'firstNameHiragana', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: たろう"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
