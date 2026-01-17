@@ -44,7 +44,7 @@ function HomeContent() {
 
           <div className="grid gap-8 md:grid-cols-2">
             {/* 親向けカード */}
-            <div className="rounded-2xl border-2 border-blue-200 bg-white p-8 shadow-lg">
+            <div className="rounded-2xl border-2 border-green-200 bg-green-50 p-8 shadow-lg">
               <div className="mb-4 text-4xl">👨‍👩‍👧‍👦</div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 離別した親の方へ
@@ -52,11 +52,15 @@ function HomeContent() {
               <p className="mb-6 text-gray-600">
                 プロフィール情報を登録して、<br />お子さまとの再会を目指しましょう。
               </p>
-              <div className="mb-4 rounded-lg bg-blue-50 p-4 text-sm text-gray-700">
-                <p className="font-semibold">月額 ¥980</p>
+              <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-700">
+                <p className="font-semibold">基本登録無料</p>
                 <p className="mt-2">
                   • 親同士の情報交換
                   <br />
+                  <br />
+                </p>
+                <p className="font-semibold">以下の機能は月額 ¥980</p>
+                <p className="mt-2">
                   • マイナンバーカード認証
                   <br />
                   • AI成長写真生成（有料）
@@ -68,14 +72,14 @@ function HomeContent() {
               </div>
               <Link
                 href="/auth/register?role=parent"
-                className="block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+                className="block rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700"
               >
                 親として登録
               </Link>
             </div>
 
             {/* 子ども向けカード */}
-            <div className="rounded-2xl border-2 border-green-200 bg-white p-8 shadow-lg">
+            <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-8 shadow-lg">
               <div className="mb-4 text-4xl">👦👧</div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 親を探す子どもの方へ
@@ -84,7 +88,7 @@ function HomeContent() {
                 12歳以上の方が対象です。プロフィールを登録して、
                 親御さんとの再会を目指しましょう。
               </p>
-              <div className="mb-4 rounded-lg bg-green-50 p-4 text-sm text-gray-700">
+              <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-700">
                 <p className="font-semibold">完全無料</p>
                 <p className="mt-2">
                   • 子ども同士の情報交換
@@ -98,7 +102,7 @@ function HomeContent() {
               </div>
               <Link
                 href="/auth/register?role=child"
-                className="block rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700"
+                className="block rounded-lg bg-orange-600 px-6 py-3 text-white hover:bg-orange-700"
               >
                 子どもとして登録
               </Link>
@@ -142,13 +146,13 @@ function HomeContent() {
         <div className="container mx-auto px-4 text-center text-sm text-gray-600">
           <p>&copy; 2024 親子マッチング. All rights reserved.</p>
           <div className="mt-4 flex justify-center gap-6">
-            <Link href="#" className="hover:text-gray-900">
+            <Link href="/terms" className="hover:text-gray-900">
               利用規約
             </Link>
-            <Link href="#" className="hover:text-gray-900">
+            <Link href="/privacy" className="hover:text-gray-900">
               プライバシーポリシー
             </Link>
-            <Link href="#" className="hover:text-gray-900">
+            <Link href="/contact" className="hover:text-gray-900">
               お問い合わせ
             </Link>
           </div>
