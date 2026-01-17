@@ -3,27 +3,6 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <h1 className="text-2xl font-bold text-blue-600">親子マッチング</h1>
-          <nav className="flex gap-4">
-            <Link 
-              href="/auth/login" 
-              className="rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100"
-            >
-              ログイン
-            </Link>
-            <Link 
-              href="/auth/register" 
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              新規登録
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <main className="container mx-auto flex-1 px-4 py-16">
         <div className="mx-auto max-w-4xl text-center">
