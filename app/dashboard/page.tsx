@@ -127,7 +127,7 @@ export default async function DashboardPage() {
                       className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">{candidate.fullName}</p>
+                        <p className="font-medium text-gray-900">{candidate.lastNameKanji}{candidate.firstNameKanji}</p>
                         <p className="text-gray-600 text-xs">
                           生年月日: {candidate.birthDate ? new Date(candidate.birthDate).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '未設定'}
                         </p>

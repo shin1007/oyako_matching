@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 interface ProfileInfo {
-  full_name?: string;
+  last_name_kanji?: string;
+  first_name_kanji?: string;
   birth_date?: string;
   searching_child_birth_date?: string | null;
 }
@@ -76,6 +77,9 @@ export default function TimeCapsulesPage() {
         await Promise.all([
           supabase.from("users").select("role").eq("id", user.id).single(),
           supabase.from("profiles").select("last_name_kanji, first_name_kanji, birth_date, searching_child_birth_date").eq("user_id", user.id).single(),
+        ]);
+
+      if (userError) throw userError;
       if (profileError) throw profileError;
 
       const userRole = userRow?.role as UserRole;
