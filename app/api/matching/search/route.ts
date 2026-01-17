@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
     if (userData.role === 'parent') {
       const { data: children } = await admin
         .from('searching_children')
-        .select('id, name_kanji, name_hiragana, birth_date, gender, display_order')
+        .select('id, last_name_kanji, first_name_kanji, name_kanji, name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality, display_order')
         .eq('user_id', user.id)
         .order('display_order', { ascending: true });
       searchingChildren = children || [];

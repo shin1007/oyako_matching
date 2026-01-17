@@ -33,10 +33,14 @@ interface Match {
 }
 interface SearchingChild {
   id: string;
+  last_name_kanji?: string;
+  first_name_kanji?: string;
   name_kanji?: string;
   name_hiragana?: string;
   birth_date?: string;
   gender?: string;
+  birthplace_prefecture?: string;
+  birthplace_municipality?: string;
   display_order?: number;
 }
 
@@ -234,7 +238,7 @@ export default function MatchingPage() {
                         探している子ども
                       </p>
                       <h3 className="text-xl font-bold text-gray-900">
-                        {child.name_kanji || child.name_hiragana || '名前未設定'}
+                        {child.last_name_kanji}{child.first_name_kanji || child.name_kanji || child.name_hiragana || '名前未設定'}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
                         {child.gender ? getGenderLabel(child.gender, 'child') : '性別未設定'}
@@ -247,6 +251,12 @@ export default function MatchingPage() {
                             month: 'long',
                             day: 'numeric',
                           })}
+                        </p>
+                      )}
+                      {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          出身地: {child.birthplace_prefecture || ''}
+                          {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
                         </p>
                       )}
                     </div>
@@ -285,6 +295,12 @@ export default function MatchingPage() {
                                     day: 'numeric',
                                   })}
                                 </p>
+                                {(match.profile.birthplace_prefecture || match.profile.birthplace_municipality) && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    出身地: {match.profile.birthplace_prefecture || ''}
+                                    {match.profile.birthplace_municipality ? ` ${match.profile.birthplace_municipality}` : ''}
+                                  </p>
+                                )}
                                 
                                 {/* 相手親が探している子ども情報 */}
                                 {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
