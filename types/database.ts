@@ -40,7 +40,6 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          full_name: string;
           last_name_kanji: string | null;
           last_name_hiragana: string | null;
           first_name_kanji: string | null;
@@ -60,7 +59,6 @@ export interface Database {
         };
         Insert: {
           user_id: string;
-          full_name: string;
           last_name_kanji?: string | null;
           last_name_hiragana?: string | null;
           first_name_kanji?: string | null;
@@ -77,7 +75,6 @@ export interface Database {
           searching_child_name_kanji?: string | null;
         };
         Update: {
-          full_name?: string;
           last_name_kanji?: string | null;
           last_name_hiragana?: string | null;
           first_name_kanji?: string | null;

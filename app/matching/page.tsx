@@ -12,11 +12,16 @@ interface Match {
   scorePerChild?: Record<string, number>;
   role?: string;
   profile: {
-    full_name: string;
+    last_name_kanji: string;
+    first_name_kanji: string;
+    last_name_hiragana?: string;
+    first_name_hiragana?: string;
     birth_date: string;
     bio?: string;
     profile_image_url?: string;
     gender?: string;
+    birthplace_prefecture?: string;
+    birthplace_municipality?: string;
   };
 }
 interface SearchingChild {
@@ -63,7 +68,7 @@ export default function MatchingPage() {
       }
 
       const data = await response.json();
-      setMatches(data.matches || []);
+      setMatches(data.candidates || []);
       setUserRole(data.userRole);
       setSearchingChildren(data.searchingChildren || []);
     } catch (err: any) {
@@ -258,7 +263,7 @@ export default function MatchingPage() {
                                 <span className="mb-1 inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
                                   登録済み{getRoleLabel(match.role || '')}ユーザー
                                 </span>
-                                <h4 className="text-lg font-semibold text-gray-900">{match.profile.full_name}</h4>
+                                <h4 className="text-lg font-semibold text-gray-900">{match.profile.last_name_kanji}{match.profile.first_name_kanji}</h4>
                                 <p className="text-sm text-gray-600 mt-1">
                                   {getGenderLabel(match.profile.gender, match.role)}
                                   {' '}• {calculateAge(match.profile.birth_date)}歳
@@ -342,7 +347,7 @@ export default function MatchingPage() {
                       <div className="flex-1 p-6">
                         <div className="mb-4">
                           <h3 className="text-2xl font-bold text-gray-900">
-                            {match.profile.full_name}
+                            {match.profile.last_name_kanji}{match.profile.first_name_kanji}
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">
                             {getGenderLabel(match.profile.gender, role)}

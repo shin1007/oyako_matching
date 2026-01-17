@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         author:users!forum_posts_author_id_fkey(id, role),
-        author_profile:profiles!forum_posts_author_id_fkey(full_name, profile_image_url),
+        author_profile:profiles!forum_posts_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url),
         category:forum_categories(id, name, icon),
         comment_count:forum_comments(count)
       `, { count: 'exact' })

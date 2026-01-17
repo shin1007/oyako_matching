@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(full_name, profile_image_url)
+        author_profile:profiles!forum_comments_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url)
       `)
       .single();
 

@@ -26,7 +26,7 @@ export async function POST() {
     // Get user's profile for display name
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('last_name_kanji, first_name_kanji')
       .eq('user_id', user.id)
       .single();
 
@@ -37,10 +37,11 @@ export async function POST() {
       .eq('user_id', user.id);
 
     // Generate registration options
+    const displayName = (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || user.email || 'ユーザー';
     const options = await generatePasskeyRegistrationOptions({
       userId: user.id,
       userName: user.email || user.id,
-      userDisplayName: profile?.full_name || user.email || 'ユーザー',
+      userDisplayName: displayName,
       excludeCredentials: existingPasskeys?.map((pk) => ({
         id: '',
         user_id: user.id,

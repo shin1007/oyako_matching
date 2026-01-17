@@ -135,7 +135,8 @@ export default function RegisterForm() {
         // Create profile record
         const { error: profileError } = await supabase.from('profiles').insert({
           user_id: data.user.id,
-          full_name: '',
+          last_name_kanji: '',
+          first_name_kanji: '',
           birth_date: new Date().toISOString().split('T')[0],
           bio: '',
           gender: null,

@@ -68,13 +68,13 @@ export default function MessagesPage() {
 
           const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name')
+            .select('last_name_kanji, first_name_kanji')
             .eq('user_id', otherUserId)
             .single();
 
           return {
             ...match,
-            other_user_name: profile?.full_name || '名前なし',
+            other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
             other_user_role: userData?.role || 'unknown',
           };
         })

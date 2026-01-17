@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
       matches.map(async (match: any) => {
         const { data: profile } = await admin
           .from('profiles')
-          .select('full_name, birth_date, bio, profile_image_url, gender')
+          .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
           .eq('user_id', match.matched_user_id)
           .single();
 
@@ -186,16 +186,22 @@ export async function GET(request: NextRequest) {
               const monthMatch = childMonth === matchMonth;
               const dayMatch = childDay === matchDay;
 
-              // Check name similarity
-              const childNameKanji = child.name_kanji || '';
+              // Check name similarity using new fields
+              const childLastNameKanji = child.last_name_kanji || '';
+              const childFirstNameKanji = child.first_name_kanji || '';
+              const childNameKanji = (child.name_kanji || '').trim() || (childLastNameKanji + childFirstNameKanji).trim();
               const childNameHiragana = child.name_hiragana || '';
-              const matchFullName = profile.full_name || '';
+              
+              const matchLastNameKanji = profile.last_name_kanji || '';
+              const matchFirstNameKanji = profile.first_name_kanji || '';
+              const matchFullName = (matchLastNameKanji + matchFirstNameKanji).trim();
               
               // Check if child's name is contained in match's full name
               let nameMatch = false;
               if (childNameKanji && matchFullName.includes(childNameKanji)) {
                 nameMatch = true;
-              } else if (childNameHiragana && matchFullName.includes(childNameHiragana)) {
+              } else if (childNameHiragana && profile.last_name_hiragana && 
+                        (profile.last_name_hiragana + profile.first_name_hiragana).includes(childNameHiragana)) {
                 nameMatch = true;
               }
 
@@ -248,6 +254,15 @@ export async function GET(request: NextRequest) {
                   `[Matching] Name match bonus applied. Child ${child.id}: ${score.toFixed(2)}`
                 );
               }
+
+              // Apply birthplace bonus if available
+              if (child.birthplace_prefecture && profile.birthplace_prefecture &&
+                  child.birthplace_prefecture === profile.birthplace_prefecture) {
+                score = Math.min(0.99, score + 0.08);
+                console.log(
+                  `[Matching] Same prefecture bonus applied. Child ${child.id}: ${score.toFixed(2)}`
+                );
+              }
             }
             scorePerChild[child.id] = score;
           });
@@ -263,7 +278,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ matches: matchDetails, userRole: userData.role, searchingChildren });
+    return NextResponse.json({ candidates: matchDetails, userRole: userData.role, searchingChildren });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(

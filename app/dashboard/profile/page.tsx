@@ -23,7 +23,6 @@ interface SearchingChild {
 
 export default function ProfilePage() {
   // 親のプロフィール
-  const [fullName, setFullName] = useState('');
   const [lastNameKanji, setLastNameKanji] = useState('');
   const [lastNameHiragana, setLastNameHiragana] = useState('');
   const [firstNameKanji, setFirstNameKanji] = useState('');
@@ -99,7 +98,6 @@ export default function ProfilePage() {
         .single();
 
       if (data) {
-        setFullName(data.full_name || '');
         setLastNameKanji((data as any).last_name_kanji || '');
         setLastNameHiragana((data as any).last_name_hiragana || '');
         setFirstNameKanji((data as any).first_name_kanji || '');
@@ -153,19 +151,25 @@ export default function ProfilePage() {
     setError('');
     setSuccess('');
 
+    // バリデーション
+    if (!lastNameKanji || !firstNameKanji) {
+      setError('苗字（漢字）と名前（漢字）は必須です');
+      setSaving(false);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('ログインが必要です');
 
-      // Save profile with new fields
+      // Save profile with new fields (full_name は削除)
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
-          full_name: fullName,
-          last_name_kanji: lastNameKanji || null,
+          last_name_kanji: lastNameKanji,
           last_name_hiragana: lastNameHiragana || null,
-          first_name_kanji: firstNameKanji || null,
+          first_name_kanji: firstNameKanji,
           first_name_hiragana: firstNameHiragana || null,
           birth_date: birthDate,
           birthplace_prefecture: birthplacePrefecture || null,
@@ -186,9 +190,9 @@ export default function ProfilePage() {
       // Insert new searching children (only non-empty ones)
       const childrenToInsert = searchingChildren
         .filter(child => 
+          child.lastNameKanji || child.firstNameKanji ||
           child.birthDate || child.nameHiragana || child.nameKanji || 
-          child.lastNameKanji || child.lastNameHiragana || 
-          child.firstNameKanji || child.firstNameHiragana || 
+          child.lastNameHiragana || child.firstNameHiragana || 
           child.gender || child.birthplacePrefecture || child.birthplaceMunicipality
         )
         .map((child, index) => ({
@@ -344,48 +348,34 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                  氏名（統合用）
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                  placeholder="例: 山田太郎"
-                />
-                <p className="mt-1 text-xs text-gray-500">後方互換性のために保持されています</p>
-              </div>
-
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="lastNameKanji" className="block text-sm font-medium text-gray-700">
-                        苗字（漢字）
+                        苗字（漢字）<span className="text-red-500 ml-1">*</span>
                       </label>
                       <input
                         id="lastNameKanji"
                         type="text"
                         value={lastNameKanji}
                         onChange={(e) => setLastNameKanji(e.target.value)}
+                        required
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                         placeholder="例: 山田"
                       />
                     </div>
                     <div>
                       <label htmlFor="firstNameKanji" className="block text-sm font-medium text-gray-700">
-                        名前（漢字）
+                        名前（漢字）<span className="text-red-500 ml-1">*</span>
                       </label>
                       <input
                         id="firstNameKanji"
                         type="text"
                         value={firstNameKanji}
                         onChange={(e) => setFirstNameKanji(e.target.value)}
+                        required
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                         placeholder="例: 太郎"
                       />

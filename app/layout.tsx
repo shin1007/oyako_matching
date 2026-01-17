@@ -23,10 +23,11 @@ export default async function RootLayout({
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("last_name_kanji, first_name_kanji")
       .eq("user_id", user.id)
       .single();
-    displayName = profile?.full_name || user.email || "ログイン中";
+    const displayNameFromProfile = (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '');
+    displayName = displayNameFromProfile || user.email || "ログイン中";
   }
 
   const heroHref = user ? "/dashboard" : "/";

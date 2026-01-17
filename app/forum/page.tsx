@@ -18,7 +18,8 @@ interface Post {
   title: string;
   content: string;
   author_profile: {
-    full_name: string;
+    last_name_kanji: string;
+    first_name_kanji: string;
   };
   category: {
     id: string;
@@ -215,7 +216,7 @@ export default function ForumPage() {
                       {post.content}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>👤 {post.author_profile.full_name}</span>
+                      <span>👤 {post.author_profile.last_name_kanji}{post.author_profile.first_name_kanji}</span>
                       <span>💬 {post.comment_count.length || 0}件のコメント</span>
                       <span>👁️ {post.view_count}回閲覧</span>
                       <span>🕒 {formatDate(post.created_at)}</span>
