@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
     { birthDate: '', nameHiragana: '', nameKanji: '', gender: '', displayOrder: 0 }
   ]);
+  const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -50,6 +51,17 @@ export default function ProfilePage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Load user role
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (userData?.role) {
+        setUserRole(userData.role as 'parent' | 'child');
+      }
 
       // Load profile
       const { data, error } = await supabase
@@ -164,7 +176,8 @@ export default function ProfilePage() {
 
   const addSearchingChild = () => {
     if (searchingChildren.length >= 5) {
-      setError('探している子どもは最大5人までです');
+      const message = userRole === 'child' ? '探している親は最大5人までです' : '探している子どもは最大5人までです';
+      setError(message);
       setTimeout(() => setError(''), 3000);
       return;
     }
@@ -347,10 +360,12 @@ export default function ProfilePage() {
 
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  探している子どもの情報
+                  {userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  親子マッチングのための情報です。任意項目です。最大5人まで登録できます。
+                  {userRole === 'child' 
+                    ? '親子マッチングのための情報です。任意項目です。' 
+                    : '親子マッチングのための情報です。任意項目です。最大5人まで登録できます。'}
                 </p>
 
                 <div className="space-y-6">
@@ -358,7 +373,7 @@ export default function ProfilePage() {
                     <div key={index} className="p-4 border border-gray-200 rounded-lg relative">
                       <div className="flex justify-between items-center mb-3">
                         <h4 className="text-sm font-medium text-gray-700">
-                          子ども {index + 1}
+                          {userRole === 'child' ? '親' : '子ども'} {index + 1}
                         </h4>
                         {searchingChildren.length > 1 && (
                           <button
@@ -439,7 +454,7 @@ export default function ProfilePage() {
                       onClick={addSearchingChild}
                       className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
                     >
-                      + 子どもを追加
+                      + {userRole === 'child' ? '親' : '子ども'}を追加
                     </button>
                   )}
                 </div>
@@ -482,7 +497,7 @@ export default function ProfilePage() {
                     <p>以下のデータが完全に削除されます：</p>
                     <ul className="list-disc list-inside space-y-1 ml-2">
                       <li>プロフィール情報</li>
-                      <li>探している子どもの情報</li>
+                      <li>{userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}</li>
                       <li>思い出エピソード</li>
                       <li>タイムカプセル</li>
                       <li>マッチング情報とメッセージ</li>
