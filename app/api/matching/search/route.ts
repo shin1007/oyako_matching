@@ -423,7 +423,7 @@ export async function GET(request: NextRequest) {
           .single();
 
         // For parents, calculate scores per child
-        let scorePerChild: Record<string, number> = {};
+        const scorePerChild: Record<string, number> = {};
         if (userData.role === 'parent' && searchingChildren.length > 0 && profile?.birth_date) {
           const matchBirthDate = new Date(profile.birth_date);
           const matchYear = matchBirthDate.getFullYear();
