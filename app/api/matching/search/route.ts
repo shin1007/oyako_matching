@@ -382,7 +382,7 @@ export async function GET(request: NextRequest) {
       matches = rpcResult.data || [];
     }
 
-    // If no matches found from episodes, try matching by gender and age range
+    // If no matches found, try matching by gender and age range
     if (matches.length === 0) {
       matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
     }
