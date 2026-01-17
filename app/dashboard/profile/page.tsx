@@ -248,23 +248,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/dashboard" className="text-2xl font-bold text-blue-600">
-            親子マッチング
-          </Link>
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
-            ダッシュボードに戻る
-          </Link>
-        </div>
-      </header>
-
       <main className="container mx-auto max-w-2xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">プロフィール</h1>
-          <p className="mt-2 text-gray-600">あなたの基本情報を管理</p>
-        </div>
-
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-gray-600">読み込み中...</p>
