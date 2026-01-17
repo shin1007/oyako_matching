@@ -191,8 +191,8 @@ export default function MatchingPage() {
           </h1>
           <p className="mt-2 text-gray-600">
             {userRole === 'child' 
-              ? 'エピソードの類似度に基づいて、あなたに合った親を表示しています'
-              : 'エピソードの類似度に基づいて、あなたに合った子を表示しています'
+              ? 'プロフィール情報に基づいて、あなたに合った親を表示しています'
+              : 'プロフィール情報に基づいて、あなたに合った子を表示しています'
             }
           </p>
         </div>
@@ -217,13 +217,13 @@ export default function MatchingPage() {
               マッチングが見つかりませんでした
             </h2>
             <p className="mb-6 text-gray-600">
-              エピソードを追加すると、マッチングの精度が向上します
+              プロフィールを充実させると、マッチングの精度が向上します
             </p>
             <Link
-              href="/dashboard/episodes"
+              href="/dashboard/profile"
               className="inline-block rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700"
             >
-              エピソードを追加
+              プロフィールを編集
             </Link>
           </div>
         ) : userRole === 'parent' && searchingChildren.length > 0 ? (

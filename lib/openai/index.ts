@@ -5,7 +5,7 @@ const openai = new OpenAI({
 });
 
 /**
- * エピソードテキストをベクトル化
+ * テキストをベクトル化
  */
 export async function createEmbedding(text: string): Promise<number[]> {
   const response = await openai.embeddings.create({

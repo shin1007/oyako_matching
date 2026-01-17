@@ -39,7 +39,7 @@ function HomeContent() {
           <p className="mb-12 text-xl text-gray-600">
             親子断絶・実子誘拐後の再会を、AIとマイナンバーカード認証による
             <br />
-            厳格な本人確認とエピソードマッチングで支援します
+            厳格な本人確認で支援します
           </p>
 
           <div className="grid gap-8 md:grid-cols-2">
@@ -50,18 +50,16 @@ function HomeContent() {
                 離別した親の方へ
               </h3>
               <p className="mb-6 text-gray-600">
-                思い出のエピソードを登録して、お子さまとの再会を目指しましょう。
-                AIが類似度の高いマッチングをサポートします。
+                プロフィール情報を登録して、お子さまとの再会を目指しましょう。
+                AIがマッチングをサポートします。
               </p>
               <div className="mb-4 rounded-lg bg-blue-50 p-4 text-sm text-gray-700">
                 <p className="font-semibold">月額 ¥1,000</p>
                 <p className="mt-2">
                   • マイナンバーカード認証
                   <br />
-                  • エピソードマッチング
-                  <br />
                   • AI成長写真生成
-                  <br />• タイムカプセル機能
+                  <br />• マッチング機能
                 </p>
               </div>
               <Link
@@ -79,7 +77,7 @@ function HomeContent() {
                 親を探す子どもの方へ
               </h3>
               <p className="mb-6 text-gray-600">
-                12歳以上の方が対象です。あなたの思い出を登録して、
+                12歳以上の方が対象です。プロフィールを登録して、
                 親御さんとの再会を目指しましょう。
               </p>
               <div className="mb-4 rounded-lg bg-green-50 p-4 text-sm text-gray-700">
@@ -87,10 +85,8 @@ function HomeContent() {
                 <p className="mt-2">
                   • マイナンバーカード認証
                   <br />
-                  • エピソードマッチング
-                  <br />
                   • 安全なメッセージ機能
-                  <br />• タイムカプセル閲覧
+                  <br />• マッチング機能
                 </p>
               </div>
               <Link
@@ -119,7 +115,7 @@ function HomeContent() {
                 <div className="mb-4 text-3xl">🤖</div>
                 <h4 className="mb-2 text-lg font-bold">AIマッチング</h4>
                 <p className="text-sm text-gray-600">
-                  思い出エピソードをAIがベクトル化し、高精度なマッチングを実現
+                  プロフィール情報をもとに、高精度なマッチングを実現
                 </p>
               </div>
               <div className="rounded-lg bg-white p-6 shadow">

@@ -91,31 +91,6 @@ export interface Database {
           searching_child_name_kanji?: string | null;
         };
       };
-      episodes: {
-        Row: {
-          id: string;
-          user_id: string;
-          title: string;
-          content: string;
-          embedding: number[] | null;
-          created_at: string;
-          updated_at: string;
-          moderation_status: 'pending' | 'approved' | 'rejected';
-        };
-        Insert: {
-          user_id: string;
-          title: string;
-          content: string;
-          embedding?: number[] | null;
-          moderation_status?: 'pending' | 'approved' | 'rejected';
-        };
-        Update: {
-          title?: string;
-          content?: string;
-          embedding?: number[] | null;
-          moderation_status?: 'pending' | 'approved' | 'rejected';
-        };
-      };
       matches: {
         Row: {
           id: string;
@@ -153,26 +128,6 @@ export interface Database {
         };
         Update: {
           read_at?: string | null;
-        };
-      };
-      time_capsules: {
-        Row: {
-          id: string;
-          parent_id: string;
-          child_birth_date: string;
-          message: string;
-          unlock_date: string;
-          created_at: string;
-          opened_at: string | null;
-        };
-        Insert: {
-          parent_id: string;
-          child_birth_date: string;
-          message: string;
-          unlock_date: string;
-        };
-        Update: {
-          opened_at?: string | null;
         };
       };
       subscriptions: {
@@ -273,15 +228,6 @@ export interface Profile {
   searchingChildNameKanji?: string;
 }
 
-export interface Episode {
-  id: string;
-  userId: string;
-  title: string;
-  content: string;
-  embedding?: number[];
-  moderationStatus: 'pending' | 'approved' | 'rejected';
-}
-
 export interface Match {
   id: string;
   parentId: string;
@@ -298,15 +244,6 @@ export interface Message {
   content: string;
   createdAt: string;
   readAt?: string;
-}
-
-export interface TimeCapsule {
-  id: string;
-  parentId: string;
-  childBirthDate: string;
-  message: string;
-  unlockDate: string;
-  openedAt?: string;
 }
 
 export interface Subscription {
