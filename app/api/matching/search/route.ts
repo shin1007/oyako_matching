@@ -283,16 +283,16 @@ export async function GET(request: NextRequest) {
                 .eq('id', match.matched_user_id)
                 .single();
 
-                if (matchedChildSearchingParent) {
-                  // Gender check - REQUIRED for child→parent matching
-                  if (matchedChildSearchingParent.gender && currentUserProfile.gender) {
-                    if (matchedChildSearchingParent.gender !== currentUserProfile.gender) {
-                      // Gender mismatch - exclude this candidate
-                      score = 0;
-                      console.log(
-                        `[Matching] Gender mismatch - Child ${child.id} looking for ${matchedChildSearchingParent.gender}, parent is ${currentUserProfile.gender}. Score set to 0.`
-                      );
-                    } else {
+              if (matchedChildSearchingParent) {
+                // Gender check - REQUIRED for child→parent matching
+                if (matchedChildSearchingParent.gender && currentUserProfile.gender) {
+                  if (matchedChildSearchingParent.gender !== currentUserProfile.gender) {
+                    // Gender mismatch - exclude this candidate
+                    score = 0;
+                    console.log(
+                      `[Matching] Gender mismatch - Child ${child.id} looking for ${matchedChildSearchingParent.gender}, parent is ${currentUserProfile.gender}. Score set to 0.`
+                    );
+                  } else {
                       // Gender match - calculate reverse score
                       let reverseScore = 0.20; // Base score for gender match
 
