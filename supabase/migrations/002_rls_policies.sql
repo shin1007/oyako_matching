@@ -9,9 +9,40 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.time_capsules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Enable insert for service role" ON public.users;
+DROP POLICY IF EXISTS "Users can view their own data" ON public.users;
+DROP POLICY IF EXISTS "Users can insert their own data" ON public.users;
+DROP POLICY IF EXISTS "Users can update their own data" ON public.users;
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view their own episodes" ON public.episodes;
+DROP POLICY IF EXISTS "Users can insert their own episodes" ON public.episodes;
+DROP POLICY IF EXISTS "Users can update their own episodes" ON public.episodes;
+DROP POLICY IF EXISTS "Users can delete their own episodes" ON public.episodes;
+DROP POLICY IF EXISTS "Users can view their own matches" ON public.matches;
+DROP POLICY IF EXISTS "System can create matches" ON public.matches;
+DROP POLICY IF EXISTS "Users can create matches" ON public.matches;
+DROP POLICY IF EXISTS "Users can update match status" ON public.matches;
+DROP POLICY IF EXISTS "Users can view messages in their matches" ON public.messages;
+DROP POLICY IF EXISTS "Users can send messages in accepted matches" ON public.messages;
+DROP POLICY IF EXISTS "Users can update their own messages" ON public.messages;
+DROP POLICY IF EXISTS "Parents can view their own time capsules" ON public.time_capsules;
+DROP POLICY IF EXISTS "Parents can create time capsules" ON public.time_capsules;
+DROP POLICY IF EXISTS "Children can view unlocked time capsules" ON public.time_capsules;
+DROP POLICY IF EXISTS "Users can view their own subscription" ON public.subscriptions;
+DROP POLICY IF EXISTS "System can manage subscriptions" ON public.subscriptions;
+DROP POLICY IF EXISTS "Users can insert their own subscription" ON public.subscriptions;
+DROP POLICY IF EXISTS "Users can update their own subscription" ON public.subscriptions;
+DROP POLICY IF EXISTS "Users can delete their own subscription" ON public.subscriptions;
+
 -- Users policies
 CREATE POLICY "Users can view their own data" ON public.users
   FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own data" ON public.users
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update their own data" ON public.users
   FOR UPDATE USING (auth.uid() = id);
@@ -45,8 +76,10 @@ CREATE POLICY "Users can view their own matches" ON public.matches
     auth.uid() = parent_id OR auth.uid() = child_id
   );
 
-CREATE POLICY "System can create matches" ON public.matches
-  FOR INSERT WITH CHECK (true); -- Handled by backend logic
+CREATE POLICY "Users can create matches" ON public.matches
+  FOR INSERT WITH CHECK (
+    auth.uid() = parent_id OR auth.uid() = child_id
+  );
 
 CREATE POLICY "Users can update match status" ON public.matches
   FOR UPDATE USING (
@@ -105,8 +138,14 @@ CREATE POLICY "Children can view unlocked time capsules" ON public.time_capsules
 CREATE POLICY "Users can view their own subscription" ON public.subscriptions
   FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "System can manage subscriptions" ON public.subscriptions
-  FOR ALL USING (true); -- Managed by webhook handlers
+CREATE POLICY "Users can insert their own subscription" ON public.subscriptions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own subscription" ON public.subscriptions
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own subscription" ON public.subscriptions
+  FOR DELETE USING (auth.uid() = user_id);
 
 -- Functions for matching logic
 CREATE OR REPLACE FUNCTION public.find_potential_matches(
@@ -161,4 +200,4 @@ BEGIN
     ORDER BY similarity_score DESC;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
