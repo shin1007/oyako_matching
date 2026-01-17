@@ -47,7 +47,7 @@ export default async function DashboardPage() {
 
   return (
     <div className={`min-h-screen ${userData?.role === 'child' ? 'bg-orange-50' : 'bg-green-50'}`}>
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
           <h1 className={`text-3xl font-bold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>ダッシュボード</h1>
           <p className={`mt-2 ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Profile Display Section - Mobile: Top, Desktop: Left Side */}
-        <div className="lg:grid lg:grid-cols-[350px_1fr] lg:gap-6 mb-6">
+        <div className="lg:grid lg:grid-cols-[350px_550px] lg:gap-6 mb-6">
           {/* Profile Card */}
           <div className="mb-6 lg:mb-0">
             <div className={`rounded-lg ${userData?.role === 'child' ? 'bg-orange-100 border-2 border-orange-200' : 'bg-green-100 border-2 border-green-200'} p-6 shadow`}>
@@ -285,11 +285,6 @@ export default async function DashboardPage() {
                         )}
                       </div>
 
-                      {!userData?.mynumber_verified && (
-                        <p className="text-sm text-orange-800 mb-4">
-                          親子マッチング機能を利用するには、マイナンバー認証が必要です。
-                        </p>
-                      )}
                       {userData?.mynumber_verified && (
                         <p className="text-sm text-orange-800">
                           すべての条件が満たされています - すべての機能がご利用いただけます
@@ -433,7 +428,7 @@ export default async function DashboardPage() {
                               href="/payments/subscribe"
                               className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap"
                             >
-                              開始する
+                              980円/月
                             </Link>
                           </div>
                         )}
@@ -453,16 +448,6 @@ export default async function DashboardPage() {
                         )}
                       </div>
 
-                      {!userData?.mynumber_verified && (
-                        <p className="text-sm text-green-800 mb-4">
-                          マッチング機能を利用するには、マイナンバー認証とサブスクリプション（月額¥1,000）が必要です。
-                        </p>
-                      )}
-                      {userData?.mynumber_verified && !subscription && (
-                        <p className="text-sm text-green-800 mb-4">
-                          マッチング機能を利用するには、月額¥1,000のサブスクリプションが必要です。
-                        </p>
-                      )}
                       {userData?.mynumber_verified && subscription?.status === 'active' && (
                         <p className="text-sm text-green-800">
                           すべての条件が満たされています - すべての機能がご利用いただけます
