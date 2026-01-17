@@ -25,6 +25,10 @@ ON public.email_verification_attempts(attempted_at);
 -- RLS policies for email_verification_attempts
 ALTER TABLE public.email_verification_attempts ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Users can view own verification attempts" ON public.email_verification_attempts;
+DROP POLICY IF EXISTS "Users can insert own verification attempts" ON public.email_verification_attempts;
+
 -- Users can only view their own verification attempts
 CREATE POLICY "Users can view own verification attempts"
 ON public.email_verification_attempts
@@ -44,7 +48,7 @@ BEGIN
   DELETE FROM public.email_verification_attempts
   WHERE attempted_at < NOW() - INTERVAL '24 hours';
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Comment
 COMMENT ON TABLE public.email_verification_attempts IS 'Tracks email verification resend attempts for rate limiting';

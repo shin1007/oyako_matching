@@ -79,7 +79,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Recreate trigger safely
 DROP TRIGGER IF EXISTS enforce_searching_children_limit ON public.searching_children;
@@ -95,7 +95,7 @@ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Recreate trigger safely
 DROP TRIGGER IF EXISTS searching_children_updated_at ON public.searching_children;
