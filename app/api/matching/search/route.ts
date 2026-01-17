@@ -272,15 +272,16 @@ export async function GET(request: NextRequest) {
 
               // Cap at 1.0 (100%)
               score = Math.min(1.0, score);
+            }
 
-              // Calculate reverse matching score (child → parent)
-              // Get what the matched child is looking for
-              if (targetUserData?.role === 'child' && currentUserProfile) {
-                const { data: matchedChildSearchingParent } = await admin
-                  .from('searching_children')
-                  .select('gender, birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture')
-                  .eq('id', match.matched_user_id)
-                  .single();
+            // Calculate reverse matching score (child → parent)
+            // Get what the matched child is looking for
+            if (targetUserData?.role === 'child' && currentUserProfile) {
+              const { data: matchedChildSearchingParent } = await admin
+                .from('searching_children')
+                .select('gender, birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture')
+                .eq('id', match.matched_user_id)
+                .single();
 
                 if (matchedChildSearchingParent) {
                   // Gender check - REQUIRED for child→parent matching
@@ -345,6 +346,7 @@ export async function GET(request: NextRequest) {
                 }
               }
             }
+
             scorePerChild[child.id] = score;
           }
         }
