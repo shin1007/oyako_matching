@@ -755,8 +755,6 @@ export default function ProfilePage() {
                     <ul className="list-disc list-inside space-y-1 ml-2">
                       <li>プロフィール情報</li>
                       <li>{userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}</li>
-                      <li>思い出エピソード</li>
-                      <li>タイムカプセル</li>
                       <li>マッチング情報とメッセージ</li>
                       <li>掲示板の投稿とコメント</li>
                       <li>サブスクリプション情報</li>

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+// マッチングスコアの定数
+const DEFAULT_PROFILE_MATCH_SCORE = 0.5; // 基本スコア
+const SAME_YEAR_DAY_SCORE = 0.55; // 同じ年と日、異なる月
+const SAME_YEAR_SCORE = 0.50; // 同じ年のみ
+
 /**
  * 年齢範囲によるフォールバックマッチングを実行
  */
@@ -86,7 +91,7 @@ async function performAgeRangeFallbackMatching(
 
   return filteredMatches.map((profile: any) => ({
     matched_user_id: profile.user_id,
-    similarity_score: 0.5, // 基本スコアは0.5
+    similarity_score: DEFAULT_PROFILE_MATCH_SCORE,
   }));
 }
 
@@ -121,11 +126,11 @@ function calculateBirthdayScore(
   }
   
   if (yearMatch && dayMatch) {
-    return 0.55; // Same year and day, different month
+    return SAME_YEAR_DAY_SCORE;
   }
   
   if (yearMatch) {
-    return 0.50; // Same year only
+    return SAME_YEAR_SCORE;
   }
 
   // Different year - check if plausible age match
@@ -368,24 +373,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Find potential matches using the stored procedure
-    let matches = [];
-    const rpcResult = await admin.rpc('find_potential_matches', {
-      target_user_id: user.id,
-      target_role: userData.role,
-      min_similarity: 0.7,
-    });
-
-    if (rpcResult.error) {
-      console.error('RPC error:', rpcResult.error);
-    } else {
-      matches = rpcResult.data || [];
-    }
-
-    // If no matches found from episodes, try matching by gender and age range
-    if (matches.length === 0) {
-      matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
-    }
+    // Find potential matches using age range and profile information as primary matching algorithm
+    let matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
 
     console.log('[Matching] Final matches count:', matches.length);
 

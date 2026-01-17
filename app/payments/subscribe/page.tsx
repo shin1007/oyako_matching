@@ -169,7 +169,7 @@ export default function SubscribePage() {
               <div className="text-xl">✓</div>
               <div>
                 <p className="font-semibold text-gray-900">AIマッチング</p>
-                <p className="text-sm text-gray-600">エピソードの類似度による高精度マッチング</p>
+                <p className="text-sm text-gray-600">プロフィール情報による高精度マッチング</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -184,13 +184,6 @@ export default function SubscribePage() {
               <div>
                 <p className="font-semibold text-gray-900">AI成長写真生成</p>
                 <p className="text-sm text-gray-600">子どもの成長をシミュレーション</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="text-xl">✓</div>
-              <div>
-                <p className="font-semibold text-gray-900">タイムカプセル機能</p>
-                <p className="text-sm text-gray-600">未来へメッセージを送る</p>
               </div>
             </div>
           </div>

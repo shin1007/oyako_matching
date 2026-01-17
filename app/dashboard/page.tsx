@@ -159,18 +159,6 @@ export default async function DashboardPage() {
             </p>
           </Link>
 
-          {/* Episodes Card */}
-          <Link
-            href="/dashboard/episodes"
-            className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-          >
-            <div className="mb-4 text-4xl">📝</div>
-            <h3 className="text-lg font-semibold text-gray-900">エピソード</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              思い出のエピソードを登録
-            </p>
-          </Link>
-
           {/* Matching Card */}
           {userData?.mynumber_verified && (
             <Link
@@ -195,20 +183,6 @@ export default async function DashboardPage() {
               <h3 className="text-lg font-semibold text-gray-900">メッセージ</h3>
               <p className="mt-2 text-sm text-gray-600">
                 マッチング相手とのメッセージ
-              </p>
-            </Link>
-          )}
-
-          {/* Time Capsules Card */}
-          {userData?.role === 'parent' && (
-            <Link
-              href="/dashboard/time-capsules"
-              className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-            >
-              <div className="mb-4 text-4xl">⏰</div>
-              <h3 className="text-lg font-semibold text-gray-900">タイムカプセル</h3>
-              <p className="mt-2 text-sm text-gray-600">
-                未来へメッセージを送る
               </p>
             </Link>
           )}

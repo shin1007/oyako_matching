@@ -62,20 +62,6 @@
 - updated_at (TIMESTAMP)
 ```
 
-#### episodes
-思い出エピソード（マッチングの基礎）
-
-```sql
-- id (UUID, PK)
-- user_id (UUID, FK -> users)
-- title (TEXT)
-- content (TEXT)
-- embedding (vector(1536)) -- OpenAI embeddings
-- moderation_status (TEXT: 'pending' | 'approved' | 'rejected')
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
-```
-
 #### matches
 マッチング情報
 
@@ -101,19 +87,6 @@
 - read_at (TIMESTAMP)
 ```
 
-#### time_capsules
-タイムカプセル機能
-
-```sql
-- id (UUID, PK)
-- parent_id (UUID, FK -> users)
-- child_birth_date (DATE)
-- message (TEXT)
-- unlock_date (DATE)
-- created_at (TIMESTAMP)
-- opened_at (TIMESTAMP)
-```
-
 #### subscriptions
 Stripe サブスクリプション管理
 
@@ -137,7 +110,6 @@ Supabase の RLS により、各ユーザーは自分のデータのみアクセ
 
 - **users**: 自分の情報のみ閲覧・更新可能
 - **profiles**: 自分のプロフィールのみ管理可能
-- **episodes**: 自分のエピソードのみ管理可能
 - **matches**: 自分が関与するマッチングのみ閲覧可能
 - **messages**: 承認済みマッチングのメッセージのみ閲覧可能
 
@@ -169,29 +141,15 @@ Supabase の RLS により、各ユーザーは自分のデータのみアクセ
 
 ## マッチングアルゴリズム
 
-### ベクトル検索
+### マッチング機能
 
-1. エピソードテキストを OpenAI embeddings でベクトル化
-2. PostgreSQL の pgvector 拡張で類似度検索
-3. コサイン類似度スコアでランキング
-
-```sql
-SELECT 
-  child_episodes.user_id,
-  AVG(parent_episodes.embedding <=> child_episodes.embedding) as similarity_score
-FROM episodes parent_episodes
-CROSS JOIN episodes child_episodes
-WHERE parent_episodes.user_id = $1
-  AND child_episodes.moderation_status = 'approved'
-GROUP BY child_episodes.user_id
-HAVING AVG(...) >= 0.7
-ORDER BY similarity_score DESC;
-```
+1. 生年月日による絞り込み
+2. プロフィール情報によるマッチング
+3. 双方の合意によるマッチング成立
 
 ### マッチング基準
 
-- **類似度閾値**: 0.7 以上（70%）
-- **モデレーション**: 承認済みエピソードのみ
+- **生年月日**: 正確な一致が必要
 - **役割**: parent と child のペアのみ
 
 ## 決済フロー
@@ -211,13 +169,6 @@ ORDER BY similarity_score DESC;
 - `past_due` の場合、マッチング機能を制限
 
 ## AI 機能
-
-### エピソード埋め込み
-
-```typescript
-const embedding = await createEmbedding(episodeText);
-// 1536次元ベクトル
-```
 
 ### コンテンツモデレーション
 
