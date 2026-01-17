@@ -368,7 +368,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Find potential matches using age range and profile information
+    // Find potential matches using age range and profile information as primary matching algorithm
     let matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
 
     console.log('[Matching] Final matches count:', matches.length);

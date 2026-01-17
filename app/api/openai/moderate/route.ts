@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { moderateContent, createEmbedding } from '@/lib/openai';
+import { moderateContent } from '@/lib/openai';
 
 export async function POST(request: NextRequest) {
   try {
