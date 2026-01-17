@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       console.log('[Matching] No RPC matches, trying age range matching...');
       const { data: currentProfile, error: profileError } = await admin
         .from('profiles')
-        .select('birth_date, parent_gender')
+        .select('birth_date, gender')
         .eq('user_id', user.id)
         .single();
 
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
       matches.map(async (match: any) => {
         const { data: profile } = await admin
           .from('profiles')
-          .select('full_name, birth_date, bio, profile_image_url, parent_gender')
+          .select('full_name, birth_date, bio, profile_image_url, gender')
           .eq('user_id', match.matched_user_id)
           .single();
 

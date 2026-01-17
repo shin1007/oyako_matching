@@ -4,7 +4,7 @@ export type MatchStatus = 'pending' | 'accepted' | 'rejected' | 'blocked';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplete';
 export type VerificationStatus = 'pending' | 'verified' | 'failed';
 export type SearchingChildGender = 'male' | 'female' | 'other';
-export type ParentGender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
+export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
 export interface Database {
   public: {
@@ -44,7 +44,7 @@ export interface Database {
           birth_date: string;
           profile_image_url: string | null;
           bio: string | null;
-          parent_gender: ParentGender | null;
+          gender: Gender | null;
           forum_display_name: string | null;
           searching_child_birth_date: string | null;
           searching_child_name_hiragana: string | null;
@@ -58,7 +58,7 @@ export interface Database {
           birth_date: string;
           profile_image_url?: string | null;
           bio?: string | null;
-          parent_gender?: ParentGender | null;
+          gender?: Gender | null;
           forum_display_name?: string | null;
           searching_child_birth_date?: string | null;
           searching_child_name_hiragana?: string | null;
@@ -69,7 +69,7 @@ export interface Database {
           birth_date?: string;
           profile_image_url?: string | null;
           bio?: string | null;
-          parent_gender?: ParentGender | null;
+          gender?: Gender | null;
           forum_display_name?: string | null;
           searching_child_birth_date?: string | null;
           searching_child_name_hiragana?: string | null;
@@ -234,7 +234,7 @@ export interface Profile {
   birthDate: string;
   profileImageUrl?: string;
   bio?: string;
-   parentGender?: ParentGender;
+  gender?: Gender;
   searchingChildBirthDate?: string;
   searchingChildNameHiragana?: string;
   searchingChildNameKanji?: string;

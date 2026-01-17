@@ -138,7 +138,6 @@ export default function RegisterForm() {
           full_name: '',
           birth_date: new Date().toISOString().split('T')[0],
           bio: '',
-          parent_gender: null,
           gender: null,
         });
 

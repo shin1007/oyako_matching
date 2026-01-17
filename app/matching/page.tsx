@@ -9,13 +9,13 @@ import type { UserRole } from '@/types/database';
 interface Match {
   userId: string;
   similarityScore: number;
+  scorePerChild?: Record<string, number>;
   role?: string;
   profile: {
     full_name: string;
     birth_date: string;
     bio?: string;
     profile_image_url?: string;
-    parent_gender?: string;
     gender?: string;
   };
 }
@@ -260,7 +260,7 @@ export default function MatchingPage() {
                                 </span>
                                 <h4 className="text-lg font-semibold text-gray-900">{match.profile.full_name}</h4>
                                 <p className="text-sm text-gray-600 mt-1">
-                                  {getGenderLabel(match.profile.parent_gender, match.role)}
+                                  {getGenderLabel(match.profile.gender, match.role)}
                                   {' '}• {calculateAge(match.profile.birth_date)}歳
                                 </p>
                                 {match.profile.bio && (
@@ -345,7 +345,7 @@ export default function MatchingPage() {
                             {match.profile.full_name}
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">
-                            {getGenderLabel(match.profile.parent_gender, role)}
+                            {getGenderLabel(match.profile.gender, role)}
                             {' '} • {calculateAge(match.profile.birth_date)}歳
                           </p>
                         </div>

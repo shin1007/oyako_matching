@@ -74,7 +74,7 @@ export default function ProfilePage() {
         setFullName(data.full_name || '');
         setBirthDate(data.birth_date || '');
         setBio(data.bio || '');
-        setParentGender((data as any).parent_gender || '');
+        setParentGender((data as any).gender || '');
         setForumDisplayName((data as any).forum_display_name || '');
       }
 
@@ -125,7 +125,7 @@ export default function ProfilePage() {
           full_name: fullName,
           birth_date: birthDate,
           bio: bio,
-          parent_gender: parentGender || null,
+          gender: parentGender || null,
           forum_display_name: forumDisplayName || null,
         }, { onConflict: 'user_id' });
 
