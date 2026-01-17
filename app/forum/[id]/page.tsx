@@ -203,7 +203,6 @@ export default function PostDetailPage() {
       router.push('/forum');
     } catch (err: any) {
       setError(err.message);
-      setShowDeletePostDialog(false);
     } finally {
       setSubmitting(false);
     }
@@ -271,7 +270,6 @@ export default function PostDetailPage() {
       setShowDeleteCommentDialog(null);
     } catch (err: any) {
       setError(err.message);
-      setShowDeleteCommentDialog(null);
     } finally {
       setSubmitting(false);
     }
@@ -417,9 +415,9 @@ export default function PostDetailPage() {
 
         {/* Delete Post Confirmation Dialog */}
         {showDeletePostDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-post-dialog-title">
             <div className="rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
-              <h3 className="mb-4 text-lg font-bold text-gray-900">投稿を削除しますか？</h3>
+              <h3 id="delete-post-dialog-title" className="mb-4 text-lg font-bold text-gray-900">投稿を削除しますか？</h3>
               <p className="mb-6 text-sm text-gray-600">
                 この操作は取り消せません。投稿とすべてのコメントが削除されます。
               </p>
@@ -557,12 +555,17 @@ export default function PostDetailPage() {
 
                   {/* Delete Comment Confirmation Dialog */}
                   {showDeleteCommentDialog === comment.id && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-comment-dialog-title">
                       <div className="rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
-                        <h3 className="mb-4 text-lg font-bold text-gray-900">コメントを削除しますか？</h3>
+                        <h3 id="delete-comment-dialog-title" className="mb-4 text-lg font-bold text-gray-900">コメントを削除しますか？</h3>
                         <p className="mb-6 text-sm text-gray-600">
                           この操作は取り消せません。
                         </p>
+                        {error && (
+                          <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600">
+                            {error}
+                          </div>
+                        )}
                         <div className="flex gap-2 justify-end">
                           <button
                             onClick={() => setShowDeleteCommentDialog(null)}
