@@ -10,45 +10,113 @@ function VerifyEmailPendingContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [email, setEmail] = useState('');
+  const [inputEmail, setInputEmail] = useState('');
+  const [showEmailInput, setShowEmailInput] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [attemptsRemaining, setAttemptsRemaining] = useState(3);
   const [nextAllowedAt, setNextAllowedAt] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState<number>(0);
+  const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
-    checkUserStatus();
+    // Prevent multiple executions
+    if (hasCheckedStatus) return;
     
-    // Check URL params for verification status
-    const verified = searchParams.get('verified');
-    const errorParam = searchParams.get('error');
-    
-    if (verified === 'true') {
-      setSuccess('メールアドレスの確認が完了しました！');
-      setIsVerified(true);
-      // Redirect to dashboard after 3 seconds
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 3000);
-    }
-    
-    if (errorParam) {
-      switch (errorParam) {
-        case 'verification_failed':
-          setError('メール確認に失敗しました。リンクが無効か期限切れです。');
-          break;
-        case 'missing_params':
-          setError('無効な確認リンクです。');
-          break;
-        case 'unexpected':
-          setError('予期しないエラーが発生しました。');
-          break;
+    const initializePage = async () => {
+      console.log('[VerifyEmailPending] Initializing page...');
+      
+      // Get email from URL params if available
+      const emailParam = searchParams.get('email');
+      if (emailParam) {
+        console.log('[VerifyEmailPending] Email from URL params:', emailParam);
+        setEmail(emailParam);
+        setInputEmail(emailParam);
+        // Show sent state immediately for better UX after registration
+        setSuccess(`${emailParam} に確認メールを送信しました`);
+        setShowEmailInput(false);
+        // Proactively resend directly to ensure delivery when arriving from signup without session
+        try {
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: emailParam,
+            options: {
+              emailRedirectTo: `${window.location.origin}/api/auth/verify-email`,
+            },
+          });
+          if (resendError) {
+            console.warn('[VerifyEmailPending] Direct resend reported error:', resendError);
+          }
+        } catch (resendErr) {
+          console.warn('[VerifyEmailPending] Auto-resend failed:', resendErr);
+        }
+        // Skip status check to avoid overriding UI with error state
+        setHasCheckedStatus(true);
+        return;
       }
-    }
-  }, [searchParams, router]);
+      
+      // Check URL params for verification status FIRST
+      const verified = searchParams.get('verified');
+      const errorParam = searchParams.get('error');
+      
+      if (verified === 'true') {
+        console.log('[VerifyEmailPending] Email verified successfully');
+        setSuccess('メールアドレスの確認が完了しました！');
+        setIsVerified(true);
+        setHasCheckedStatus(true);
+        
+        // Try to get user session, but don't fail if it's not available yet
+        // Session may not be immediately available after email verification
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            console.log('[VerifyEmailPending] User session found:', user.email);
+            // Update our database
+            await supabase
+              .from('users')
+              .update({ email_verified_at: user.email_confirmed_at || new Date().toISOString() })
+              .eq('id', user.id);
+          } else {
+            console.log('[VerifyEmailPending] No user session yet, but verification was successful');
+          }
+        } catch (err) {
+          console.log('[VerifyEmailPending] Could not get user session, but verification was successful:', err);
+          // Session may not be available yet, which is OK - user will login next
+        }
+        
+        // Redirect to login page after a short delay to show success message
+        // User will login on the next page, which will establish the session properly
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 2000);
+        return;
+      }
+      
+      if (errorParam) {
+        console.log('[VerifyEmailPending] Error in URL params:', errorParam);
+        switch (errorParam) {
+          case 'verification_failed':
+            setError('メール確認に失敗しました。リンクが無効か期限切れです。');
+            break;
+          case 'missing_params':
+            setError('無効な確認リンクです。');
+            break;
+          case 'unexpected':
+            setError('予期しないエラーが発生しました。');
+            break;
+        }
+      }
+
+      // Check user status only if not already in a verification result state
+      await checkUserStatus();
+      setHasCheckedStatus(true);
+    };
+
+    initializePage();
+  }, []); // Empty dependency array - run only once on mount
 
   // Countdown timer for rate limit
   useEffect(() => {
@@ -71,23 +139,55 @@ function VerifyEmailPendingContent() {
 
   const checkUserStatus = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('[VerifyEmailPending] Checking user status...');
+      
+      // If email is available from URL params (e.g., after registration), 
+      // don't show error - this is expected for new registrations
+      if (email) {
+        console.log('[VerifyEmailPending] Email from URL params - showing success message for new registration');
+        setShowEmailInput(false); // Don't show input, show the success message instead
+        // Don't set error - this is a valid state
+        return;
+      }
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('[VerifyEmailPending] Error getting user:', userError);
+        setError('ユーザー情報の取得に失敗しました。メールアドレスを入力してください。');
+        setShowEmailInput(true);
+        return;
+      }
       
       if (!user) {
-        router.push('/auth/login');
+        console.log('[VerifyEmailPending] No user found');
+        // No user and no email - redirect to login after delay
+        console.log('[VerifyEmailPending] No user and no email - redirecting to login');
+        setError('セッションが見つかりません。ログインしてください。');
+        setTimeout(() => router.push('/auth/login'), 2000);
         return;
       }
 
+      console.log('[VerifyEmailPending] User found:', user.email, 'Email confirmed:', !!user.email_confirmed_at);
       setEmail(user.email || '');
+      setInputEmail(user.email || '');
 
       // Check if email is verified in Supabase Auth
       if (user.email_confirmed_at) {
+        console.log('[VerifyEmailPending] Email already verified - redirecting to dashboard');
         setIsVerified(true);
+        setSuccess('メールアドレスは既に確認済みです');
         // Update our database
         await supabase
           .from('users')
           .update({ email_verified_at: user.email_confirmed_at })
           .eq('id', user.id);
+        
+        // Redirect after a short delay to show success message
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+        return;
       }
 
       // Check recent attempts for rate limiting
@@ -112,7 +212,9 @@ function VerifyEmailPendingContent() {
         }
       }
     } catch (err) {
-      console.error('Error checking user status:', err);
+      console.error('[VerifyEmailPending] Error checking user status:', err);
+      // Show email input form on error
+      setShowEmailInput(true);
     }
   };
 
@@ -121,7 +223,55 @@ function VerifyEmailPendingContent() {
     setError('');
     setSuccess('');
 
+    // Validate email if using input field
+    if (showEmailInput) {
+      if (!inputEmail) {
+        setError('メールアドレスを入力してください');
+        setLoading(false);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(inputEmail)) {
+        setError('メールアドレスの形式が正しくありません');
+        setLoading(false);
+        return;
+      }
+      // Update the email state
+      setEmail(inputEmail);
+    }
+
     try {
+      // Check if user is logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user && (showEmailInput || email)) {
+        // For non-logged-in users, use Supabase's resend functionality directly
+        const targetEmail = showEmailInput ? inputEmail : email;
+        const { error: resendError } = await supabase.auth.resend({
+          type: 'signup',
+          email: targetEmail,
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/auth/verify-email`
+          }
+        });
+
+        if (resendError) {
+          throw resendError;
+        }
+
+        setSuccess(`${targetEmail} に確認メールを送信しました`);
+        if (showEmailInput) {
+          setShowEmailInput(false);
+        }
+        // For non-logged-in users, decrement attempts counter manually
+        if (attemptsRemaining > 0) {
+          setAttemptsRemaining(prev => Math.max(0, prev - 1));
+        }
+        setLoading(false);
+        return;
+      }
+
+      // For logged-in users, use API for rate limiting and tracking
       const response = await fetch('/api/auth/send-verification-email', {
         method: 'POST',
         headers: {
@@ -142,13 +292,31 @@ function VerifyEmailPendingContent() {
         }
       } else {
         setSuccess(data.message);
-        setAttemptsRemaining(data.attemptsRemaining);
+        if (data.attemptsRemaining !== undefined) {
+          setAttemptsRemaining(data.attemptsRemaining);
+        }
+        if (showEmailInput) {
+          setShowEmailInput(false);
+        }
         // Refresh status after sending
         setTimeout(() => checkUserStatus(), 1000);
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('認証メールの送信に失敗しました');
-      setError(error.message);
+      let errorMessage = error.message;
+      
+      // Translate Supabase rate limit errors
+      if (errorMessage.includes('For security purposes')) {
+        const match = errorMessage.match(/after (\d+) seconds?/);
+        if (match) {
+          const seconds = match[1];
+          errorMessage = `セキュリティのため、${seconds}秒後に再試行してください。`;
+        } else {
+          errorMessage = 'セキュリティのため、しばらくしてから再試行してください。';
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -179,13 +347,13 @@ function VerifyEmailPendingContent() {
                 </div>
               )}
               <p className="text-sm text-gray-500 mb-4">
-                ダッシュボードに移動しています...
+                ログインページに移動しています...
               </p>
               <Link
-                href="/dashboard"
+                href="/auth/login"
                 className="inline-block rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
               >
-                ダッシュボードへ
+                ログインページへ
               </Link>
             </div>
           </div>
@@ -203,9 +371,15 @@ function VerifyEmailPendingContent() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               メールアドレスの確認
             </h1>
-            <p className="text-gray-600">
-              {email} に確認メールを送信しました
-            </p>
+            {email && !showEmailInput ? (
+              <p className="text-gray-600">
+                {email} に確認メールを送信しました
+              </p>
+            ) : (
+              <p className="text-gray-600">
+                確認メールを送信します
+              </p>
+            )}
           </div>
 
           {error && (
@@ -217,6 +391,25 @@ function VerifyEmailPendingContent() {
           {success && (
             <div className="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-600">
               {success}
+            </div>
+          )}
+
+          {showEmailInput && (
+            <div className="mb-6">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
+                メールアドレス
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={inputEmail}
+                onChange={(e) => setInputEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                登録時に使用したメールアドレスを入力してください
+              </p>
             </div>
           )}
 
@@ -243,19 +436,21 @@ function VerifyEmailPendingContent() {
           <div className="space-y-3">
             <button
               onClick={handleResendEmail}
-              disabled={loading || countdown > 0 || attemptsRemaining === 0}
+              disabled={loading || isVerified || (countdown > 0 && !showEmailInput) || (!showEmailInput && attemptsRemaining === 0)}
               className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
                 ? '送信中...'
-                : countdown > 0
+                : countdown > 0 && !showEmailInput
                 ? `再送信可能まで ${formatCountdown(countdown)}`
-                : attemptsRemaining === 0
+                : !showEmailInput && attemptsRemaining === 0
                 ? '送信回数の上限に達しました'
+                : showEmailInput
+                ? '確認メールを送信'
                 : '確認メールを再送信'}
             </button>
 
-            {attemptsRemaining > 0 && countdown === 0 && (
+            {!showEmailInput && attemptsRemaining > 0 && countdown === 0 && (
               <p className="text-center text-xs text-gray-500">
                 残り送信回数: {attemptsRemaining}/3（1時間あたり）
               </p>

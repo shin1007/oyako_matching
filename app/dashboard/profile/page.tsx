@@ -225,7 +225,19 @@ export default function ProfilePage() {
       // Success - redirect to home page
       router.push('/?deleted=true');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'アカウントの削除に失敗しました';
+      let errorMessage = err instanceof Error ? err.message : 'アカウントの削除に失敗しました';
+      
+      // Translate Supabase rate limit error to Japanese
+      if (errorMessage.includes('For security purposes')) {
+        const match = errorMessage.match(/after (\d+) seconds?/);
+        if (match) {
+          const seconds = match[1];
+          errorMessage = `セキュリティのため、${seconds}秒後に再試行してください。`;
+        } else {
+          errorMessage = 'セキュリティのため、しばらくしてから再試行してください。';
+        }
+      }
+      
       setError(errorMessage);
       setShowDeleteConfirm(false);
       setShowDeleteWarning(false);
