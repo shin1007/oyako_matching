@@ -368,24 +368,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Find potential matches using the stored procedure
-    let matches = [];
-    const rpcResult = await admin.rpc('find_potential_matches', {
-      target_user_id: user.id,
-      target_role: userData.role,
-      min_similarity: 0.7,
-    });
-
-    if (rpcResult.error) {
-      console.error('RPC error:', rpcResult.error);
-    } else {
-      matches = rpcResult.data || [];
-    }
-
-    // If no matches found, try matching by gender and age range
-    if (matches.length === 0) {
-      matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
-    }
+    // Find potential matches using age range and profile information
+    let matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
 
     console.log('[Matching] Final matches count:', matches.length);
 
