@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { moderateContent } from '@/lib/openai';
 
 export async function GET(
   request: NextRequest,
@@ -64,6 +65,13 @@ export async function PATCH(
     const body = await request.json();
     const { title, content } = body;
 
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: 'Title and content are required' },
+        { status: 400 }
+      );
+    }
+
     // Verify ownership
     const { data: post } = await supabase
       .from('forum_posts')
@@ -73,6 +81,15 @@ export async function PATCH(
 
     if (!post || post.author_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Moderate content
+    const moderation = await moderateContent(`${title} ${content}`);
+    if (moderation.flagged) {
+      return NextResponse.json(
+        { error: 'Content contains inappropriate material' },
+        { status: 400 }
+      );
     }
 
     const { data: updatedPost, error } = await supabase
