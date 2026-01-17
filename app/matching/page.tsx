@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import type { UserRole } from '@/types/database';
 
 interface Match {
   userId: string;
@@ -169,9 +170,14 @@ export default function MatchingPage() {
     <div className="min-h-screen bg-gray-100">
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">マッチング検索</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {userRole === 'child' ? '親を探す' : '子を探す'}
+          </h1>
           <p className="mt-2 text-gray-600">
-            エピソードの類似度に基づいて、潜在的なマッチングを表示しています
+            {userRole === 'child' 
+              ? 'エピソードの類似度に基づいて、あなたに合った親を表示しています'
+              : 'エピソードの類似度に基づいて、あなたに合った子を表示しています'
+            }
           </p>
         </div>
 
