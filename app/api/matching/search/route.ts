@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
           const matchDay = matchBirthDate.getDate();
 
           // Calculate score for each searching child
-          searchingChildren.forEach((child) => {
+          for (const child of searchingChildren) {
             let score = match.similarity_score;
             if (child.birth_date) {
               const childBirthDate = new Date(child.birth_date);
@@ -346,7 +346,7 @@ export async function GET(request: NextRequest) {
               }
             }
             scorePerChild[child.id] = score;
-          });
+          }
         }
 
         // Get searching children info for this matched user
