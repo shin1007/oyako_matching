@@ -287,7 +287,7 @@ export default function MatchingPage() {
                                 </p>
                                 
                                 {/* 相手親が探している子ども情報 */}
-                                {match.role === 'parent' && match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
+                                {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
                                   <div className="mt-4 pt-4 border-t border-gray-200">
                                     <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
                                     <div className="space-y-1">

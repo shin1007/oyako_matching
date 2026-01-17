@@ -271,12 +271,30 @@ export async function GET(request: NextRequest) {
         // Get searching children info for this matched user
         let searchingChildrenInfo: any[] = [];
         if (targetUserData?.role === 'parent') {
+          // 相手が親の場合、その親が探している子ども情報を取得
           const { data: childrenData } = await admin
             .from('searching_children')
             .select('id, last_name_kanji, first_name_kanji, birthplace_prefecture, birthplace_municipality')
             .eq('user_id', match.matched_user_id)
             .order('display_order', { ascending: true });
           searchingChildrenInfo = childrenData || [];
+        } else if (targetUserData?.role === 'child') {
+          // 相手が子の場合、その子の親ユーザー情報を取得
+          const { data: childData } = await admin
+            .from('searching_children')
+            .select('user_id')
+            .eq('id', match.matched_user_id)
+            .single();
+          
+          if (childData?.user_id) {
+            // その親が探している他の子ども情報を取得
+            const { data: parentChildrenData } = await admin
+              .from('searching_children')
+              .select('id, last_name_kanji, first_name_kanji, birthplace_prefecture, birthplace_municipality')
+              .eq('user_id', childData.user_id)
+              .order('display_order', { ascending: true });
+            searchingChildrenInfo = parentChildrenData || [];
+          }
         }
 
         return {
