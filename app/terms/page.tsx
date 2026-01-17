@@ -37,8 +37,7 @@ export default function TermsPage() {
               </p>
               <ul className="ml-6 list-disc space-y-2">
                 <li>親の場合：成人（18歳以上）であること</li>
-                <li>子どもの場合：12歳以上18歳未満であること</li>
-                <li>18歳以上の子どもの場合は、親として登録してください</li>
+                <li>子どもの場合：12歳以上であること</li>
                 <li>マイナンバーカード認証による本人確認を完了していること</li>
               </ul>
             </section>

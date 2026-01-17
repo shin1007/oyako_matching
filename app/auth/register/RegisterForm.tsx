@@ -12,6 +12,8 @@ export default function RegisterForm() {
   const [role, setRole] = useState<'parent' | 'child'>('parent');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+    const [agreeTerms, setAgreeTerms] = useState(false);
+    const [agreePrivacy, setAgreePrivacy] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -33,6 +35,12 @@ export default function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+      if (!agreeTerms || !agreePrivacy) {
+        setError('利用規約とプライバシーポリシーに同意してください');
+        setLoading(false);
+        return;
+      }
 
     // Validate email format
     if (!isValidEmail(email)) {
@@ -58,6 +66,36 @@ export default function RegisterForm() {
     }
 
     try {
+        <div className="space-y-3 border-t pt-4">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              className="mt-1 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                利用規約
+              </Link>
+              に同意します
+            </span>
+          </label>
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreePrivacy}
+              onChange={(e) => setAgreePrivacy(e.target.checked)}
+              className="mt-1 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">
+                プライバシーポリシー
+              </Link>
+              に同意します
+            </span>
+          </label>
+        </div>
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -176,7 +214,7 @@ export default function RegisterForm() {
               onClick={() => setRole('parent')}
               className={`rounded-lg border-2 px-4 py-3 text-center transition ${
                 role === 'parent'
-                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  ? 'border-green-600 bg-green-50 text-green-700'
                   : 'border-gray-300 text-gray-700 hover:border-gray-400'
               }`}
             >
@@ -189,7 +227,7 @@ export default function RegisterForm() {
               onClick={() => setRole('child')}
               className={`rounded-lg border-2 px-4 py-3 text-center transition ${
                 role === 'child'
-                  ? 'border-green-600 bg-green-50 text-green-700'
+                  ? 'border-orange-600 bg-orange-50 text-orange-700'
                   : 'border-gray-300 text-gray-700 hover:border-gray-400'
               }`}
             >
@@ -247,7 +285,9 @@ export default function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+          className={`w-full rounded-lg px-4 py-2 text-white disabled:opacity-50 ${
+            role === 'parent' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+          }`}
         >
           {loading ? '登録中...' : '登録'}
         </button>
