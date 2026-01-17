@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ matches: matchDetails });
+    return NextResponse.json({ matches: matchDetails, userRole: userData.role });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(
