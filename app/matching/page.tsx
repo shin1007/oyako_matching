@@ -23,6 +23,13 @@ interface Match {
     birthplace_prefecture?: string;
     birthplace_municipality?: string;
   };
+  searchingChildrenInfo?: Array<{
+    id: string;
+    last_name_kanji?: string;
+    first_name_kanji?: string;
+    birthplace_prefecture?: string;
+    birthplace_municipality?: string;
+  }>;
 }
 interface SearchingChild {
   id: string;
@@ -278,6 +285,28 @@ export default function MatchingPage() {
                                     day: 'numeric',
                                   })}
                                 </p>
+                                
+                                {/* 相手親が探している子ども情報 */}
+                                {match.role === 'parent' && match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
+                                    <div className="space-y-1">
+                                      {match.searchingChildrenInfo.map((child) => (
+                                        <div key={child.id} className="text-sm bg-blue-50 rounded p-2">
+                                          <p className="font-semibold text-gray-900">
+                                            {child.last_name_kanji || ''}{child.first_name_kanji || ''}
+                                          </p>
+                                          {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                                            <p className="text-xs text-gray-600">
+                                              出身地: {child.birthplace_prefecture || ''}
+                                              {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
+                                            </p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">

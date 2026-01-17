@@ -268,12 +268,24 @@ export async function GET(request: NextRequest) {
           });
         }
 
+        // Get searching children info for this matched user
+        let searchingChildrenInfo: any[] = [];
+        if (targetUserData?.role === 'parent') {
+          const { data: childrenData } = await admin
+            .from('searching_children')
+            .select('id, last_name_kanji, first_name_kanji, birthplace_prefecture, birthplace_municipality')
+            .eq('user_id', match.matched_user_id)
+            .order('display_order', { ascending: true });
+          searchingChildrenInfo = childrenData || [];
+        }
+
         return {
           userId: match.matched_user_id,
           similarityScore: match.similarity_score,
           scorePerChild, // 子どもごとのスコア
           role: targetUserData?.role,
           profile,
+          searchingChildrenInfo, // 相手親が探している子ども情報
         };
       })
     );
