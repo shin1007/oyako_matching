@@ -2,7 +2,7 @@
 -- このマイグレーションは episodes と time_capsules テーブルを削除します
 
 -- Drop find_potential_matches function (depends on episodes table)
-DROP FUNCTION IF EXISTS public.find_potential_matches(UUID, TEXT, DECIMAL);
+DROP FUNCTION IF EXISTS public.find_potential_matches(target_user_id UUID, target_role TEXT, min_similarity DECIMAL);
 
 -- Drop episodes table and related objects
 DROP INDEX IF EXISTS public.idx_episodes_embedding;
