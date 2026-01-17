@@ -293,55 +293,54 @@ export async function GET(request: NextRequest) {
                       `[Matching] Gender mismatch - Child ${child.id} looking for ${matchedChildSearchingParent.gender}, parent is ${currentUserProfile.gender}. Score set to 0.`
                     );
                   } else {
-                      // Gender match - calculate reverse score
-                      let reverseScore = 0.20; // Base score for gender match
+                    // Gender match - calculate reverse score
+                    let reverseScore = 0.20; // Base score for gender match
 
-                      // Birth year proximity (lenient)
-                      if (matchedChildSearchingParent.birth_date && currentUserProfile.birth_date) {
-                        const searchingYear = new Date(matchedChildSearchingParent.birth_date).getFullYear();
-                        const parentYear = new Date(currentUserProfile.birth_date).getFullYear();
-                        const yearDiff = Math.abs(searchingYear - parentYear);
+                    // Birth year proximity (lenient)
+                    if (matchedChildSearchingParent.birth_date && currentUserProfile.birth_date) {
+                      const searchingYear = new Date(matchedChildSearchingParent.birth_date).getFullYear();
+                      const parentYear = new Date(currentUserProfile.birth_date).getFullYear();
+                      const yearDiff = Math.abs(searchingYear - parentYear);
 
-                        if (yearDiff <= 5) {
-                          reverseScore += 0.30;
-                        } else if (yearDiff <= 10) {
-                          reverseScore += 0.20;
-                        }
-                      } else {
-                        reverseScore += 0.10; // No data penalty is mild
+                      if (yearDiff <= 5) {
+                        reverseScore += 0.30;
+                      } else if (yearDiff <= 10) {
+                        reverseScore += 0.20;
                       }
-
-                      // Hiragana name match (lenient)
-                      if (matchedChildSearchingParent.last_name_hiragana && currentUserProfile.last_name_hiragana) {
-                        const searchingHiragana = (matchedChildSearchingParent.last_name_hiragana + (matchedChildSearchingParent.first_name_hiragana || '')).trim();
-                        const parentHiragana = (currentUserProfile.last_name_hiragana + (currentUserProfile.first_name_hiragana || '')).trim();
-                        
-                        if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
-                          reverseScore += 0.15;
-                        }
-                      }
-
-                      // Birthplace match (lenient)
-                      if (matchedChildSearchingParent.birthplace_prefecture && currentUserProfile.birthplace_prefecture) {
-                        if (matchedChildSearchingParent.birthplace_prefecture === currentUserProfile.birthplace_prefecture) {
-                          reverseScore += 0.15;
-                        }
-                      } else if (!matchedChildSearchingParent.birthplace_prefecture) {
-                        reverseScore += 0.05; // Mild bonus for no data
-                      }
-
-                      reverseScore = Math.min(0.80, reverseScore); // Cap reverse score at 80%
-
-                      // Final score = weighted average (parent→child: 60%, child→parent: 40%)
-                      const originalScore = score;
-                      score = (originalScore * 0.60) + (reverseScore * 0.40);
-
-                      console.log(
-                        `[Matching] Bidirectional score - Child ${child.id}: ` +
-                        `parent→child=${originalScore.toFixed(2)}, child→parent=${reverseScore.toFixed(2)}, ` +
-                        `final=${score.toFixed(2)}`
-                      );
+                    } else {
+                      reverseScore += 0.10; // No data penalty is mild
                     }
+
+                    // Hiragana name match (lenient)
+                    if (matchedChildSearchingParent.last_name_hiragana && currentUserProfile.last_name_hiragana) {
+                      const searchingHiragana = (matchedChildSearchingParent.last_name_hiragana + (matchedChildSearchingParent.first_name_hiragana || '')).trim();
+                      const parentHiragana = (currentUserProfile.last_name_hiragana + (currentUserProfile.first_name_hiragana || '')).trim();
+                      
+                      if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
+                        reverseScore += 0.15;
+                      }
+                    }
+
+                    // Birthplace match (lenient)
+                    if (matchedChildSearchingParent.birthplace_prefecture && currentUserProfile.birthplace_prefecture) {
+                      if (matchedChildSearchingParent.birthplace_prefecture === currentUserProfile.birthplace_prefecture) {
+                        reverseScore += 0.15;
+                      }
+                    } else if (!matchedChildSearchingParent.birthplace_prefecture) {
+                      reverseScore += 0.05; // Mild bonus for no data
+                    }
+
+                    reverseScore = Math.min(0.80, reverseScore); // Cap reverse score at 80%
+
+                    // Final score = weighted average (parent→child: 60%, child→parent: 40%)
+                    const originalScore = score;
+                    score = (originalScore * 0.60) + (reverseScore * 0.40);
+
+                    console.log(
+                      `[Matching] Bidirectional score - Child ${child.id}: ` +
+                      `parent→child=${originalScore.toFixed(2)}, child→parent=${reverseScore.toFixed(2)}, ` +
+                      `final=${score.toFixed(2)}`
+                    );
                   }
                 }
               }
