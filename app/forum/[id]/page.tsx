@@ -157,20 +157,6 @@ export default function PostDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/dashboard" className="text-2xl font-bold text-blue-600">
-            親子マッチング
-          </Link>
-          <Link
-            href="/forum"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            掲示板に戻る
-          </Link>
-        </div>
-      </header>
-
       <main className="container mx-auto max-w-4xl px-4 py-8">
         {/* Post */}
         <div className="mb-8 rounded-lg bg-white p-8 shadow">
