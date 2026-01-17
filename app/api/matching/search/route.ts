@@ -210,23 +210,23 @@ export async function GET(request: NextRequest) {
                 `year=${yearMatch}, month=${monthMatch}, day=${dayMatch}, name=${nameMatch}`
               );
 
-              // Score based on birthday component matches
+              // Score based on birthday component matches (base score)
               if (yearMatch && monthMatch && dayMatch) {
                 // Same birthday (same person or same date)
-                score = 0.85;
+                score = 0.80;
               } else if (monthMatch && dayMatch) {
                 // Same month and day but different year
                 // Possibly same person with age misrecorded
-                score = 0.78;
+                score = 0.70;
               } else if (yearMatch && monthMatch) {
                 // Same year and month, different day
-                score = 0.72;
+                score = 0.60;
               } else if (yearMatch && dayMatch) {
                 // Same year and day, different month
-                score = 0.68;
+                score = 0.55;
               } else if (yearMatch) {
                 // Same year only
-                score = 0.65;
+                score = 0.50;
               } else {
                 // Different year - check if plausible age match
                 const childAge = new Date().getFullYear() - childYear;
@@ -234,35 +234,37 @@ export async function GET(request: NextRequest) {
                 const ageDiff = Math.abs(childAge - matchAge);
 
                 if (ageDiff === 0) {
-                  score = 0.30;
-                } else if (ageDiff === 1) {
                   score = 0.25;
-                } else if (ageDiff === 2) {
+                } else if (ageDiff === 1) {
                   score = 0.20;
-                } else if (ageDiff <= 5) {
+                } else if (ageDiff === 2) {
                   score = 0.15;
+                } else if (ageDiff <= 5) {
+                  score = 0.10;
                 } else {
-                  score = 0.10; // 6年以上の差は10%以下
+                  score = 0.05; // 6年以上の差は5%
                 }
               }
 
-              // Apply name match bonus
+              // Apply name match bonus (max +0.10)
               if (nameMatch) {
-                // Boost score by 0.05 if name matches (but cap at 0.99)
-                score = Math.min(0.99, score + 0.05);
+                score += 0.10;
                 console.log(
                   `[Matching] Name match bonus applied. Child ${child.id}: ${score.toFixed(2)}`
                 );
               }
 
-              // Apply birthplace bonus if available
+              // Apply birthplace bonus (max +0.10)
               if (child.birthplace_prefecture && profile.birthplace_prefecture &&
                   child.birthplace_prefecture === profile.birthplace_prefecture) {
-                score = Math.min(0.99, score + 0.08);
+                score += 0.10;
                 console.log(
                   `[Matching] Same prefecture bonus applied. Child ${child.id}: ${score.toFixed(2)}`
                 );
               }
+
+              // Cap at 1.0 (100%)
+              score = Math.min(1.0, score);
             }
             scorePerChild[child.id] = score;
           });
