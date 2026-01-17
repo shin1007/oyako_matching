@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import PasskeyRegister from '@/app/components/passkey/PasskeyRegister';
 import PasskeyList from '@/app/components/passkey/PasskeyList';
+import ChangePasswordForm from '@/app/components/security/ChangePasswordForm';
 
 export default async function SecurityPage() {
   const supabase = await createClient();
@@ -25,6 +26,14 @@ export default async function SecurityPage() {
         </div>
 
         <div className="space-y-8">
+          {/* Password Change Section */}
+          <div className="rounded-lg bg-white p-6 shadow">
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">
+              パスワード変更
+            </h2>
+            <ChangePasswordForm />
+          </div>
+
           {/* Passkey Registration Section */}
           <div className="rounded-lg bg-white p-6 shadow">
             <h2 className="mb-4 text-xl font-semibold text-gray-900">
@@ -82,9 +91,9 @@ export default async function SecurityPage() {
           {/* Account Settings Link */}
           <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center">
             <p className="text-sm text-gray-600">
-              メールアドレスやパスワードの変更は{' '}
-              <a href="/dashboard" className="text-blue-600 hover:underline">
-                ダッシュボード
+              メールアドレスの変更や、その他のアカウント設定は{' '}
+              <a href="/dashboard/profile" className="text-blue-600 hover:underline">
+                プロフィール設定
               </a>{' '}
               から行えます
             </p>

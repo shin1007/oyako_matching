@@ -27,6 +27,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -191,6 +194,56 @@ export default function ProfilePage() {
     const newChildren = [...searchingChildren];
     newChildren[index] = { ...newChildren[index], [field]: value };
     setSearchingChildren(newChildren);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleting) return; // Prevent double submission
+    
+    setDeleting(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'アカウントの削除に失敗しました');
+      }
+
+      // Ensure session is signed out on client side
+      await supabase.auth.signOut();
+      
+      // Small delay to ensure session is fully cleared
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Success - redirect to home page
+      router.push('/?deleted=true');
+    } catch (err) {
+      let errorMessage = err instanceof Error ? err.message : 'アカウントの削除に失敗しました';
+      
+      // Translate Supabase rate limit error to Japanese
+      if (errorMessage.includes('For security purposes')) {
+        const match = errorMessage.match(/after (\d+) seconds?/);
+        if (match) {
+          const seconds = match[1];
+          errorMessage = `セキュリティのため、${seconds}秒後に再試行してください。`;
+        } else {
+          errorMessage = 'セキュリティのため、しばらくしてから再試行してください。';
+        }
+      }
+      
+      setError(errorMessage);
+      setShowDeleteConfirm(false);
+      setShowDeleteWarning(false);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -416,6 +469,98 @@ export default function ProfilePage() {
                 {saving ? '保存中...' : 'プロフィールを保存'}
               </button>
             </form>
+
+            {/* Account Deletion Section */}
+            <div className="mt-8 border-t border-gray-200 pt-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                アカウント削除
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                アカウントを削除すると、すべてのデータが完全に削除されます。この操作は取り消せません。
+              </p>
+              
+              {!showDeleteWarning && !showDeleteConfirm && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteWarning(true)}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                >
+                  退会する
+                </button>
+              )}
+
+              {showDeleteWarning && !showDeleteConfirm && (
+                <div className="rounded-lg bg-red-50 p-6 border border-red-200">
+                  <h4 className="text-lg font-medium text-red-900 mb-3">
+                    ⚠️ 警告：アカウント削除について
+                  </h4>
+                  <div className="text-sm text-red-800 mb-4 space-y-2">
+                    <p>以下のデータが完全に削除されます：</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>プロフィール情報</li>
+                      <li>探している子どもの情報</li>
+                      <li>思い出エピソード</li>
+                      <li>タイムカプセル</li>
+                      <li>マッチング情報とメッセージ</li>
+                      <li>掲示板の投稿とコメント</li>
+                      <li>サブスクリプション情報</li>
+                      <li>パスキー認証情報</li>
+                    </ul>
+                    <p className="font-semibold mt-3">
+                      この操作は取り消すことができません。
+                    </p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteWarning(false)}
+                      className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDeleteWarning(false);
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                    >
+                      削除を続行
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showDeleteConfirm && (
+                <div className="rounded-lg bg-red-50 p-6 border-2 border-red-300">
+                  <h4 className="text-lg font-medium text-red-900 mb-3">
+                    🚨 最終確認
+                  </h4>
+                  <p className="text-sm text-red-800 mb-4">
+                    本当にアカウントを削除しますか？すべてのデータが完全に削除され、元に戻すことはできません。
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={deleting}
+                      className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={deleting}
+                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {deleting ? '削除中...' : '完全に削除する'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
