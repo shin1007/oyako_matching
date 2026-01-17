@@ -129,7 +129,7 @@ export default async function DashboardPage() {
                       <div>
                         <p className="font-medium text-gray-900">{candidate.fullName}</p>
                         <p className="text-gray-600 text-xs">
-                          生年月日: {new Date(candidate.birthDate).toLocaleDateString('ja-JP')}
+                          生年月日: {candidate.birthDate ? new Date(candidate.birthDate).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '未設定'}
                         </p>
                       </div>
                     </div>

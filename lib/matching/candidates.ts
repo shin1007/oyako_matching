@@ -32,26 +32,29 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
   const candidates: MatchingCandidate[] = [];
   const birthDates = Array.from(new Set(searchingChildren.map(child => child.birth_date).filter(Boolean)));
 
-  for (const birthDate of birthDates) {
-    const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select('user_id, full_name, birth_date')
-      .eq('birth_date', birthDate);
+  if (birthDates.length === 0) {
+    return [];
+  }
 
-    if (!profileError && profiles) {
-      for (const profile of profiles) {
-        // 自分自身は除外
-        if (profile.user_id === userId) continue;
-        
-        // 重複チェック
-        if (candidates.some(c => c.userId === profile.user_id)) continue;
+  // 単一クエリで全ての一致するプロフィールを取得
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('user_id, full_name, birth_date')
+    .in('birth_date', birthDates);
 
-        candidates.push({
-          userId: profile.user_id,
-          fullName: profile.full_name,
-          birthDate: profile.birth_date,
-        });
-      }
+  if (!profileError && profiles) {
+    for (const profile of profiles) {
+      // 自分自身は除外
+      if (profile.user_id === userId) continue;
+      
+      // 重複チェック
+      if (candidates.some(c => c.userId === profile.user_id)) continue;
+
+      candidates.push({
+        userId: profile.user_id,
+        fullName: profile.full_name,
+        birthDate: profile.birth_date,
+      });
     }
   }
 
@@ -90,21 +93,25 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
   const parentUserIds = Array.from(new Set(searchingChildren.map(sc => sc.user_id)));
   const candidates: MatchingCandidate[] = [];
 
-  for (const parentUserId of parentUserIds) {
-    // 自分自身は除外
-    if (parentUserId === userId) continue;
+  if (parentUserIds.length === 0) {
+    return [];
+  }
 
-    const { data: parentProfile, error: parentError } = await supabase
-      .from('profiles')
-      .select('user_id, full_name, birth_date')
-      .eq('user_id', parentUserId)
-      .single();
+  // 単一クエリで全ての親プロフィールを取得
+  const { data: parentProfiles, error: parentError } = await supabase
+    .from('profiles')
+    .select('user_id, full_name, birth_date')
+    .in('user_id', parentUserIds);
 
-    if (!parentError && parentProfile) {
+  if (!parentError && parentProfiles) {
+    for (const parentProfile of parentProfiles) {
+      // 自分自身は除外
+      if (parentProfile.user_id === userId) continue;
+
       candidates.push({
         userId: parentProfile.user_id,
         fullName: parentProfile.full_name,
-        birthDate: profile.birth_date, // マッチした子どもの生年月日
+        birthDate: parentProfile.birth_date,
       });
     }
   }
