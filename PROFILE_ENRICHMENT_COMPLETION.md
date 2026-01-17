@@ -46,7 +46,6 @@
   - app/forum/[id]/page.tsx
   - app/messages/page.tsx
   - app/dashboard/page.tsx
-  - app/dashboard/time-capsules/page.tsx
 
 - **API エンドポイント**: 新フィールドをクエリ
   - app/api/matching/search/route.ts
@@ -97,7 +96,6 @@
 ### フロントエンドページ
 - `app/dashboard/profile/page.tsx`
 - `app/dashboard/page.tsx`
-- `app/dashboard/time-capsules/page.tsx`
 - `app/matching/page.tsx`
 - `app/forum/page.tsx`
 - `app/forum/[id]/page.tsx`
@@ -116,7 +114,6 @@
 4. 🔍 マッチング検索で新フィールドを使用した精度向上を確認
 5. 🔍 フォーラム投稿・コメント表示で名前が正しく表示される
 6. 🔍 メッセージ一覧で相手名が正しく表示される
-7. 🔍 タイムカプセル機能で名前が正しく表示される
 
 ## マイグレーション適用手順
 
