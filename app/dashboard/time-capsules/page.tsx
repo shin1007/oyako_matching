@@ -313,17 +313,6 @@ export default function TimeCapsulesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-emerald-50">
-      <header className="border-b bg-white/80 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/dashboard" className="text-2xl font-bold text-sky-700">
-            親子マッチング
-          </Link>
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
-            ダッシュボードに戻る
-          </Link>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
           <div className="rounded-2xl bg-white/90 p-6 shadow-sm ring-1 ring-sky-100">
