@@ -37,7 +37,7 @@ function HomeContent() {
             マッチングプラットフォーム
           </h2>
           <p className="mb-12 text-xl text-gray-600">
-            親子断絶・実子誘拐後の再会を、AIとマイナンバーカード認証による
+            親子断絶後の再会を、マイナンバーカード認証による
             <br />
             厳格な本人確認で支援します
           </p>
@@ -50,16 +50,20 @@ function HomeContent() {
                 離別した親の方へ
               </h3>
               <p className="mb-6 text-gray-600">
-                プロフィール情報を登録して、お子さまとの再会を目指しましょう。
-                AIがマッチングをサポートします。
+                プロフィール情報を登録して、<br />お子さまとの再会を目指しましょう。
               </p>
               <div className="mb-4 rounded-lg bg-blue-50 p-4 text-sm text-gray-700">
-                <p className="font-semibold">月額 ¥1,000</p>
+                <p className="font-semibold">月額 ¥980</p>
                 <p className="mt-2">
+                  • 親同士の情報交換
+                  <br />
                   • マイナンバーカード認証
                   <br />
-                  • AI成長写真生成
-                  <br />• マッチング機能
+                  • AI成長写真生成（有料）
+                  <br />
+                  • マッチング機能（有料）
+                  <br />
+                  • 安全なメッセージ機能（有料）
                 </p>
               </div>
               <Link
@@ -83,10 +87,13 @@ function HomeContent() {
               <div className="mb-4 rounded-lg bg-green-50 p-4 text-sm text-gray-700">
                 <p className="font-semibold">完全無料</p>
                 <p className="mt-2">
+                  • 子ども同士の情報交換
+                  <br />
                   • マイナンバーカード認証
                   <br />
+                  • マッチング機能
+                  <br />
                   • 安全なメッセージ機能
-                  <br />• マッチング機能
                 </p>
               </div>
               <Link
@@ -106,21 +113,21 @@ function HomeContent() {
             <div className="grid gap-6 md:grid-cols-3">
               <div className="rounded-lg bg-white p-6 shadow">
                 <div className="mb-4 text-3xl">🔒</div>
-                <h4 className="mb-2 text-lg font-bold">厳格な本人確認</h4>
+                <h4 className="mb-2 text-lg font-bold text-gray-900">厳格な本人確認</h4>
                 <p className="text-sm text-gray-600">
                   マイナンバーカードによる確実な本人確認で、安全性を確保
                 </p>
               </div>
               <div className="rounded-lg bg-white p-6 shadow">
                 <div className="mb-4 text-3xl">🤖</div>
-                <h4 className="mb-2 text-lg font-bold">AIマッチング</h4>
+                <h4 className="mb-2 text-lg font-bold text-gray-900">AIマッチング</h4>
                 <p className="text-sm text-gray-600">
                   プロフィール情報をもとに、高精度なマッチングを実現
                 </p>
               </div>
               <div className="rounded-lg bg-white p-6 shadow">
                 <div className="mb-4 text-3xl">🛡️</div>
-                <h4 className="mb-2 text-lg font-bold">プライバシー保護</h4>
+                <h4 className="mb-2 text-lg font-bold text-gray-900">プライバシー保護</h4>
                 <p className="text-sm text-gray-600">
                   ストーカー規制法に準拠した非公開照合で、両者の安全を守ります
                 </p>
