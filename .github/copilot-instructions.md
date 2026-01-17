@@ -15,3 +15,4 @@
 - Next.js 16とReact 19を使用しています
 - TypeScriptを使用しています
 - 認証にはSupabase AuthとWebAuthn (Passkey)を使用しています
+- 何か変更をする際はmainブランチでは行いたくないので、必ず新規ブランチ、Issueを発行してから行ってください。
