@@ -12,6 +12,8 @@ export default function RegisterForm() {
   const [role, setRole] = useState<'parent' | 'child'>('parent');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+    const [agreeTerms, setAgreeTerms] = useState(false);
+    const [agreePrivacy, setAgreePrivacy] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -33,6 +35,12 @@ export default function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+      if (!agreeTerms || !agreePrivacy) {
+        setError('利用規約とプライバシーポリシーに同意してください');
+        setLoading(false);
+        return;
+      }
 
     // Validate email format
     if (!isValidEmail(email)) {
@@ -58,6 +66,36 @@ export default function RegisterForm() {
     }
 
     try {
+        <div className="space-y-3 border-t pt-4">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              className="mt-1 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                利用規約
+              </Link>
+              に同意します
+            </span>
+          </label>
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreePrivacy}
+              onChange={(e) => setAgreePrivacy(e.target.checked)}
+              className="mt-1 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">
+                プライバシーポリシー
+              </Link>
+              に同意します
+            </span>
+          </label>
+        </div>
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -70,14 +108,38 @@ export default function RegisterForm() {
       });
 
       if (signUpError) {
-        // Handle already registered users: Supabase may resend confirmation emails
+        // Handle already registered users: attempt sign-in when correct credentials
         if (signUpError.message?.includes('User already registered')) {
-          console.log('[Register] User already registered, likely resent verification email');
-          // Treat as verification flow: guide user to verification pending
-          setError('このメールアドレスは既に登録されています。確認メールを再送しました。メールをご確認ください。');
-          setTimeout(() => {
-            router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
-          }, 1500);
+          console.log('[Register] User already registered, attempting sign-in');
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            // If email not confirmed, silently redirect to verification pending
+            if (
+              signInError.message?.includes('Email not confirmed') ||
+              signInError.message?.includes('Email not verified') ||
+              signInError.message?.toLowerCase().includes('confirm your email')
+            ) {
+              router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
+              return;
+            }
+
+            // Invalid credentials or other auth error: silently redirect to login
+            router.push('/auth/login');
+            return;
+          }
+
+          // Sign-in success: route to dashboard
+          if (signInData?.user) {
+            router.push('/dashboard');
+            return;
+          }
+
+          // Fallback: silently go to verification pending
+          router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
           return;
         }
         
@@ -98,56 +160,19 @@ export default function RegisterForm() {
       }
 
       if (data.user) {
-        const { error: insertError } = await supabase.from('users').insert({
-          id: data.user.id,
+        // Attempt to sign in after successful sign-up
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
-          role,
-          verification_status: 'pending',
-          mynumber_verified: false,
+          password,
         });
 
-        if (insertError) {
-          console.error('[Register] Error inserting user to database:', insertError);
-          console.error('[Register] Insert error details:', JSON.stringify(insertError, null, 2));
-          
-          // If it's a unique constraint error, user already exists in database
-          // This means they went through signup before - redirect to login
-          if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
-            console.log('[Register] Duplicate email in public.users detected');
-            // UX: continue with email verification pending to avoid confusion
-            setError('確認メールを送信しました。メールをご確認ください。');
-            setTimeout(() => {
-              router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
-            }, 1500);
-            return;
-          }
-          
-          // For any other database error, since auth.users was created, 
-          // continue with email verification
-          console.warn('[Register] Database insert failed but auth user exists, continuing with verification');
-          setError('登録処理を続行しています。確認メールをご確認ください。');
-          setTimeout(() => {
-            router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
-          }, 1500);
+        if (!signInError && signInData?.user) {
+          // Email confirmed: route to dashboard
+          router.push('/dashboard');
           return;
         }
 
-        // Create profile record
-        const { error: profileError } = await supabase.from('profiles').insert({
-          user_id: data.user.id,
-          last_name_kanji: '',
-          first_name_kanji: '',
-          birth_date: new Date().toISOString().split('T')[0],
-          bio: '',
-          gender: null,
-        });
-
-        if (profileError) {
-          console.error('[Register] Error creating profile:', profileError);
-          // Continue anyway - profile can be created later
-        }
-        
-        // Redirect to email verification pending page with email parameter
+        // Email not confirmed or other error: redirect to verification pending
         router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
       }
     } catch (err: any) {
@@ -176,26 +201,26 @@ export default function RegisterForm() {
               onClick={() => setRole('parent')}
               className={`rounded-lg border-2 px-4 py-3 text-center transition ${
                 role === 'parent'
-                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  ? 'border-green-600 bg-green-50 text-green-700'
                   : 'border-gray-300 text-gray-700 hover:border-gray-400'
               }`}
             >
               <div className="text-2xl mb-1">👨‍👩‍👧‍👦</div>
               <div className="font-medium">親</div>
-              <div className="text-xs">月額¥1,000</div>
+              <div className="text-xs">登録無料</div>
             </button>
             <button
               type="button"
               onClick={() => setRole('child')}
               className={`rounded-lg border-2 px-4 py-3 text-center transition ${
                 role === 'child'
-                  ? 'border-green-600 bg-green-50 text-green-700'
+                  ? 'border-orange-600 bg-orange-50 text-orange-700'
                   : 'border-gray-300 text-gray-700 hover:border-gray-400'
               }`}
             >
               <div className="text-2xl mb-1">👦👧</div>
               <div className="font-medium">子ども</div>
-              <div className="text-xs">無料</div>
+              <div className="text-xs">完全無料</div>
             </button>
           </div>
         </div>
@@ -244,10 +269,37 @@ export default function RegisterForm() {
           />
         </div>
 
+        <div className="space-y-3 border-t pt-4">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              className="mt-1 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">利用規約</Link>に同意します
+            </span>
+          </label>
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreePrivacy}
+              onChange={(e) => setAgreePrivacy(e.target.checked)}
+              className="mt-1 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">プライバシーポリシー</Link>に同意します
+            </span>
+          </label>
+        </div>
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+          className={`w-full rounded-lg px-4 py-2 text-white disabled:opacity-50 ${
+            role === 'parent' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+          }`}
         >
           {loading ? '登録中...' : '登録'}
         </button>
