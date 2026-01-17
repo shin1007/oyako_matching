@@ -16,6 +16,12 @@ export default function RegisterForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  // Email validation function
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   useEffect(() => {
     const roleParam = searchParams.get('role');
     if (roleParam === 'parent' || roleParam === 'child') {
@@ -27,6 +33,13 @@ export default function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      setError('メールアドレスの形式が正しくありません。例: user@example.com');
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('パスワードが一致しません');
@@ -52,7 +65,34 @@ export default function RegisterForm() {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        // Handle already registered users
+        if (signUpError.message?.includes('User already registered')) {
+          console.log('[Register] User already registered, redirecting to login');
+          // User already exists - always redirect to login page
+          // We cannot reliably check verification status without the correct password
+          setError('このメールアドレスは既に登録されています。ログインしてください。');
+          setTimeout(() => {
+            router.push(`/auth/login?email=${encodeURIComponent(email)}`);
+          }, 2000);
+          return;
+        }
+        
+        if (signUpError.message?.includes('Invalid email')) {
+          throw new Error('メールアドレスの形式が正しくありません。');
+        }
+        // Translate Supabase rate limit errors
+        if (signUpError.message?.includes('For security purposes')) {
+          const match = signUpError.message.match(/after (\d+) seconds?/);
+          if (match) {
+            const seconds = match[1];
+            throw new Error(`セキュリティのため、${seconds}秒後に再試行してください。`);
+          } else {
+            throw new Error('セキュリティのため、しばらくしてから再試行してください。');
+          }
+        }
+        throw signUpError;
+      }
 
       if (data.user) {
         const { error: insertError } = await supabase.from('users').insert({
@@ -63,10 +103,33 @@ export default function RegisterForm() {
           mynumber_verified: false,
         });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('[Register] Error inserting user to database:', insertError);
+          console.error('[Register] Insert error details:', JSON.stringify(insertError, null, 2));
+          
+          // If it's a unique constraint error, user already exists in database
+          // This means they went through signup before - redirect to login
+          if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
+            console.log('[Register] Duplicate user detected, redirecting to login');
+            setError('このメールアドレスは既に登録されています。ログインしてください。');
+            setTimeout(() => {
+              router.push(`/auth/login?email=${encodeURIComponent(email)}`);
+            }, 2000);
+            return;
+          }
+          
+          // For any other database error, since auth.users was created, 
+          // continue with email verification
+          console.warn('[Register] Database insert failed but auth user exists, continuing with verification');
+          setError('登録処理を続行しています。確認メールをご確認ください。');
+          setTimeout(() => {
+            router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
+          }, 1500);
+          return;
+        }
         
-        // Redirect to email verification pending page
-        router.push('/auth/verify-email-pending');
+        // Redirect to email verification pending page with email parameter
+        router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
       }
     } catch (err: any) {
       setError(err.message || '登録に失敗しました');

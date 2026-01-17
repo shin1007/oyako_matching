@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -10,13 +10,59 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // Check if user is already logged in on component mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          if (user.email_confirmed_at) {
+            console.log('[Login] User already authenticated, redirecting to dashboard');
+            setIsVerified(true);
+            router.push('/dashboard');
+          } else {
+            console.log('[Login] User logged in but email not verified');
+            setIsVerified(false);
+          }
+        }
+      } catch (err) {
+        console.log('[Login] No active session');
+      }
+    };
+    checkSession();
+  }, [router, supabase]);
+
+  // Get email from URL parameters if available
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    if (emailParam) {
+      console.log('[Login] Email from URL params:', emailParam);
+      setEmail(emailParam);
+    }
+  }, []);
+
+  // Email validation function
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate email format before attempting login
+    if (!isValidEmail(email)) {
+      setError('メールアドレスの形式が正しくありません。例: user@example.com');
+      setLoading(false);
+      return;
+    }
 
     try {
       console.log('Attempting login...');
@@ -42,14 +88,36 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      let errorMessage = err.message || 'ログインに失敗しました';
+      let errorMessage = 'ログインに失敗しました';
       
       // Check for network/fetch errors
       if (err.name === 'TypeError' && err.message?.includes('fetch')) {
-        errorMessage = 'Supabaseサーバーに接続できません。ネットワーク接続とSupabase URL設定を確認してください。';
+        errorMessage = 'サーバーに接続できません。ネットワーク接続を確認してください。';
+      }
+      // Handle authentication errors
+      else if (err.message?.includes('Invalid login credentials') || 
+               err.message?.includes('Invalid email or password') ||
+               err.name === 'AuthApiError') {
+        errorMessage = 'メールアドレスまたはパスワードが正しくありません。';
+      }
+      // Handle email not confirmed error
+      else if (err.message?.includes('Email not confirmed')) {
+        errorMessage = 'メールアドレスの確認が完了していません。';
+        // Redirect to verification page
+        setTimeout(() => router.push('/auth/verify-email-pending'), 2000);
+      }
+      // Translate Supabase rate limit errors
+      else if (err.message?.includes('For security purposes')) {
+        const match = err.message.match(/after (\d+) seconds?/);
+        if (match) {
+          const seconds = match[1];
+          errorMessage = `セキュリティのため、${seconds}秒後に再試行してください。`;
+        } else {
+          errorMessage = 'セキュリティのため、しばらくしてから再試行してください。';
+        }
       }
       
-      setError(`${errorMessage} (詳細: ${err.name || 'Unknown'})`);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -134,12 +202,14 @@ export default function LoginPage() {
               </Link>
             </p>
             
-            <p className="text-center text-sm text-gray-600">
-              メール確認がまだの方は{' '}
-              <Link href="/auth/verify-email-pending" className="text-blue-600 hover:underline">
-                こちら
-              </Link>
-            </p>
+            {!isVerified && (
+              <p className="text-center text-sm text-gray-600">
+                メール確認がまだの方は{' '}
+                <Link href="/auth/verify-email-pending" className="text-blue-600 hover:underline">
+                  こちら
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

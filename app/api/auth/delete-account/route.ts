@@ -53,107 +53,53 @@ export async function POST() {
       // Sign out the user session first (before deleting any data)
       await supabase.auth.signOut();
 
-      // Delete in order to respect foreign key relationships
-      // Messages reference matches, so delete them first
-      await supabaseAdmin
-        .from('messages')
-        .delete()
-        .eq('sender_id', userId);
+      console.log(`[DeleteAccount] Starting deletion process for user: ${userId}`);
 
-      // Delete matches where user is parent or child
-      await supabaseAdmin
-        .from('matches')
-        .delete()
-        .or(`parent_id.eq.${userId},child_id.eq.${userId}`);
-
-      // Delete forum comments (may reference posts)
-      await supabaseAdmin
-        .from('forum_comments')
-        .delete()
-        .eq('author_id', userId);
-
-      // Delete forum posts
-      await supabaseAdmin
-        .from('forum_posts')
-        .delete()
-        .eq('author_id', userId);
-
-      // Delete episodes
-      await supabaseAdmin
-        .from('episodes')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete time capsules
-      await supabaseAdmin
-        .from('time_capsules')
-        .delete()
-        .eq('parent_id', userId);
-
-      // Delete searching children
-      await supabaseAdmin
-        .from('searching_children')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete subscriptions
-      await supabaseAdmin
-        .from('subscriptions')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete passkeys
-      await supabaseAdmin
-        .from('passkeys')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete profile
-      await supabaseAdmin
-        .from('profiles')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete the auth user first
-      // This will CASCADE delete the users table row automatically due to
-      // the foreign key constraint: users(id) REFERENCES auth.users(id) ON DELETE CASCADE
-      // We delete auth user BEFORE manually deleting from users table to avoid
-      // "duplicate key value" errors when recreating accounts
+      // CRITICAL: Delete auth.users FIRST
+      // The users table has "REFERENCES auth.users(id) ON DELETE CASCADE"
+      // so deleting auth.users will automatically delete the users table row
+      // and all related data through CASCADE constraints
       const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(
         userId
       );
 
       if (deleteAuthError) {
-        console.error('Failed to delete auth user:', deleteAuthError);
-        throw new Error('認証ユーザーの削除に失敗しました');
+        console.error('[DeleteAccount] Failed to delete auth user:', deleteAuthError);
+        throw new Error(`認証ユーザーの削除に失敗しました: ${deleteAuthError.message}`);
       }
 
-      // Note: The users table row is automatically deleted by CASCADE,
-      // but we verify it's gone to ensure clean state
+      console.log('[DeleteAccount] Successfully deleted auth user (CASCADE will handle users table and related data)');
+
+      // Wait a moment for CASCADE to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify cleanup
       const { data: remainingUser, error: checkError } = await supabaseAdmin
         .from('users')
         .select('id')
         .eq('id', userId)
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Failed to verify users table cleanup:', checkError);
-        console.warn('Cannot verify CASCADE deletion worked, but auth user was deleted successfully');
-        // Continue - the CASCADE should have worked even if verification failed
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 = no rows found, which is expected
+        console.warn('[DeleteAccount] Error verifying cleanup:', checkError);
       } else if (remainingUser) {
-        // Manually delete if CASCADE didn't work for some reason
-        console.warn('CASCADE deletion did not remove users table row, attempting manual cleanup');
+        console.error('[DeleteAccount] WARNING: users table row still exists after deletion!');
+        console.error('[DeleteAccount] Attempting manual deletion of users row...');
+        
+        // If CASCADE didn't work, manually delete the users row
         const { error: manualDeleteError } = await supabaseAdmin
           .from('users')
           .delete()
           .eq('id', userId);
-
+        
         if (manualDeleteError) {
-          console.error('Failed to manually delete users table row:', manualDeleteError);
-          // Log but don't fail - auth user is already deleted
-        } else {
-          console.info('Successfully manually deleted users table row after CASCADE cleanup');
+          console.error('[DeleteAccount] Manual deletion also failed:', manualDeleteError);
+          throw new Error(`ユーザーデータの削除に失敗しました: ${manualDeleteError.message}`);
         }
+        console.log('[DeleteAccount] Manual deletion successful');
+      } else {
+        console.log('[DeleteAccount] Verified: users table row successfully deleted');
       }
 
       return NextResponse.json({

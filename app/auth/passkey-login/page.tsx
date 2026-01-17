@@ -19,6 +19,12 @@ export default function PasskeyLoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Email validation function
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   // Check browser support on mount
   useEffect(() => {
     (async () => {
@@ -32,6 +38,13 @@ export default function PasskeyLoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate email format if provided
+    if (email && !isValidEmail(email)) {
+      setError('メールアドレスの形式が正しくありません。例: user@example.com');
+      setLoading(false);
+      return;
+    }
 
     try {
       // Check support
@@ -53,6 +66,10 @@ export default function PasskeyLoginPage() {
 
       if (!challengeResponse.ok) {
         const data = await challengeResponse.json();
+        // User-friendly error messages
+        if (data.error?.includes('not found') || data.error?.includes('No passkeys')) {
+          throw new Error('このメールアドレスに登録されたパスキーが見つかりません。');
+        }
         throw new Error(data.error || 'ログインの準備に失敗しました');
       }
 
@@ -91,7 +108,19 @@ export default function PasskeyLoginPage() {
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
-      const errorMessage = getWebAuthnErrorMessage(err);
+      let errorMessage = getWebAuthnErrorMessage(err);
+      
+      // Translate Supabase rate limit errors
+      if (errorMessage.includes('For security purposes')) {
+        const match = errorMessage.match(/after (\d+) seconds?/);
+        if (match) {
+          const seconds = match[1];
+          errorMessage = `セキュリティのため、${seconds}秒後に再試行してください。`;
+        } else {
+          errorMessage = 'セキュリティのため、しばらくしてから再試行してください。';
+        }
+      }
+      
       setError(errorMessage);
       console.error('Passkey login error:', err);
     } finally {
