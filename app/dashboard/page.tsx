@@ -46,11 +46,11 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${userData?.role === 'child' ? 'bg-orange-50' : 'bg-green-50'}`}>
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">ダッシュボード</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className={`text-3xl font-bold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>ダッシュボード</h1>
+          <p className={`mt-2 ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>
             {userData?.role === 'parent' ? '親アカウント' : '子アカウント'}
           </p>
         </div>
@@ -59,12 +59,12 @@ export default async function DashboardPage() {
         <div className="lg:grid lg:grid-cols-[350px_1fr] lg:gap-6 mb-6">
           {/* Profile Card */}
           <div className="mb-6 lg:mb-0">
-            <div className="rounded-lg bg-white p-6 shadow">
+            <div className={`rounded-lg ${userData?.role === 'child' ? 'bg-orange-100 border-2 border-orange-200' : 'bg-green-100 border-2 border-green-200'} p-6 shadow`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">プロフィール</h2>
+                <h2 className={`text-xl font-semibold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>プロフィール</h2>
                 <Link
                   href="/dashboard/profile"
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className={`text-sm font-medium ${userData?.role === 'child' ? 'text-orange-700 hover:text-orange-900' : 'text-green-700 hover:text-green-900'}`}
                 >
                   編集 →
                 </Link>
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
                 <div className="space-y-4">
                   {/* Profile Image */}
                   <div className="flex justify-center">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-3xl font-bold">
+                    <div className={`w-24 h-24 rounded-full ${userData?.role === 'child' ? 'bg-gradient-to-br from-orange-400 to-orange-600' : 'bg-gradient-to-br from-green-400 to-green-600'} flex items-center justify-center text-white text-3xl font-bold`}>
                       {(profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) ? 
                         (profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) : 
                         <span className="text-5xl">👤</span>
@@ -84,14 +84,14 @@ export default async function DashboardPage() {
 
                   {/* Name */}
                   <div>
-                    <p className="text-sm text-gray-600">氏名</p>
-                    <p className="text-lg font-medium text-gray-900">
+                    <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>氏名</p>
+                    <p className={`text-lg font-medium ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>
                       {profile.last_name_kanji && profile.first_name_kanji
                         ? `${profile.last_name_kanji} ${profile.first_name_kanji}`
                         : '未設定'}
                     </p>
                     {profile.last_name_hiragana && profile.first_name_hiragana && (
-                      <p className="text-sm text-gray-500">
+                      <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-600' : 'text-green-600'}`}>
                         {profile.last_name_hiragana} {profile.first_name_hiragana}
                       </p>
                     )}
@@ -100,8 +100,8 @@ export default async function DashboardPage() {
                   {/* Birth Date */}
                   {profile.birth_date && (
                     <div>
-                      <p className="text-sm text-gray-600">生年月日</p>
-                      <p className="text-gray-900">
+                      <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>生年月日</p>
+                      <p className={userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}>
                         {new Date(profile.birth_date).toLocaleDateString('ja-JP', {
                           year: 'numeric',
                           month: 'long',
@@ -114,8 +114,8 @@ export default async function DashboardPage() {
                   {/* Gender */}
                   {profile.gender && (
                     <div>
-                      <p className="text-sm text-gray-600">性別</p>
-                      <p className="text-gray-900">
+                      <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>性別</p>
+                      <p className={userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}>
                         {(() => {
                           const genderMap: Record<string, string> = {
                             'male': '男性',
@@ -132,8 +132,8 @@ export default async function DashboardPage() {
                   {/* Birthplace */}
                   {(profile.birthplace_prefecture || profile.birthplace_municipality) && (
                     <div>
-                      <p className="text-sm text-gray-600">出身地</p>
-                      <p className="text-gray-900">
+                      <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>出身地</p>
+                      <p className={userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}>
                         {profile.birthplace_prefecture}
                         {profile.birthplace_municipality && ` ${profile.birthplace_municipality}`}
                       </p>
@@ -143,8 +143,8 @@ export default async function DashboardPage() {
                   {/* Bio */}
                   {profile.bio && (
                     <div>
-                      <p className="text-sm text-gray-600">自己紹介</p>
-                      <p className="text-gray-900 text-sm line-clamp-3">
+                      <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>自己紹介</p>
+                      <p className={`${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'} text-sm line-clamp-3`}>
                         {profile.bio}
                       </p>
                     </div>
@@ -153,10 +153,10 @@ export default async function DashboardPage() {
               ) : (
                 <div className="text-center py-8">
                   <div className="text-5xl mb-4">👤</div>
-                  <p className="text-gray-600 mb-4">プロフィール情報が未設定です</p>
+                  <p className={`${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'} mb-4`}>プロフィール情報が未設定です</p>
                   <Link
                     href="/dashboard/profile"
-                    className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+                    className={`inline-block rounded-lg ${userData?.role === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} px-4 py-2 text-sm text-white`}
                   >
                     プロフィールを作成
                   </Link>
@@ -168,59 +168,27 @@ export default async function DashboardPage() {
           {/* Right Side Content */}
           <div className="space-y-6">
 
-            {/* Verification Status */}
-            {!userData?.mynumber_verified && (
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                <h3 className="font-semibold text-yellow-900">本人確認が必要です</h3>
-                <p className="mt-1 text-sm text-yellow-800">
-                  マッチング機能を利用するには、マイナンバーカードによる本人確認が必要です。
-                </p>
-                <Link
-                  href="/auth/verification"
-                  className="mt-3 inline-block rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white hover:bg-yellow-700"
-                >
-                  本人確認を行う
-                </Link>
-              </div>
-            )}
-
-            {/* Subscription Status for Parents */}
-            {userData?.role === 'parent' && !subscription && userData.mynumber_verified && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <h3 className="font-semibold text-blue-900">サブスクリプションが必要です</h3>
-                <p className="mt-1 text-sm text-blue-800">
-                  マッチング機能を利用するには、月額¥1,000のサブスクリプションが必要です。
-                </p>
-                <Link
-                  href="/payments/subscribe"
-                  className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-                >
-                  サブスクリプションを開始
-                </Link>
-              </div>
-            )}
-
             {/* Matching Candidates Notification */}
             {userData?.mynumber_verified && (
               <>
                 {matchingData.missingRequiredData ? (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
-                    <h3 className="font-semibold text-orange-900">マッチング候補を探すには情報が必要です</h3>
-                    <p className="mt-1 text-sm text-orange-800">
+                  <div className={`rounded-lg border-2 ${userData?.role === 'child' ? 'border-orange-300 bg-orange-100' : 'border-green-300 bg-green-100'} p-4`}>
+                    <h3 className={`font-semibold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>マッチング候補を探すには情報が必要です</h3>
+                    <p className={`mt-1 text-sm ${userData?.role === 'child' ? 'text-orange-800' : 'text-green-800'}`}>
                       マッチング候補を見つけるには、以下の情報を登録してください：
                       {matchingData.missingFields.join('、')}
                     </p>
                     <Link
                       href="/dashboard/profile"
-                      className="mt-3 inline-block rounded-lg bg-orange-600 px-4 py-2 text-sm text-white hover:bg-orange-700"
+                      className={`mt-3 inline-block rounded-lg ${userData?.role === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} px-4 py-2 text-sm text-white`}
                     >
                       プロフィールを編集
                     </Link>
                   </div>
                 ) : matchingData.candidates.length > 0 && (
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className={`rounded-lg border-2 ${userData?.role === 'child' ? 'border-orange-300 bg-orange-100' : 'border-green-300 bg-green-100'} p-4`}>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-green-900">
+                      <h3 className={`font-semibold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>
                         🎉 マッチング候補 {matchingData.candidates.length} 件
                       </h3>
                       <Link
@@ -249,7 +217,7 @@ export default async function DashboardPage() {
                       ))}
                     </div>
                     {matchingData.candidates.length > 5 && (
-                      <p className="mt-3 text-xs text-green-700">
+                      <p className={`mt-3 text-xs ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>
                         他 {matchingData.candidates.length - 5} 件の候補があります
                       </p>
                     )}
@@ -258,96 +226,340 @@ export default async function DashboardPage() {
               </>
             )}
 
-            {/* Main Content Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-              {/* Profile Card */}
-              <Link
-                href="/dashboard/profile"
-                className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-              >
-                <div className="mb-4 text-4xl">👤</div>
-                <h3 className="text-lg font-semibold text-gray-900">詳細設定</h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  プロフィール詳細設定
-                </p>
-              </Link>
+              {/* Main Feature Panels - Vertical Layout */}
+              {userData?.role === 'child' ? (
+                // Child User - Same layout as parent with verification requirements
+                <div className="space-y-4">
+                  {/* Forum Card - Always available for children */}
+                  <Link
+                    href="/forum/child"
+                    className="block rounded-lg bg-orange-100 border-2 border-orange-200 p-6 shadow hover:shadow-lg transition"
+                  >
+                    <div className="flex items-start">
+                      <div className="text-4xl mr-4">💭</div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-orange-900">ピアサポート掲示板</h3>
+                        <p className="mt-1 text-sm text-orange-800">
+                          子ども同士で情報交換
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
 
-              {/* Matching Card */}
-              {userData?.mynumber_verified && (
-                <Link
-                  href="/matching"
-                  className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-                >
-                  <div className="mb-4 text-4xl">🔍</div>
-                  <h3 className="text-lg font-semibold text-gray-900">マッチング</h3>
-                  <p className="mt-2 text-sm text-gray-600">
-                    マッチングを探す
-                  </p>
-                </Link>
-              )}
+                  {/* Verification Required Features Section */}
+                  <div className="rounded-lg border-2 border-orange-200 bg-orange-50 p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-orange-900 mb-2">
+                        {userData?.mynumber_verified ? '🔓 利用可能な機能' : '🔒 利用条件が必要な機能'}
+                      </h3>
+                      
+                      {/* Requirements Status */}
+                      <div className="mb-4 space-y-2">
+                        {!userData?.mynumber_verified && (
+                          <div className="text-sm text-orange-800 flex items-center gap-3">
+                            <div>
+                              <span className="font-medium">① マイナンバー認証：</span>
+                              <span className="text-red-600 font-semibold ml-2">未完了</span>
+                            </div>
+                            <Link
+                              href="/auth/verification"
+                              className="rounded-lg bg-orange-600 hover:bg-orange-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap"
+                            >
+                              認証する
+                            </Link>
+                          </div>
+                        )}
+                        {userData?.mynumber_verified && (
+                          <div className="text-sm text-orange-800 flex items-center gap-3">
+                            <div>
+                              <span className="font-medium">① マイナンバー認証：</span>
+                              <span className="text-green-600 font-semibold ml-2">✓ 完了</span>
+                            </div>
+                            <button
+                              disabled
+                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap"
+                            >
+                              認証済み
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-              {/* Messages Card */}
-              {userData?.mynumber_verified && (
-                <Link
-                  href="/messages"
-                  className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-                >
-                  <div className="mb-4 text-4xl">💬</div>
-                  <h3 className="text-lg font-semibold text-gray-900">メッセージ</h3>
-                  <p className="mt-2 text-sm text-gray-600">
-                    マッチング相手とのメッセージ
-                  </p>
-                </Link>
-              )}
+                      {!userData?.mynumber_verified && (
+                        <p className="text-sm text-orange-800 mb-4">
+                          親子マッチング機能を利用するには、マイナンバー認証が必要です。
+                        </p>
+                      )}
+                      {userData?.mynumber_verified && (
+                        <p className="text-sm text-orange-800">
+                          すべての条件が満たされています - すべての機能がご利用いただけます
+                        </p>
+                      )}
+                    </div>
 
-              {/* AI Growth Photos Card */}
-              {userData?.role === 'parent' && subscription?.status === 'active' && (
-                <Link
-                  href="/dashboard/growth-photos"
-                  className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-                >
-                  <div className="mb-4 text-4xl">🖼️</div>
-                  <h3 className="text-lg font-semibold text-gray-900">AI成長写真</h3>
-                  <p className="mt-2 text-sm text-gray-600">
-                    子どもの成長をシミュレーション
-                  </p>
-                </Link>
-              )}
+                    <div className="space-y-3">
+                      {/* Matching Card */}
+                      {userData?.mynumber_verified ? (
+                        <Link
+                          href="/matching"
+                          className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
+                        >
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">🔍</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-900">親子マッチング</h4>
+                              <p className="mt-1 text-sm text-gray-600">
+                                マッチングを探す
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="rounded-lg bg-white p-5 shadow opacity-60">
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">🔍</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-700">親子マッチング</h4>
+                              <p className="mt-1 text-sm text-gray-500">
+                                マッチングを探す
+                              </p>
+                              <p className="mt-2 text-xs text-orange-700 font-medium">
+                                🔒 マイナンバー認証が必要
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-              {/* Forum Card */}
-              {userData?.role === 'parent' && (
-                <Link
-                  href="/forum"
-                  className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-                >
-                  <div className="mb-4 text-4xl">💭</div>
-                  <h3 className="text-lg font-semibold text-gray-900">ピアサポート掲示板</h3>
-                  <p className="mt-2 text-sm text-gray-600">
-                    親同士で情報交換
-                  </p>
-                </Link>
+                      {/* Messages Card */}
+                      {userData?.mynumber_verified ? (
+                        <Link
+                          href="/messages"
+                          className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
+                        >
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">💬</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-900">メッセージ</h4>
+                              <p className="mt-1 text-sm text-gray-600">
+                                マッチング相手とのメッセージ
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="rounded-lg bg-white p-5 shadow opacity-60">
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">💬</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-700">メッセージ</h4>
+                              <p className="mt-1 text-sm text-gray-500">
+                                マッチング相手とのメッセージ
+                              </p>
+                              <p className="mt-2 text-xs text-orange-700 font-medium">
+                                🔒 マイナンバー認証が必要
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // Parent User - Layout with subscription requirements
+                <div className="space-y-4">
+                  {/* Forum Card - Always available for parents */}
+                  <Link
+                    href="/forum/parent"
+                    className="block rounded-lg bg-green-100 border-2 border-green-200 p-6 shadow hover:shadow-lg transition"
+                  >
+                    <div className="flex items-start">
+                      <div className="text-4xl mr-4">💭</div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-green-900">ピアサポート掲示板</h3>
+                        <p className="mt-1 text-sm text-green-800">
+                          親同士で情報交換
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Subscription Required Features Section */}
+                  <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-green-900 mb-2">
+                        {userData?.mynumber_verified && subscription?.status === 'active' ? '🔓 プレミアム機能' : '🔒 利用条件が必要な機能'}
+                      </h3>
+                      
+                      {/* Requirements Status */}
+                      <div className="mb-4 space-y-2">
+                        {!userData?.mynumber_verified && (
+                          <div className="text-sm text-green-800 flex items-center gap-3">
+                            <div className="flex-none w-56">
+                              <span className="font-medium">① マイナンバー認証：</span>
+                              <span className="text-red-600 font-semibold ml-2">未完了</span>
+                            </div>
+                            <Link
+                              href="/auth/verification"
+                              className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap"
+                            >
+                              認証する
+                            </Link>
+                          </div>
+                        )}
+                        {userData?.mynumber_verified && (
+                          <div className="text-sm text-green-800 flex items-center gap-3">
+                            <div className="flex-none w-56">
+                              <span className="font-medium">① マイナンバー認証：</span>
+                              <span className="text-green-600 font-semibold ml-2">✓ 完了</span>
+                            </div>
+                            <button
+                              disabled
+                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap"
+                            >
+                              認証済み
+                            </button>
+                          </div>
+                        )}
+                        
+                        {!subscription && (
+                          <div className="text-sm text-green-800 flex items-center gap-3">
+                            <div className="flex-none w-56">
+                              <span className="font-medium">② サブスクリプション：</span>
+                              <span className="text-red-600 font-semibold ml-2">未登録</span>
+                            </div>
+                            <Link
+                              href="/payments/subscribe"
+                              className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap"
+                            >
+                              開始する
+                            </Link>
+                          </div>
+                        )}
+                        {subscription?.status === 'active' && (
+                          <div className="text-sm text-green-800 flex items-center gap-3">
+                            <div className="flex-none w-56">
+                              <span className="font-medium">② サブスクリプション：</span>
+                              <span className="text-green-600 font-semibold ml-2">✓ 登録済み</span>
+                            </div>
+                            <button
+                              disabled
+                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap"
+                            >
+                              登録済み
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {!userData?.mynumber_verified && (
+                        <p className="text-sm text-green-800 mb-4">
+                          マッチング機能を利用するには、マイナンバー認証とサブスクリプション（月額¥1,000）が必要です。
+                        </p>
+                      )}
+                      {userData?.mynumber_verified && !subscription && (
+                        <p className="text-sm text-green-800 mb-4">
+                          マッチング機能を利用するには、月額¥1,000のサブスクリプションが必要です。
+                        </p>
+                      )}
+                      {userData?.mynumber_verified && subscription?.status === 'active' && (
+                        <p className="text-sm text-green-800">
+                          すべての条件が満たされています - すべての機能がご利用いただけます
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* Matching Card */}
+                      {userData?.mynumber_verified && subscription?.status === 'active' ? (
+                        <Link
+                          href="/matching"
+                          className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
+                        >
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">🔍</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-900">親子マッチング</h4>
+                              <p className="mt-1 text-sm text-gray-600">
+                                マッチングを探す
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="rounded-lg bg-white p-5 shadow opacity-60">
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">🔍</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-700">親子マッチング</h4>
+                              <p className="mt-1 text-sm text-gray-500">
+                                マッチングを探す
+                              </p>
+                              <p className="mt-2 text-xs text-green-700 font-medium">
+                                🔒 マイナンバー認証とサブスクリプションが必要
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Messages Card */}
+                      {userData?.mynumber_verified && subscription?.status === 'active' ? (
+                        <Link
+                          href="/messages"
+                          className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
+                        >
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">💬</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-900">メッセージ</h4>
+                              <p className="mt-1 text-sm text-gray-600">
+                                マッチング相手とのメッセージ
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="rounded-lg bg-white p-5 shadow opacity-60">
+                          <div className="flex items-start">
+                            <div className="text-3xl mr-4">💬</div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-semibold text-gray-700">メッセージ</h4>
+                              <p className="mt-1 text-sm text-gray-500">
+                                マッチング相手とのメッセージ
+                              </p>
+                              <p className="mt-2 text-xs text-green-700 font-medium">
+                                🔒 マイナンバー認証とサブスクリプションが必要
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
-            </div>
 
             {/* Subscription Info for Parents */}
             {userData?.role === 'parent' && subscription && (
-              <div className="rounded-lg bg-white p-6 shadow">
-                <h3 className="text-lg font-semibold text-gray-900">サブスクリプション情報</h3>
+              <div className="rounded-lg bg-green-100 border-2 border-green-200 p-6 shadow">
+                <h3 className="text-lg font-semibold text-green-900">サブスクリプション情報</h3>
                 <div className="mt-4 space-y-2 text-sm">
                   <p>
-                    <span className="text-gray-600">状態:</span>{' '}
+                    <span className="text-green-800">状態:</span>{' '}
                     <span className={`font-semibold ${subscription.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
                       {subscription.status === 'active' ? 'アクティブ' : subscription.status}
                     </span>
                   </p>
                   <p>
-                    <span className="text-gray-600">次回請求日:</span>{' '}
+                    <span className="text-green-800">次回請求日:</span>{' '}
                     {new Date(subscription.current_period_end).toLocaleDateString('ja-JP')}
                   </p>
                 </div>
                 <Link
                   href="/payments/manage"
-                  className="mt-4 inline-block text-sm text-blue-600 hover:underline"
+                  className="mt-4 inline-block text-sm text-green-700 hover:text-green-900 font-medium"
                 >
                   サブスクリプションを管理 →
                 </Link>
