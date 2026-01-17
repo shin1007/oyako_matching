@@ -12,19 +12,35 @@ interface Match {
   scorePerChild?: Record<string, number>;
   role?: string;
   profile: {
-    full_name: string;
+    last_name_kanji: string;
+    first_name_kanji: string;
+    last_name_hiragana?: string;
+    first_name_hiragana?: string;
     birth_date: string;
     bio?: string;
     profile_image_url?: string;
     gender?: string;
+    birthplace_prefecture?: string;
+    birthplace_municipality?: string;
   };
+  searchingChildrenInfo?: Array<{
+    id: string;
+    last_name_kanji?: string;
+    first_name_kanji?: string;
+    birthplace_prefecture?: string;
+    birthplace_municipality?: string;
+  }>;
 }
 interface SearchingChild {
   id: string;
+  last_name_kanji?: string;
+  first_name_kanji?: string;
   name_kanji?: string;
   name_hiragana?: string;
   birth_date?: string;
   gender?: string;
+  birthplace_prefecture?: string;
+  birthplace_municipality?: string;
   display_order?: number;
 }
 
@@ -63,7 +79,7 @@ export default function MatchingPage() {
       }
 
       const data = await response.json();
-      setMatches(data.matches || []);
+      setMatches(data.candidates || []);
       setUserRole(data.userRole);
       setSearchingChildren(data.searchingChildren || []);
     } catch (err: any) {
@@ -222,7 +238,7 @@ export default function MatchingPage() {
                         探している子ども
                       </p>
                       <h3 className="text-xl font-bold text-gray-900">
-                        {child.name_kanji || child.name_hiragana || '名前未設定'}
+                        {child.last_name_kanji}{child.first_name_kanji || child.name_kanji || child.name_hiragana || '名前未設定'}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
                         {child.gender ? getGenderLabel(child.gender, 'child') : '性別未設定'}
@@ -235,6 +251,12 @@ export default function MatchingPage() {
                             month: 'long',
                             day: 'numeric',
                           })}
+                        </p>
+                      )}
+                      {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          出身地: {child.birthplace_prefecture || ''}
+                          {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
                         </p>
                       )}
                     </div>
@@ -258,7 +280,7 @@ export default function MatchingPage() {
                                 <span className="mb-1 inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
                                   登録済み{getRoleLabel(match.role || '')}ユーザー
                                 </span>
-                                <h4 className="text-lg font-semibold text-gray-900">{match.profile.full_name}</h4>
+                                <h4 className="text-lg font-semibold text-gray-900">{match.profile.last_name_kanji}{match.profile.first_name_kanji}</h4>
                                 <p className="text-sm text-gray-600 mt-1">
                                   {getGenderLabel(match.profile.gender, match.role)}
                                   {' '}• {calculateAge(match.profile.birth_date)}歳
@@ -273,6 +295,34 @@ export default function MatchingPage() {
                                     day: 'numeric',
                                   })}
                                 </p>
+                                {(match.profile.birthplace_prefecture || match.profile.birthplace_municipality) && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    出身地: {match.profile.birthplace_prefecture || ''}
+                                    {match.profile.birthplace_municipality ? ` ${match.profile.birthplace_municipality}` : ''}
+                                  </p>
+                                )}
+                                
+                                {/* 相手親が探している子ども情報 */}
+                                {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
+                                    <div className="space-y-1">
+                                      {match.searchingChildrenInfo.map((child) => (
+                                        <div key={child.id} className="text-sm bg-blue-50 rounded p-2">
+                                          <p className="font-semibold text-gray-900">
+                                            {child.last_name_kanji || ''}{child.first_name_kanji || ''}
+                                          </p>
+                                          {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                                            <p className="text-xs text-gray-600">
+                                              出身地: {child.birthplace_prefecture || ''}
+                                              {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
+                                            </p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">
@@ -342,7 +392,7 @@ export default function MatchingPage() {
                       <div className="flex-1 p-6">
                         <div className="mb-4">
                           <h3 className="text-2xl font-bold text-gray-900">
-                            {match.profile.full_name}
+                            {match.profile.last_name_kanji}{match.profile.first_name_kanji}
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">
                             {getGenderLabel(match.profile.gender, role)}

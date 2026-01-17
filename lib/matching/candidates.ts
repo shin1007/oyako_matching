@@ -5,14 +5,68 @@ import { createClient } from '@/lib/supabase/server';
  */
 export interface MatchingCandidate {
   userId: string;
-  fullName: string;
+  lastNameKanji: string;
+  firstNameKanji: string;
+  lastNameHiragana?: string;
+  firstNameHiragana?: string;
   birthDate: string;
   gender?: string;
+  birthplacePrefecture?: string;
+  birthplaceMunicipality?: string;
+}
+
+/**
+ * 氏名から表示名を生成
+ */
+function getDisplayName(lastNameKanji: string, firstNameKanji: string): string {
+  return `${lastNameKanji}${firstNameKanji}`.trim() || '名前なし';
+}
+
+/**
+ * ひらがなの類似度を計算（簡易版）
+ * 同じひらがなが含まれる場合は0.1ボーナス
+ */
+function calculateHiraganaSimilarity(
+  childHiragana: string | null | undefined,
+  parentHiragana: string | null | undefined
+): number {
+  if (!childHiragana || !parentHiragana) return 0;
+  
+  // 同じひらがなが含まれるかチェック
+  if (childHiragana === parentHiragana) return 0.15;
+  
+  // 部分一致でボーナス
+  const childChars = new Set(childHiragana);
+  const commonChars = Array.from(parentHiragana).filter(char => childChars.has(char));
+  return commonChars.length / Math.max(childHiragana.length, parentHiragana.length) * 0.1;
+}
+
+/**
+ * 出身地による類似度を計算
+ */
+function calculateBirthplaceSimilarity(
+  childPref: string | null | undefined,
+  parentPref: string | null | undefined,
+  childMuni?: string | null | undefined,
+  parentMuni?: string | null | undefined
+): number {
+  if (!childPref || !parentPref) return 0;
+  
+  // 同じ都道府県: 0.2ボーナス
+  if (childPref === parentPref) {
+    // さらに市区町村も同じ場合: +0.1
+    if (childMuni && parentMuni && childMuni === parentMuni) {
+      return 0.3;
+    }
+    return 0.2;
+  }
+  
+  return 0;
 }
 
 /**
  * 親ユーザー向け：マッチング候補を取得
- * searching_children テーブルの birth_date と一致する子ユーザーを検索
+ * searching_children テーブルの情報と一致する子ユーザーを検索
  */
 async function getParentMatchingCandidates(userId: string): Promise<MatchingCandidate[]> {
   const supabase = await createClient();
@@ -20,7 +74,7 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
   // 親ユーザーが探している子どもの情報を取得
   const { data: searchingChildren, error: searchError } = await supabase
     .from('searching_children')
-    .select('birth_date, gender')
+    .select('birth_date, gender, last_name_hiragana, first_name_hiragana, birthplace_prefecture, birthplace_municipality')
     .eq('user_id', userId)
     .not('birth_date', 'is', null);
 
@@ -36,10 +90,10 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
     return [];
   }
 
-  // 単一クエリで全ての一致するプロフィールを取得
+  // 子ユーザーのプロフィールを取得（新フィールド対応）
   const { data: profiles, error: profileError } = await supabase
     .from('profiles')
-    .select('user_id, full_name, birth_date')
+    .select('user_id, last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality')
     .in('birth_date', birthDates);
 
   if (!profileError && profiles) {
@@ -50,10 +104,19 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
       // 重複チェック
       if (candidates.some(c => c.userId === profile.user_id)) continue;
 
+      // フィールド必須チェック
+      if (!profile.last_name_kanji || !profile.first_name_kanji) continue;
+
       candidates.push({
         userId: profile.user_id,
-        fullName: profile.full_name,
+        lastNameKanji: profile.last_name_kanji,
+        firstNameKanji: profile.first_name_kanji,
+        lastNameHiragana: profile.last_name_hiragana || undefined,
+        firstNameHiragana: profile.first_name_hiragana || undefined,
         birthDate: profile.birth_date,
+        gender: profile.gender || undefined,
+        birthplacePrefecture: profile.birthplace_prefecture || undefined,
+        birthplaceMunicipality: profile.birthplace_municipality || undefined,
       });
     }
   }
@@ -63,15 +126,15 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
 
 /**
  * 子ユーザー向け：マッチング候補を取得
- * 自身の profiles.birth_date と一致する searching_children.birth_date を持つ親ユーザーを検索
+ * 自身の プロフィール情報と一致する親の searching_children を検索
  */
 async function getChildMatchingCandidates(userId: string): Promise<MatchingCandidate[]> {
   const supabase = await createClient();
   
-  // 子ユーザー自身の生年月日を取得
+  // 子ユーザー自身のプロフィール情報を取得
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('birth_date')
+    .select('birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture, birthplace_municipality')
     .eq('user_id', userId)
     .single();
 
@@ -89,7 +152,7 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
     return [];
   }
 
-  // 親ユーザーのプロフィール情報を取得
+  // 親ユーザーのプロフィール情報を取得（新フィールド対応）
   const parentUserIds = Array.from(new Set(searchingChildren.map(sc => sc.user_id)));
   const candidates: MatchingCandidate[] = [];
 
@@ -97,10 +160,9 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
     return [];
   }
 
-  // 単一クエリで全ての親プロフィールを取得
   const { data: parentProfiles, error: parentError } = await supabase
     .from('profiles')
-    .select('user_id, full_name, birth_date')
+    .select('user_id, last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality')
     .in('user_id', parentUserIds);
 
   if (!parentError && parentProfiles) {
@@ -108,10 +170,19 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
       // 自分自身は除外
       if (parentProfile.user_id === userId) continue;
 
+      // フィールド必須チェック
+      if (!parentProfile.last_name_kanji || !parentProfile.first_name_kanji) continue;
+
       candidates.push({
         userId: parentProfile.user_id,
-        fullName: parentProfile.full_name,
+        lastNameKanji: parentProfile.last_name_kanji,
+        firstNameKanji: parentProfile.first_name_kanji,
+        lastNameHiragana: parentProfile.last_name_hiragana || undefined,
+        firstNameHiragana: parentProfile.first_name_hiragana || undefined,
         birthDate: parentProfile.birth_date,
+        gender: parentProfile.gender || undefined,
+        birthplacePrefecture: parentProfile.birthplace_prefecture || undefined,
+        birthplaceMunicipality: parentProfile.birthplace_municipality || undefined,
       });
     }
   }

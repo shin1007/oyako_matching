@@ -4,24 +4,51 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
 
 interface SearchingChild {
   id?: string;
   birthDate: string;
   nameHiragana: string;
   nameKanji: string;
-   gender: 'male' | 'female' | 'other' | '';
+  lastNameKanji: string;
+  lastNameHiragana: string;
+  firstNameKanji: string;
+  firstNameHiragana: string;
+  gender: 'male' | 'female' | 'other' | '';
+  birthplacePrefecture: string;
+  birthplaceMunicipality: string;
   displayOrder: number;
 }
 
 export default function ProfilePage() {
-  const [fullName, setFullName] = useState('');
+  // 親のプロフィール
+  const [lastNameKanji, setLastNameKanji] = useState('');
+  const [lastNameHiragana, setLastNameHiragana] = useState('');
+  const [firstNameKanji, setFirstNameKanji] = useState('');
+  const [firstNameHiragana, setFirstNameHiragana] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [birthplacePrefecture, setBirthplacePrefecture] = useState('');
+  const [birthplaceMunicipality, setBirthplaceMunicipality] = useState('');
   const [bio, setBio] = useState('');
   const [parentGender, setParentGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
   const [forumDisplayName, setForumDisplayName] = useState('');
+
+  // 子ども/親情報
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
-    { birthDate: '', nameHiragana: '', nameKanji: '', gender: '', displayOrder: 0 }
+    { 
+      birthDate: '', 
+      nameHiragana: '', 
+      nameKanji: '',
+      lastNameKanji: '',
+      lastNameHiragana: '',
+      firstNameKanji: '',
+      firstNameHiragana: '',
+      gender: '', 
+      birthplacePrefecture: '',
+      birthplaceMunicipality: '',
+      displayOrder: 0 
+    }
   ]);
   const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,8 +98,13 @@ export default function ProfilePage() {
         .single();
 
       if (data) {
-        setFullName(data.full_name || '');
+        setLastNameKanji((data as any).last_name_kanji || '');
+        setLastNameHiragana((data as any).last_name_hiragana || '');
+        setFirstNameKanji((data as any).first_name_kanji || '');
+        setFirstNameHiragana((data as any).first_name_hiragana || '');
         setBirthDate(data.birth_date || '');
+        setBirthplacePrefecture((data as any).birthplace_prefecture || '');
+        setBirthplaceMunicipality((data as any).birthplace_municipality || '');
         setBio(data.bio || '');
         setParentGender((data as any).gender || '');
         setForumDisplayName((data as any).forum_display_name || '');
@@ -91,7 +123,13 @@ export default function ProfilePage() {
           birthDate: child.birth_date || '',
           nameHiragana: child.name_hiragana || '',
           nameKanji: child.name_kanji || '',
+          lastNameKanji: (child as any).last_name_kanji || '',
+          lastNameHiragana: (child as any).last_name_hiragana || '',
+          firstNameKanji: (child as any).first_name_kanji || '',
+          firstNameHiragana: (child as any).first_name_hiragana || '',
           gender: child.gender || '',
+          birthplacePrefecture: (child as any).birthplace_prefecture || '',
+          birthplaceMunicipality: (child as any).birthplace_municipality || '',
           displayOrder: child.display_order
         })));
       }
@@ -113,17 +151,29 @@ export default function ProfilePage() {
     setError('');
     setSuccess('');
 
+    // バリデーション
+    if (!lastNameKanji || !firstNameKanji) {
+      setError('苗字（漢字）と名前（漢字）は必須です');
+      setSaving(false);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('ログインが必要です');
 
-      // Save profile
+      // Save profile with new fields (full_name は削除)
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
-          full_name: fullName,
+          last_name_kanji: lastNameKanji,
+          last_name_hiragana: lastNameHiragana || null,
+          first_name_kanji: firstNameKanji,
+          first_name_hiragana: firstNameHiragana || null,
           birth_date: birthDate,
+          birthplace_prefecture: birthplacePrefecture || null,
+          birthplace_municipality: birthplaceMunicipality || null,
           bio: bio,
           gender: parentGender || null,
           forum_display_name: forumDisplayName || null,
@@ -139,13 +189,24 @@ export default function ProfilePage() {
 
       // Insert new searching children (only non-empty ones)
       const childrenToInsert = searchingChildren
-        .filter(child => child.birthDate || child.nameHiragana || child.nameKanji || child.gender)
+        .filter(child => 
+          child.lastNameKanji || child.firstNameKanji ||
+          child.birthDate || child.nameHiragana || child.nameKanji || 
+          child.lastNameHiragana || child.firstNameHiragana || 
+          child.gender || child.birthplacePrefecture || child.birthplaceMunicipality
+        )
         .map((child, index) => ({
           user_id: user.id,
           birth_date: child.birthDate || null,
           name_hiragana: child.nameHiragana || null,
           name_kanji: child.nameKanji || null,
+          last_name_kanji: child.lastNameKanji || null,
+          last_name_hiragana: child.lastNameHiragana || null,
+          first_name_kanji: child.firstNameKanji || null,
+          first_name_hiragana: child.firstNameHiragana || null,
           gender: child.gender || null,
+          birthplace_prefecture: child.birthplacePrefecture || null,
+          birthplace_municipality: child.birthplaceMunicipality || null,
           display_order: index
         }));
 
@@ -186,8 +247,14 @@ export default function ProfilePage() {
       { 
         birthDate: '', 
         nameHiragana: '', 
-        nameKanji: '', 
+        nameKanji: '',
+        lastNameKanji: '',
+        lastNameHiragana: '',
+        firstNameKanji: '',
+        firstNameHiragana: '',
         gender: '',
+        birthplacePrefecture: '',
+        birthplaceMunicipality: '',
         displayOrder: searchingChildren.length 
       }
     ]);
@@ -281,18 +348,68 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                  氏名
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                />
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="lastNameKanji" className="block text-sm font-medium text-gray-700">
+                        苗字（漢字）<span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        id="lastNameKanji"
+                        type="text"
+                        value={lastNameKanji}
+                        onChange={(e) => setLastNameKanji(e.target.value)}
+                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: 山田"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="firstNameKanji" className="block text-sm font-medium text-gray-700">
+                        名前（漢字）<span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        id="firstNameKanji"
+                        type="text"
+                        value={firstNameKanji}
+                        onChange={(e) => setFirstNameKanji(e.target.value)}
+                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: 太郎"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="lastNameHiragana" className="block text-sm font-medium text-gray-700">
+                        苗字（ひらがな）
+                      </label>
+                      <input
+                        id="lastNameHiragana"
+                        type="text"
+                        value={lastNameHiragana}
+                        onChange={(e) => setLastNameHiragana(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: やまだ"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
+                        名前（ひらがな）
+                      </label>
+                      <input
+                        id="firstNameHiragana"
+                        type="text"
+                        value={firstNameHiragana}
+                        onChange={(e) => setFirstNameHiragana(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        placeholder="例: たろう"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -307,6 +424,45 @@ export default function ProfilePage() {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                 />
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-md font-medium text-gray-900 mb-3">出身地</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="birthplacePrefecture" className="block text-sm font-medium text-gray-700">
+                      都道府県
+                    </label>
+                    <select
+                      id="birthplacePrefecture"
+                      value={birthplacePrefecture}
+                      onChange={(e) => {
+                        setBirthplacePrefecture(e.target.value);
+                        // Reset municipality when prefecture changes
+                        setBirthplaceMunicipality('');
+                      }}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="">選択してください</option>
+                      {PREFECTURES.map(prefecture => (
+                        <option key={prefecture} value={prefecture}>{prefecture}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="birthplaceMunicipality" className="block text-sm font-medium text-gray-700">
+                      市区町村
+                    </label>
+                    <input
+                      id="birthplaceMunicipality"
+                      type="text"
+                      value={birthplaceMunicipality}
+                      onChange={(e) => setBirthplaceMunicipality(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                      placeholder="例: 渋谷区、北区"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -417,32 +573,133 @@ export default function ProfilePage() {
                           </select>
                         </div>
 
-                        <div>
-                          <label htmlFor={`searchingChildNameHiragana-${index}`} className="block text-sm font-medium text-gray-700">
-                            名前（ひらがな）
-                          </label>
-                          <input
-                            id={`searchingChildNameHiragana-${index}`}
-                            type="text"
-                            value={child.nameHiragana}
-                            onChange={(e) => updateSearchingChild(index, 'nameHiragana', e.target.value)}
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            placeholder="例: たろう"
-                          />
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <h5 className="text-xs font-semibold text-gray-600 mb-3">詳細な氏名（後方互換性用）</h5>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            <div>
+                              <label htmlFor={`searchingChildNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
+                                名前（ひらがな）
+                              </label>
+                              <input
+                                id={`searchingChildNameHiragana-${index}`}
+                                type="text"
+                                value={child.nameHiragana}
+                                onChange={(e) => updateSearchingChild(index, 'nameHiragana', e.target.value)}
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                placeholder="例: たろう"
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor={`searchingChildNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
+                                名前（漢字）
+                              </label>
+                              <input
+                                id={`searchingChildNameKanji-${index}`}
+                                type="text"
+                                value={child.nameKanji}
+                                onChange={(e) => updateSearchingChild(index, 'nameKanji', e.target.value)}
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                placeholder="例: 太郎"
+                              />
+                            </div>
+                          </div>
                         </div>
 
                         <div>
-                          <label htmlFor={`searchingChildNameKanji-${index}`} className="block text-sm font-medium text-gray-700">
-                            名前（漢字）
-                          </label>
-                          <input
-                            id={`searchingChildNameKanji-${index}`}
-                            type="text"
-                            value={child.nameKanji}
-                            onChange={(e) => updateSearchingChild(index, 'nameKanji', e.target.value)}
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            placeholder="例: 太郎"
-                          />
+                          <label className="block text-sm font-medium text-gray-700 mb-2">新形式：詳細な氏名</label>
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label htmlFor={`searchingChildLastNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
+                                  苗字（漢字）
+                                </label>
+                                <input
+                                  id={`searchingChildLastNameKanji-${index}`}
+                                  type="text"
+                                  value={child.lastNameKanji}
+                                  onChange={(e) => updateSearchingChild(index, 'lastNameKanji', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: 山田"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor={`searchingChildFirstNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
+                                  名前（漢字）
+                                </label>
+                                <input
+                                  id={`searchingChildFirstNameKanji-${index}`}
+                                  type="text"
+                                  value={child.firstNameKanji}
+                                  onChange={(e) => updateSearchingChild(index, 'firstNameKanji', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: 太郎"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label htmlFor={`searchingChildLastNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
+                                  苗字（ひらがな）
+                                </label>
+                                <input
+                                  id={`searchingChildLastNameHiragana-${index}`}
+                                  type="text"
+                                  value={child.lastNameHiragana}
+                                  onChange={(e) => updateSearchingChild(index, 'lastNameHiragana', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: やまだ"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor={`searchingChildFirstNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
+                                  名前（ひらがな）
+                                </label>
+                                <input
+                                  id={`searchingChildFirstNameHiragana-${index}`}
+                                  type="text"
+                                  value={child.firstNameHiragana}
+                                  onChange={(e) => updateSearchingChild(index, 'firstNameHiragana', e.target.value)}
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  placeholder="例: たろう"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">出身地</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label htmlFor={`searchingChildBirthplacePrefecture-${index}`} className="block text-xs font-medium text-gray-600">
+                                都道府県
+                              </label>
+                              <select
+                                id={`searchingChildBirthplacePrefecture-${index}`}
+                                value={child.birthplacePrefecture}
+                                onChange={(e) => updateSearchingChild(index, 'birthplacePrefecture', e.target.value)}
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                              >
+                                <option value="">選択</option>
+                                {PREFECTURES.map(prefecture => (
+                                  <option key={prefecture} value={prefecture}>{prefecture}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label htmlFor={`searchingChildBirthplaceMunicipality-${index}`} className="block text-xs font-medium text-gray-600">
+                                市区町村
+                              </label>
+                              <input
+                                id={`searchingChildBirthplaceMunicipality-${index}`}
+                                type="text"
+                                value={child.birthplaceMunicipality}
+                                onChange={(e) => updateSearchingChild(index, 'birthplaceMunicipality', e.target.value)}
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                placeholder="例: 渋谷区"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

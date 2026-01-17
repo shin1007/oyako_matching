@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 interface ProfileInfo {
-  full_name?: string;
+  last_name_kanji?: string;
+  first_name_kanji?: string;
   birth_date?: string;
   searching_child_birth_date?: string | null;
 }
@@ -75,7 +76,7 @@ export default function TimeCapsulesPage() {
       const [{ data: userRow, error: userError }, { data: profileRow, error: profileError }] =
         await Promise.all([
           supabase.from("users").select("role").eq("id", user.id).single(),
-          supabase.from("profiles").select("full_name, birth_date, searching_child_birth_date").eq("user_id", user.id).single(),
+          supabase.from("profiles").select("last_name_kanji, first_name_kanji, birth_date, searching_child_birth_date").eq("user_id", user.id).single(),
         ]);
 
       if (userError) throw userError;
@@ -341,8 +342,8 @@ export default function TimeCapsulesPage() {
               <li>・ 「開封日」には思い出の写真や動画を一緒に見返す計画も</li>
               <li>・ 年齢ごとにメッセージを分けると、節目がより伝わりやすく</li>
             </ul>
-            {profile?.full_name && (
-              <p className="mt-4 text-xs text-sky-100">登録名: {profile.full_name}</p>
+            {profile?.last_name_kanji && (
+              <p className="mt-4 text-xs text-sky-100">登録名: {profile.last_name_kanji}{profile.first_name_kanji}</p>
             )}
             {profile?.birth_date && (
               <p className="text-xs text-sky-100">誕生日: {formatDate(profile.birth_date)}</p>

@@ -10,7 +10,8 @@ interface Post {
   title: string;
   content: string;
   author_profile: {
-    full_name: string;
+    last_name_kanji: string;
+    first_name_kanji: string;
     profile_image_url?: string;
   };
   category: {
@@ -28,7 +29,8 @@ interface Comment {
   id: string;
   content: string;
   author_profile: {
-    full_name: string;
+    last_name_kanji: string;
+    first_name_kanji: string;
   };
   created_at: string;
   author_id: string;
@@ -176,7 +178,7 @@ export default function PostDetailPage() {
           <h1 className="mb-4 text-3xl font-bold text-gray-900">{post.title}</h1>
 
           <div className="mb-6 flex items-center gap-4 text-sm text-gray-500">
-            <span>👤 {post.author_profile.full_name}</span>
+            <span>👤 {post.author_profile.last_name_kanji}{post.author_profile.first_name_kanji}</span>
             <span>👁️ {post.view_count}回閲覧</span>
             <span>🕒 {formatDate(post.created_at)}</span>
           </div>
@@ -233,7 +235,7 @@ export default function PostDetailPage() {
                 <div key={comment.id} className="border-l-4 border-blue-200 bg-gray-50 p-4">
                   <div className="mb-2 flex items-center gap-4 text-sm text-gray-500">
                     <span className="font-semibold text-gray-700">
-                      {comment.author_profile.full_name}
+                      {comment.author_profile.last_name_kanji}{comment.author_profile.first_name_kanji}
                     </span>
                     <span>🕒 {formatDate(comment.created_at)}</span>
                   </div>
