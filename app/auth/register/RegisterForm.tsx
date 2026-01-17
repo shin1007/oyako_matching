@@ -131,6 +131,21 @@ export default function RegisterForm() {
           }, 1500);
           return;
         }
+
+        // Create profile record
+        const { error: profileError } = await supabase.from('profiles').insert({
+          user_id: data.user.id,
+          full_name: '',
+          birth_date: new Date().toISOString().split('T')[0],
+          bio: '',
+          parent_gender: null,
+          gender: null,
+        });
+
+        if (profileError) {
+          console.error('[Register] Error creating profile:', profileError);
+          // Continue anyway - profile can be created later
+        }
         
         // Redirect to email verification pending page with email parameter
         router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);

@@ -131,17 +131,6 @@ export default function SubscribePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/dashboard" className="text-2xl font-bold text-blue-600">
-            親子マッチング
-          </Link>
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
-            ダッシュボードに戻る
-          </Link>
-        </div>
-      </header>
-
       <main className="container mx-auto max-w-2xl px-4 py-16">
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900">
