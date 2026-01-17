@@ -5,6 +5,90 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
+/**
+ * メールパラメータからの初期化を処理
+ */
+async function handleEmailParamInitialization(
+  emailParam: string,
+  supabase: any,
+  setEmail: (email: string) => void,
+  setInputEmail: (email: string) => void,
+  setSuccess: (msg: string) => void,
+  setShowEmailInput: (show: boolean) => void
+) {
+  console.log('[VerifyEmailPending] Email from URL params:', emailParam);
+  setEmail(emailParam);
+  setInputEmail(emailParam);
+  setSuccess(`${emailParam} に確認メールを送信しました`);
+  setShowEmailInput(false);
+  
+  // Proactively resend directly to ensure delivery when arriving from signup without session
+  try {
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email: emailParam,
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/verify-email`,
+      },
+    });
+    if (resendError) {
+      console.warn('[VerifyEmailPending] Direct resend reported error:', resendError);
+    }
+  } catch (resendErr) {
+    console.warn('[VerifyEmailPending] Auto-resend failed:', resendErr);
+  }
+}
+
+/**
+ * 検証済み状態を処理
+ */
+async function handleVerifiedState(
+  supabase: any,
+  router: any,
+  setSuccess: (msg: string) => void,
+  setIsVerified: (verified: boolean) => void
+) {
+  console.log('[VerifyEmailPending] Email verified successfully');
+  setSuccess('メールアドレスの確認が完了しました！');
+  setIsVerified(true);
+  
+  // Try to get user session, but don't fail if it's not available yet
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      console.log('[VerifyEmailPending] User session found:', user.email);
+      await supabase
+        .from('users')
+        .update({ email_verified_at: user.email_confirmed_at || new Date().toISOString() })
+        .eq('id', user.id);
+    } else {
+      console.log('[VerifyEmailPending] No user session yet, but verification was successful');
+    }
+  } catch (err) {
+    console.log('[VerifyEmailPending] Could not get user session, but verification was successful:', err);
+  }
+  
+  // Redirect to login page after a short delay
+  setTimeout(() => {
+    router.push('/auth/login');
+  }, 2000);
+}
+
+/**
+ * URLエラーパラメータを処理
+ */
+function handleErrorParam(errorParam: string, setError: (msg: string) => void) {
+  console.log('[VerifyEmailPending] Error in URL params:', errorParam);
+  
+  const errorMessages: Record<string, string> = {
+    verification_failed: 'メール確認に失敗しました。リンクが無効か期限切れです。',
+    missing_params: '無効な確認リンクです。',
+    unexpected: '予期しないエラーが発生しました。',
+  };
+  
+  setError(errorMessages[errorParam] || '予期しないエラーが発生しました。');
+}
+
 function VerifyEmailPendingContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,82 +116,30 @@ function VerifyEmailPendingContent() {
       // Get email from URL params if available
       const emailParam = searchParams.get('email');
       if (emailParam) {
-        console.log('[VerifyEmailPending] Email from URL params:', emailParam);
-        setEmail(emailParam);
-        setInputEmail(emailParam);
-        // Show sent state immediately for better UX after registration
-        setSuccess(`${emailParam} に確認メールを送信しました`);
-        setShowEmailInput(false);
-        // Proactively resend directly to ensure delivery when arriving from signup without session
-        try {
-          const { error: resendError } = await supabase.auth.resend({
-            type: 'signup',
-            email: emailParam,
-            options: {
-              emailRedirectTo: `${window.location.origin}/api/auth/verify-email`,
-            },
-          });
-          if (resendError) {
-            console.warn('[VerifyEmailPending] Direct resend reported error:', resendError);
-          }
-        } catch (resendErr) {
-          console.warn('[VerifyEmailPending] Auto-resend failed:', resendErr);
-        }
-        // Skip status check to avoid overriding UI with error state
+        await handleEmailParamInitialization(
+          emailParam,
+          supabase,
+          setEmail,
+          setInputEmail,
+          setSuccess,
+          setShowEmailInput
+        );
         setHasCheckedStatus(true);
         return;
       }
       
-      // Check URL params for verification status FIRST
+      // Check URL params for verification status
       const verified = searchParams.get('verified');
       const errorParam = searchParams.get('error');
       
       if (verified === 'true') {
-        console.log('[VerifyEmailPending] Email verified successfully');
-        setSuccess('メールアドレスの確認が完了しました！');
-        setIsVerified(true);
+        await handleVerifiedState(supabase, router, setSuccess, setIsVerified);
         setHasCheckedStatus(true);
-        
-        // Try to get user session, but don't fail if it's not available yet
-        // Session may not be immediately available after email verification
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            console.log('[VerifyEmailPending] User session found:', user.email);
-            // Update our database
-            await supabase
-              .from('users')
-              .update({ email_verified_at: user.email_confirmed_at || new Date().toISOString() })
-              .eq('id', user.id);
-          } else {
-            console.log('[VerifyEmailPending] No user session yet, but verification was successful');
-          }
-        } catch (err) {
-          console.log('[VerifyEmailPending] Could not get user session, but verification was successful:', err);
-          // Session may not be available yet, which is OK - user will login next
-        }
-        
-        // Redirect to login page after a short delay to show success message
-        // User will login on the next page, which will establish the session properly
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, 2000);
         return;
       }
       
       if (errorParam) {
-        console.log('[VerifyEmailPending] Error in URL params:', errorParam);
-        switch (errorParam) {
-          case 'verification_failed':
-            setError('メール確認に失敗しました。リンクが無効か期限切れです。');
-            break;
-          case 'missing_params':
-            setError('無効な確認リンクです。');
-            break;
-          case 'unexpected':
-            setError('予期しないエラーが発生しました。');
-            break;
-        }
+        handleErrorParam(errorParam, setError);
       }
 
       // Check user status only if not already in a verification result state
@@ -141,17 +173,16 @@ function VerifyEmailPendingContent() {
     try {
       console.log('[VerifyEmailPending] Checking user status...');
       
-      // If email is available from URL params (e.g., after registration), 
-      // don't show error - this is expected for new registrations
+      // 早期リターン: URLパラメータからのメールがある場合
       if (email) {
         console.log('[VerifyEmailPending] Email from URL params - showing success message for new registration');
-        setShowEmailInput(false); // Don't show input, show the success message instead
-        // Don't set error - this is a valid state
+        setShowEmailInput(false);
         return;
       }
       
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
+      // 早期リターン: ユーザー取得エラー
       if (userError) {
         console.error('[VerifyEmailPending] Error getting user:', userError);
         setError('ユーザー情報の取得に失敗しました。メールアドレスを入力してください。');
@@ -159,9 +190,8 @@ function VerifyEmailPendingContent() {
         return;
       }
       
+      // 早期リターン: ユーザーが存在しない場合
       if (!user) {
-        console.log('[VerifyEmailPending] No user found');
-        // No user and no email - redirect to login after delay
         console.log('[VerifyEmailPending] No user and no email - redirecting to login');
         setError('セッションが見つかりません。ログインしてください。');
         setTimeout(() => router.push('/auth/login'), 2000);
@@ -172,18 +202,16 @@ function VerifyEmailPendingContent() {
       setEmail(user.email || '');
       setInputEmail(user.email || '');
 
-      // Check if email is verified in Supabase Auth
+      // 早期リターン: メールが既に確認済みの場合
       if (user.email_confirmed_at) {
         console.log('[VerifyEmailPending] Email already verified - redirecting to dashboard');
         setIsVerified(true);
         setSuccess('メールアドレスは既に確認済みです');
-        // Update our database
         await supabase
           .from('users')
           .update({ email_verified_at: user.email_confirmed_at })
           .eq('id', user.id);
         
-        // Redirect after a short delay to show success message
         setTimeout(() => {
           router.push('/dashboard');
         }, 2000);
@@ -213,7 +241,6 @@ function VerifyEmailPendingContent() {
       }
     } catch (err) {
       console.error('[VerifyEmailPending] Error checking user status:', err);
-      // Show email input form on error
       setShowEmailInput(true);
     }
   };
@@ -223,7 +250,7 @@ function VerifyEmailPendingContent() {
     setError('');
     setSuccess('');
 
-    // Validate email if using input field
+    // 早期リターン: メールアドレスの検証（入力フィールドを使用している場合）
     if (showEmailInput) {
       if (!inputEmail) {
         setError('メールアドレスを入力してください');
@@ -236,16 +263,14 @@ function VerifyEmailPendingContent() {
         setLoading(false);
         return;
       }
-      // Update the email state
       setEmail(inputEmail);
     }
 
     try {
-      // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser();
       
+      // 早期リターン: ログインしていないユーザーの場合
       if (!user && (showEmailInput || email)) {
-        // For non-logged-in users, use Supabase's resend functionality directly
         const targetEmail = showEmailInput ? inputEmail : email;
         const { error: resendError } = await supabase.auth.resend({
           type: 'signup',
@@ -263,7 +288,6 @@ function VerifyEmailPendingContent() {
         if (showEmailInput) {
           setShowEmailInput(false);
         }
-        // For non-logged-in users, decrement attempts counter manually
         if (attemptsRemaining > 0) {
           setAttemptsRemaining(prev => Math.max(0, prev - 1));
         }
@@ -298,7 +322,6 @@ function VerifyEmailPendingContent() {
         if (showEmailInput) {
           setShowEmailInput(false);
         }
-        // Refresh status after sending
         setTimeout(() => checkUserStatus(), 1000);
       }
     } catch (err) {
