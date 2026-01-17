@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [showDeletedMessage, setShowDeletedMessage] = useState(false);
 
@@ -173,5 +173,13 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-gray-600">読み込み中...</p></div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

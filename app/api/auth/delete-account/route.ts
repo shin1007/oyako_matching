@@ -70,8 +70,9 @@ export async function POST() {
 
       console.log('[DeleteAccount] Successfully deleted auth user (CASCADE will handle users table and related data)');
 
-      // Wait a moment for CASCADE to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait longer for CASCADE to complete and for database consistency
+      console.log('[DeleteAccount] Waiting for CASCADE operations to complete...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Verify cleanup
       const { data: remainingUser, error: checkError } = await supabaseAdmin

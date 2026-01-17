@@ -47,8 +47,12 @@ export default function RegisterForm() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('パスワードは8文字以上である必要があります');
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+
+    if (!(password.length >= 8 && hasUpper && hasLower && hasNumber)) {
+      setError('8文字以上で、大文字・小文字・数字をすべて含めてください');
       setLoading(false);
       return;
     }
@@ -66,15 +70,14 @@ export default function RegisterForm() {
       });
 
       if (signUpError) {
-        // Handle already registered users
+        // Handle already registered users: Supabase may resend confirmation emails
         if (signUpError.message?.includes('User already registered')) {
-          console.log('[Register] User already registered, redirecting to login');
-          // User already exists - always redirect to login page
-          // We cannot reliably check verification status without the correct password
-          setError('このメールアドレスは既に登録されています。ログインしてください。');
+          console.log('[Register] User already registered, likely resent verification email');
+          // Treat as verification flow: guide user to verification pending
+          setError('このメールアドレスは既に登録されています。確認メールを再送しました。メールをご確認ください。');
           setTimeout(() => {
-            router.push(`/auth/login?email=${encodeURIComponent(email)}`);
-          }, 2000);
+            router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
+          }, 1500);
           return;
         }
         
@@ -110,11 +113,12 @@ export default function RegisterForm() {
           // If it's a unique constraint error, user already exists in database
           // This means they went through signup before - redirect to login
           if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
-            console.log('[Register] Duplicate user detected, redirecting to login');
-            setError('このメールアドレスは既に登録されています。ログインしてください。');
+            console.log('[Register] Duplicate email in public.users detected');
+            // UX: continue with email verification pending to avoid confusion
+            setError('確認メールを送信しました。メールをご確認ください。');
             setTimeout(() => {
-              router.push(`/auth/login?email=${encodeURIComponent(email)}`);
-            }, 2000);
+              router.push(`/auth/verify-email-pending?email=${encodeURIComponent(email)}`);
+            }, 1500);
             return;
           }
           
@@ -208,7 +212,7 @@ export default function RegisterForm() {
             minLength={8}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
           />
-          <p className="mt-1 text-xs text-gray-500">8文字以上</p>
+          <p className="mt-1 text-xs text-gray-500">8文字以上で、大文字・小文字・数字をすべて含めてください</p>
         </div>
 
         <div>

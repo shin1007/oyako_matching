@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -43,6 +44,18 @@ export default function LoginPage() {
     if (emailParam) {
       console.log('[Login] Email from URL params:', emailParam);
       setEmail(emailParam);
+    }
+    
+    // Check for message or verified status
+    const messageParam = params.get('message');
+    const verifiedParam = params.get('verified');
+    
+    if (messageParam) {
+      setMessage(decodeURIComponent(messageParam));
+    }
+    
+    if (verifiedParam === 'true') {
+      setMessage('メールアドレスの確認が完了しました！ログインしてください。');
     }
   }, []);
 
@@ -133,6 +146,12 @@ export default function LoginPage() {
 
         <div className="rounded-lg bg-white p-8 shadow-lg">
           <form onSubmit={handleLogin} className="space-y-6">
+            {message && (
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
+                {message}
+              </div>
+            )}
+            
             {error && (
               <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
                 {error}
@@ -165,15 +184,27 @@ export default function LoginPage() {
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
               />
+              <p className="mt-1 text-xs text-gray-500">8文字以上で、大文字・小文字・数字をすべて含めてください</p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'ログイン中...' : 'ログイン'}
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'ログイン中...' : 'ログイン'}
+              </button>
+            </div>
+
+            <div>
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                パスワードをお忘れですか？
+              </Link>
+            </div>
           </form>
 
           <div className="mt-6 space-y-4">
