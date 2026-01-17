@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { getMatchingCandidates } from '@/lib/matching/candidates';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -33,6 +34,9 @@ export default async function DashboardPage() {
       .single();
     subscription = sub;
   }
+
+  // Get matching candidates
+  const matchingData = await getMatchingCandidates();
 
   const handleSignOut = async () => {
     'use server';
@@ -81,6 +85,64 @@ export default async function DashboardPage() {
               サブスクリプションを開始
             </Link>
           </div>
+        )}
+
+        {/* Matching Candidates Notification */}
+        {userData?.mynumber_verified && (
+          <>
+            {matchingData.missingRequiredData ? (
+              <div className="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
+                <h3 className="font-semibold text-orange-900">マッチング候補を探すには情報が必要です</h3>
+                <p className="mt-1 text-sm text-orange-800">
+                  マッチング候補を見つけるには、以下の情報を登録してください：
+                  {matchingData.missingFields.join('、')}
+                </p>
+                <Link
+                  href="/dashboard/profile"
+                  className="mt-3 inline-block rounded-lg bg-orange-600 px-4 py-2 text-sm text-white hover:bg-orange-700"
+                >
+                  プロフィールを編集
+                </Link>
+              </div>
+            ) : matchingData.candidates.length > 0 && (
+              <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-green-900">
+                    🎉 マッチング候補 {matchingData.candidates.length} 件
+                  </h3>
+                  <Link
+                    href="/matching"
+                    className="text-sm text-green-700 hover:text-green-800 font-medium"
+                  >
+                    すべて表示 →
+                  </Link>
+                </div>
+                <p className="text-sm text-green-800 mb-3">
+                  生年月日が一致する{userData?.role === 'parent' ? '子ユーザー' : '親ユーザー'}が見つかりました
+                </p>
+                <div className="space-y-2">
+                  {matchingData.candidates.slice(0, 5).map((candidate, index) => (
+                    <div
+                      key={candidate.userId}
+                      className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{candidate.fullName}</p>
+                        <p className="text-gray-600 text-xs">
+                          生年月日: {new Date(candidate.birthDate).toLocaleDateString('ja-JP')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {matchingData.candidates.length > 5 && (
+                  <p className="mt-3 text-xs text-green-700">
+                    他 {matchingData.candidates.length - 5} 件の候補があります
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Main Content Grid */}
