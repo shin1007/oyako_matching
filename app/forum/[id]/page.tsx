@@ -415,10 +415,21 @@ export default function PostDetailPage() {
 
         {/* Delete Post Confirmation Dialog */}
         {showDeletePostDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-post-dialog-title">
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" 
+            role="dialog" 
+            aria-modal="true" 
+            aria-labelledby="delete-post-dialog-title"
+            aria-describedby="delete-post-dialog-description"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' && !submitting) {
+                setShowDeletePostDialog(false);
+              }
+            }}
+          >
             <div className="rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
               <h3 id="delete-post-dialog-title" className="mb-4 text-lg font-bold text-gray-900">投稿を削除しますか？</h3>
-              <p className="mb-6 text-sm text-gray-600">
+              <p id="delete-post-dialog-description" className="mb-6 text-sm text-gray-600">
                 この操作は取り消せません。投稿とすべてのコメントが削除されます。
               </p>
               {error && (
@@ -555,10 +566,21 @@ export default function PostDetailPage() {
 
                   {/* Delete Comment Confirmation Dialog */}
                   {showDeleteCommentDialog === comment.id && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-comment-dialog-title">
+                    <div 
+                      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" 
+                      role="dialog" 
+                      aria-modal="true" 
+                      aria-labelledby="delete-comment-dialog-title"
+                      aria-describedby="delete-comment-dialog-description"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape' && !submitting) {
+                          setShowDeleteCommentDialog(null);
+                        }
+                      }}
+                    >
                       <div className="rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
                         <h3 id="delete-comment-dialog-title" className="mb-4 text-lg font-bold text-gray-900">コメントを削除しますか？</h3>
-                        <p className="mb-6 text-sm text-gray-600">
+                        <p id="delete-comment-dialog-description" className="mb-6 text-sm text-gray-600">
                           この操作は取り消せません。
                         </p>
                         {error && (
