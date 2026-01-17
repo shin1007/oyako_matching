@@ -78,6 +78,7 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
     .eq('user_id', userId)
     .not('birth_date', 'is', null);
 
+  // 早期リターン: データ取得エラーまたはデータなし
   if (searchError || !searchingChildren || searchingChildren.length === 0) {
     return [];
   }
@@ -86,6 +87,7 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
   const candidates: MatchingCandidate[] = [];
   const birthDates = Array.from(new Set(searchingChildren.map(child => child.birth_date).filter(Boolean)));
 
+  // 早期リターン: 生年月日なし
   if (birthDates.length === 0) {
     return [];
   }
@@ -98,13 +100,13 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
 
   if (!profileError && profiles) {
     for (const profile of profiles) {
-      // 自分自身は除外
+      // 早期 continue: 自分自身は除外
       if (profile.user_id === userId) continue;
       
-      // 重複チェック
+      // 早期 continue: 重複チェック
       if (candidates.some(c => c.userId === profile.user_id)) continue;
 
-      // フィールド必須チェック
+      // 早期 continue: フィールド必須チェック
       if (!profile.last_name_kanji || !profile.first_name_kanji) continue;
 
       candidates.push({
@@ -138,6 +140,7 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
     .eq('user_id', userId)
     .single();
 
+  // 早期リターン: プロフィールエラーまたは生年月日なし
   if (profileError || !profile || !profile.birth_date) {
     return [];
   }
@@ -148,6 +151,7 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
     .select('user_id, birth_date')
     .eq('birth_date', profile.birth_date);
 
+  // 早期リターン: データ取得エラーまたはデータなし
   if (searchError || !searchingChildren || searchingChildren.length === 0) {
     return [];
   }
@@ -156,6 +160,7 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
   const parentUserIds = Array.from(new Set(searchingChildren.map(sc => sc.user_id)));
   const candidates: MatchingCandidate[] = [];
 
+  // 早期リターン: 親ユーザーIDなし
   if (parentUserIds.length === 0) {
     return [];
   }
@@ -167,10 +172,10 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
 
   if (!parentError && parentProfiles) {
     for (const parentProfile of parentProfiles) {
-      // 自分自身は除外
+      // 早期 continue: 自分自身は除外
       if (parentProfile.user_id === userId) continue;
 
-      // フィールド必須チェック
+      // 早期 continue: フィールド必須チェック
       if (!parentProfile.last_name_kanji || !parentProfile.first_name_kanji) continue;
 
       candidates.push({

@@ -36,32 +36,29 @@ async function decryptXIDResponse(
   publicKey: string,
   privateKey: string
 ): Promise<string> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const { instantiate } = await import('js-nacl');
-      instantiate((nacl) => {
-        try {
-          const cipherBuff = Buffer.from(encryptedMessage, 'base64');
-          const publicBuff = Buffer.from(publicKey, 'base64');
-          const privateBuff = Buffer.from(privateKey, 'base64');
+  const { instantiate } = await import('js-nacl');
+  
+  return new Promise((resolve, reject) => {
+    instantiate((nacl) => {
+      try {
+        const cipherBuff = Buffer.from(encryptedMessage, 'base64');
+        const publicBuff = Buffer.from(publicKey, 'base64');
+        const privateBuff = Buffer.from(privateKey, 'base64');
 
-          const nonce = cipherBuff.slice(0, 24);
-          const message = nacl.crypto_box_open(
-            cipherBuff.slice(24),
-            nonce,
-            publicBuff,
-            privateBuff
-          );
+        const nonce = cipherBuff.slice(0, 24);
+        const message = nacl.crypto_box_open(
+          cipherBuff.slice(24),
+          nonce,
+          publicBuff,
+          privateBuff
+        );
 
-          const utf8message = nacl.decode_utf8(message);
-          resolve(utf8message);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    } catch (e) {
-      reject(e);
-    }
+        const utf8message = nacl.decode_utf8(message);
+        resolve(utf8message);
+      } catch (error) {
+        reject(error);
+      }
+    });
   });
 }
 
@@ -72,7 +69,7 @@ export async function initiateVerification(
   userId: string,
   callbackUrl: string
 ): Promise<XIDVerificationResponse> {
-  // 開発環境ではモックレスポンスを返す
+  // 早期リターン: 開発環境でAPIキーが設定されていない場合
   if (process.env.NODE_ENV === 'development' && !XID_API_KEY) {
     console.warn('xID API key not configured, using mock response');
     const mockId = `mock-${Date.now()}`;
@@ -96,6 +93,7 @@ export async function initiateVerification(
     }),
   });
 
+  // 早期リターン: APIエラー
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[xID] initiate verification failed', {
@@ -108,7 +106,7 @@ export async function initiateVerification(
 
   const data = await response.json();
   
-  // 暗号化されたレスポンスの場合は復号化
+  // 早期リターン: 暗号化されたレスポンスの場合は復号化
   if (data.encryptedMessage && XID_PUBLIC_KEY && XID_PRIVATE_KEY) {
     const decrypted = await decryptXIDResponse(
       data.encryptedMessage,
@@ -127,7 +125,7 @@ export async function initiateVerification(
 export async function getVerificationResult(
   verificationId: string
 ): Promise<XIDVerificationResult> {
-  // 開発環境のモック
+  // 早期リターン: 開発環境のモック
   if (verificationId.startsWith('mock-')) {
     console.warn('Using mock verification result');
     return {
@@ -148,13 +146,14 @@ export async function getVerificationResult(
     }
   );
 
+  // 早期リターン: APIエラー
   if (!response.ok) {
     throw new Error('Failed to get verification result');
   }
 
   const data = await response.json();
 
-  // 暗号化されたレスポンスの場合は復号化
+  // 早期リターン: 暗号化されたレスポンスの場合は復号化
   if (data.encryptedMessage && XID_PUBLIC_KEY && XID_PRIVATE_KEY) {
     const decrypted = await decryptXIDResponse(
       data.encryptedMessage,
