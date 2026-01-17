@@ -137,17 +137,6 @@ export default function EpisodesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/dashboard" className="text-2xl font-bold text-blue-600">
-            親子マッチング
-          </Link>
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
-            ダッシュボードに戻る
-          </Link>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>

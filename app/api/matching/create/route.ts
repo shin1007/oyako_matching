@@ -42,6 +42,28 @@ export async function POST(request: NextRequest) {
     const parentId = currentUser.role === 'parent' ? user.id : targetUserId;
     const childId = currentUser.role === 'child' ? user.id : targetUserId;
 
+    // 決済チェック（本番環境でのみ実行）
+    const isDev = process.env.NODE_ENV === 'development';
+    console.log('[Matching Create] NODE_ENV:', process.env.NODE_ENV, 'isDev:', isDev);
+    if (!isDev && currentUser.role === 'parent') {
+      // 親がマッチングを申請する場合、アクティブなサブスクリプションを確認
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', parentId)
+        .single();
+
+      if (!subscription || subscription.status !== 'active') {
+        return NextResponse.json(
+          {
+            error: 'アクティブなサブスクリプションが必要です。決済を完了してからマッチングを申請してください。',
+            requiresSubscription: true,
+          },
+          { status: 402 }
+        );
+      }
+    }
+
     // Check if match already exists
     const { data: existingMatch } = await supabase
       .from('matches')
