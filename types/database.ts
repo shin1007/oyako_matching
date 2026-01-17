@@ -41,7 +41,13 @@ export interface Database {
           id: string;
           user_id: string;
           full_name: string;
+          last_name_kanji: string | null;
+          last_name_hiragana: string | null;
+          first_name_kanji: string | null;
+          first_name_hiragana: string | null;
           birth_date: string;
+          birthplace_prefecture: string | null;
+          birthplace_municipality: string | null;
           profile_image_url: string | null;
           bio: string | null;
           gender: Gender | null;
@@ -55,7 +61,13 @@ export interface Database {
         Insert: {
           user_id: string;
           full_name: string;
+          last_name_kanji?: string | null;
+          last_name_hiragana?: string | null;
+          first_name_kanji?: string | null;
+          first_name_hiragana?: string | null;
           birth_date: string;
+          birthplace_prefecture?: string | null;
+          birthplace_municipality?: string | null;
           profile_image_url?: string | null;
           bio?: string | null;
           gender?: Gender | null;
@@ -66,7 +78,13 @@ export interface Database {
         };
         Update: {
           full_name?: string;
+          last_name_kanji?: string | null;
+          last_name_hiragana?: string | null;
+          first_name_kanji?: string | null;
+          first_name_hiragana?: string | null;
           birth_date?: string;
+          birthplace_prefecture?: string | null;
+          birthplace_municipality?: string | null;
           profile_image_url?: string | null;
           bio?: string | null;
           gender?: Gender | null;
@@ -193,6 +211,12 @@ export interface Database {
           birth_date: string | null;
           name_hiragana: string | null;
           name_kanji: string | null;
+          last_name_kanji: string | null;
+          last_name_hiragana: string | null;
+          first_name_kanji: string | null;
+          first_name_hiragana: string | null;
+          birthplace_prefecture: string | null;
+          birthplace_municipality: string | null;
           gender: SearchingChildGender | null;
           display_order: number;
           created_at: string;
@@ -203,6 +227,12 @@ export interface Database {
           birth_date?: string | null;
           name_hiragana?: string | null;
           name_kanji?: string | null;
+          last_name_kanji?: string | null;
+          last_name_hiragana?: string | null;
+          first_name_kanji?: string | null;
+          first_name_hiragana?: string | null;
+          birthplace_prefecture?: string | null;
+          birthplace_municipality?: string | null;
           gender?: SearchingChildGender | null;
           display_order?: number;
         };
@@ -210,6 +240,12 @@ export interface Database {
           birth_date?: string | null;
           name_hiragana?: string | null;
           name_kanji?: string | null;
+          last_name_kanji?: string | null;
+          last_name_hiragana?: string | null;
+          first_name_kanji?: string | null;
+          first_name_hiragana?: string | null;
+          birthplace_prefecture?: string | null;
+          birthplace_municipality?: string | null;
           gender?: SearchingChildGender | null;
           display_order?: number;
         };
