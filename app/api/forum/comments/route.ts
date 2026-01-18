@@ -52,16 +52,32 @@ export async function POST(request: NextRequest) {
         content,
         moderation_status: 'approved'
       })
-      .select(`
-        *,
-        author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url)
-      `)
+      .select('*')
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json({ comment }, { status: 201 });
+    // Fetch author profile
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
+      .eq('user_id', user.id)
+      .single();
+
+    // フォールバック: forum_display_nameがない場合はフルネームを使用
+    const displayName = authorProfile?.forum_display_name || 
+      `${authorProfile?.last_name_kanji || ''}${authorProfile?.first_name_kanji || '名無し'}`;
+
+    // Enrich comment with profile
+    const enrichedComment = {
+      ...comment,
+      author_profile: {
+        forum_display_name: displayName,
+        profile_image_url: authorProfile?.profile_image_url
+      }
+    };
+
+    return NextResponse.json({ comment: enrichedComment }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating comment:', error);
     return NextResponse.json(

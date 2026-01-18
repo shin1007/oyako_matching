@@ -8,7 +8,6 @@
 - npm または yarn
 - Supabase アカウント
 - Stripe アカウント
-- OpenAI API アカウント
 - xID API アカウント（マイナンバーカード認証用）
 
 ## 1. リポジトリのクローン
@@ -106,12 +105,11 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
 STRIPE_PRICE_ID=your_subscription_price_id
 
-# OpenAI
-OPENAI_API_KEY=your_openai_api_key
-
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+> **📝 注意**: コンテンツモデレーション機能は追加の設定なしで動作します。詳細は [docs/CONTENT_MODERATION.md](./docs/CONTENT_MODERATION.md) を参照してください。
 
 ## 8. 開発サーバーの起動
 
