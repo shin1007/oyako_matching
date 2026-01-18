@@ -260,6 +260,170 @@ function calculateChildMatchScore(
 }
 
 /**
+ * 子アカウント用：子が探している親の条件と親候補のマッチングスコアを計算（子→親方向）
+ */
+async function calculateParentToChildReverseScore(
+  admin: any,
+  childUserId: string,
+  parentProfile: any
+): Promise<number | null> {
+  // 子が探している親の情報を取得（searching_childrenテーブルを使用）
+  const { data: searchingParents } = await admin
+    .from('searching_children')
+    .select('gender, birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture')
+    .eq('user_id', childUserId);
+
+  if (!searchingParents || searchingParents.length === 0) {
+    // 子が親を探す情報を登録していない場合はnull
+    return null;
+  }
+
+  // 複数の親候補から最も高いスコアを選択
+  let maxScore = 0;
+
+  for (const searchingParent of searchingParents) {
+    let score = 0.20; // 基本スコア
+
+    // 性別チェック（重要）
+    if (searchingParent.gender && parentProfile.gender) {
+      if (searchingParent.gender !== parentProfile.gender) {
+        continue; // 性別不一致の場合はスキップ
+      }
+      // 性別一致の場合は継続
+    } else {
+      // 性別情報がない場合は軽微なペナルティ
+      score += 0.10;
+    }
+
+    // 生年の近さ（寛容）
+    if (searchingParent.birth_date && parentProfile.birth_date) {
+      const searchingYear = new Date(searchingParent.birth_date).getFullYear();
+      const parentYear = new Date(parentProfile.birth_date).getFullYear();
+      const yearDiff = Math.abs(searchingYear - parentYear);
+
+      if (yearDiff <= 5) {
+        score += 0.30;
+      } else if (yearDiff <= 10) {
+        score += 0.20;
+      } else if (yearDiff <= 15) {
+        score += 0.10;
+      }
+    } else {
+      score += 0.10; // データなしの場合は軽微なボーナス
+    }
+
+    // ひらがな氏名の一致（寛容）
+    if (searchingParent.last_name_hiragana && parentProfile.last_name_hiragana) {
+      const searchingHiragana = (searchingParent.last_name_hiragana + (searchingParent.first_name_hiragana || '')).trim();
+      const parentHiragana = (parentProfile.last_name_hiragana + (parentProfile.first_name_hiragana || '')).trim();
+      
+      if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
+        score += 0.15;
+      } else if (searchingHiragana && parentHiragana) {
+        // 部分一致チェック
+        const commonChars = searchingHiragana.split('').filter(char => parentHiragana.includes(char));
+        if (commonChars.length > 0) {
+          score += 0.05;
+        }
+      }
+    }
+
+    // 出身地の一致（寛容）
+    if (searchingParent.birthplace_prefecture && parentProfile.birthplace_prefecture) {
+      if (searchingParent.birthplace_prefecture === parentProfile.birthplace_prefecture) {
+        score += 0.15;
+      }
+    } else if (!searchingParent.birthplace_prefecture) {
+      score += 0.05; // データなしの場合は軽微なボーナス
+    }
+
+    maxScore = Math.max(maxScore, score);
+  }
+
+  return maxScore > 0 ? Math.min(0.80, maxScore) : null; // 最大80%
+}
+
+/**
+ * 子アカウント用：親候補に対するマッチングスコアを計算（親→子方向）
+ */
+async function calculateChildToParentMatchScore(
+  admin: any,
+  parentUserId: string,
+  childProfile: any
+): Promise<number> {
+  // 親が探している子ども情報を取得
+  const { data: searchingChildren } = await admin
+    .from('searching_children')
+    .select('birth_date, gender, last_name_kanji, first_name_kanji, name_kanji, name_hiragana, last_name_hiragana, first_name_hiragana, birthplace_prefecture, birthplace_municipality')
+    .eq('user_id', parentUserId);
+
+  if (!searchingChildren || searchingChildren.length === 0) {
+    return DEFAULT_PROFILE_MATCH_SCORE;
+  }
+
+  // 子どもの生年月日でマッチする searching_children を探す
+  const matchingChild = searchingChildren.find(
+    (child: any) => child.birth_date === childProfile.birth_date
+  );
+
+  if (!matchingChild) {
+    // 生年月日が一致しない場合は年齢ベースのスコアを返す
+    return DEFAULT_PROFILE_MATCH_SCORE;
+  }
+
+  // 生年月日が完全一致している場合の詳細スコア計算
+  let score = 0.80; // 生年月日完全一致の基本スコア
+
+  // 氏名の一致チェック
+  const childFullNameKanji = (childProfile.last_name_kanji || '') + (childProfile.first_name_kanji || '');
+  const childFullNameHiragana = (childProfile.last_name_hiragana || '') + (childProfile.first_name_hiragana || '');
+  
+  const searchingNameKanji = (matchingChild.last_name_kanji || '') + (matchingChild.first_name_kanji || '');
+  const searchingNameKanjiAlt = matchingChild.name_kanji || '';
+  const searchingNameHiragana = (matchingChild.last_name_hiragana || '') + (matchingChild.first_name_hiragana || '');
+  const searchingNameHiraganaAlt = matchingChild.name_hiragana || '';
+
+  // 漢字氏名の一致
+  const kanjiMatch = 
+    (searchingNameKanji && childFullNameKanji.includes(searchingNameKanji)) ||
+    (searchingNameKanjiAlt && childFullNameKanji.includes(searchingNameKanjiAlt)) ||
+    (childFullNameKanji && searchingNameKanji && searchingNameKanji.includes(childFullNameKanji));
+
+  // ひらがな氏名の一致
+  const hiraganaMatch = 
+    (searchingNameHiragana && childFullNameHiragana.includes(searchingNameHiragana)) ||
+    (searchingNameHiraganaAlt && childFullNameHiragana.includes(searchingNameHiraganaAlt)) ||
+    (childFullNameHiragana && searchingNameHiragana && searchingNameHiragana.includes(childFullNameHiragana));
+
+  if (kanjiMatch || hiraganaMatch) {
+    score += 0.10;
+    console.log(
+      `[Matching] Child name match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
+    );
+  }
+
+  // 出身地の一致チェック
+  if (matchingChild.birthplace_prefecture && childProfile.birthplace_prefecture &&
+      matchingChild.birthplace_prefecture === childProfile.birthplace_prefecture) {
+    score += 0.10;
+    console.log(
+      `[Matching] Child birthplace match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
+    );
+  }
+
+  // 性別の一致チェック（あれば追加ボーナス）
+  if (matchingChild.gender && childProfile.gender &&
+      matchingChild.gender === childProfile.gender) {
+    // 性別一致は既に高いスコアなので小さなボーナス
+    console.log(
+      `[Matching] Child gender match confirmed. Parent ${parentUserId}`
+    );
+  }
+
+  return Math.min(1.0, score);
+}
+
+/**
  * 逆方向マッチングスコアの計算（子→親）
  */
 async function calculateReverseMatchingScore(
@@ -415,8 +579,44 @@ export async function GET(request: NextRequest) {
           .eq('user_id', user.id)
           .single();
 
-        // For parents, calculate scores per child
+        // Calculate detailed score based on user role
         const scorePerChild: Record<string, number> = {};
+        let detailedScore = match.similarity_score;
+
+        // For child users, calculate bidirectional matching score
+        if (userData.role === 'child' && currentUserProfile && targetUserData?.role === 'parent') {
+          // 親→子方向のスコア（親が探している子どもと自分のプロフィールの一致度）
+          const parentToChildScore = await calculateChildToParentMatchScore(
+            admin,
+            match.matched_user_id,
+            currentUserProfile
+          );
+          
+          // 子→親方向のスコア（子が探している親と相手のプロフィールの一致度）
+          const childToParentScore = await calculateParentToChildReverseScore(
+            admin,
+            user.id,
+            profile
+          );
+
+          if (childToParentScore === null) {
+            // 子が親を探す情報を登録していない場合は親→子のスコアのみ使用
+            detailedScore = parentToChildScore;
+            console.log(
+              `[Matching] Child user score (parent→child only) for parent ${match.matched_user_id}: ${detailedScore.toFixed(2)}`
+            );
+          } else {
+            // 双方向スコアの加重平均（親→子: 60%, 子→親: 40%）
+            detailedScore = (parentToChildScore * 0.60) + (childToParentScore * 0.40);
+            console.log(
+              `[Matching] Child user bidirectional score for parent ${match.matched_user_id}: ` +
+              `parent→child=${parentToChildScore.toFixed(2)}, child→parent=${childToParentScore.toFixed(2)}, ` +
+              `final=${detailedScore.toFixed(2)}`
+            );
+          }
+        }
+
+        // For parents, calculate scores per child
         if (userData.role === 'parent' && searchingChildren.length > 0 && profile?.birth_date) {
           const matchBirthDate = new Date(profile.birth_date);
           const matchYear = matchBirthDate.getFullYear();
@@ -474,8 +674,8 @@ export async function GET(request: NextRequest) {
 
         return {
           userId: match.matched_user_id,
-          similarityScore: match.similarity_score,
-          scorePerChild, // 子どもごとのスコア
+          similarityScore: userData.role === 'child' ? detailedScore : match.similarity_score,
+          scorePerChild, // 子どもごとのスコア（親の場合のみ使用）
           role: targetUserData?.role,
           profile,
           searchingChildrenInfo, // 相手親が探している子ども情報
@@ -492,7 +692,24 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    return NextResponse.json({ candidates: filteredMatchDetails, userRole: userData.role, searchingChildren });
+    // 各候補について既存のマッチング状態を確認
+    const candidatesWithMatchStatus = await Promise.all(
+      filteredMatchDetails.map(async (candidate) => {
+        const { data: existingMatch } = await admin
+          .from('matches')
+          .select('id, status')
+          .or(`and(parent_id.eq.${user.id},child_id.eq.${candidate.userId}),and(parent_id.eq.${candidate.userId},child_id.eq.${user.id})`)
+          .maybeSingle();
+
+        return {
+          ...candidate,
+          existingMatchId: existingMatch?.id || null,
+          existingMatchStatus: existingMatch?.status || null,
+        };
+      })
+    );
+
+    return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, searchingChildren });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(

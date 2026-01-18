@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { UserRole } from '@/types/database';
+import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
 
 interface Match {
   userId: string;
   similarityScore: number;
   scorePerChild?: Record<string, number>;
   role?: string;
+  existingMatchId?: string | null;
+  existingMatchStatus?: 'pending' | 'accepted' | 'rejected' | 'blocked' | null;
   profile: {
     last_name_kanji: string;
     first_name_kanji: string;
@@ -362,8 +365,11 @@ export default function MatchingPage() {
 
                               <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">
                                 <div className="text-center mb-3">
-                                  <div className="text-3xl font-bold text-green-600 mb-1">
-                                    {(childScore * 100).toFixed(0)}%
+                                  <div className="flex items-center justify-center gap-2 mb-1">
+                                    <div className="text-3xl font-bold text-green-600">
+                                      {(childScore * 100).toFixed(0)}%
+                                    </div>
+                                    <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
                                   </div>
                                   <p className="text-xs text-gray-600 font-semibold">類似度</p>
                                   <p className="text-xs text-gray-500 mt-1">
@@ -386,13 +392,29 @@ export default function MatchingPage() {
                                   />
                                 </div>
 
-                                <button
-                                  onClick={() => handleCreateMatch(match.userId, childScore)}
-                                  disabled={creating === match.userId}
-                                  className="w-full rounded-lg bg-green-600 px-3 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
-                                >
-                                  {creating === match.userId ? '処理中...' : 'マッチング申請'}
-                                </button>
+                                {match.existingMatchStatus === 'accepted' ? (
+                                  <Link
+                                    href={`/messages/${match.existingMatchId}`}
+                                    className="w-full block text-center rounded-lg bg-blue-600 px-3 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
+                                  >
+                                    メッセージへ
+                                  </Link>
+                                ) : match.existingMatchStatus === 'pending' ? (
+                                  <button
+                                    disabled
+                                    className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
+                                  >
+                                    承認待ち
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleCreateMatch(match.userId, childScore)}
+                                    disabled={creating === match.userId}
+                                    className="w-full rounded-lg bg-green-600 px-3 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
+                                  >
+                                    {creating === match.userId ? '処理中...' : 'マッチング申請'}
+                                  </button>
+                                )}
                               </div>
                             </div>
                             );
@@ -456,8 +478,11 @@ export default function MatchingPage() {
                       {/* Right side - Matching info & button */}
                       <div className="w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-6 flex flex-col items-center justify-center border-l">
                         <div className="text-center mb-4">
-                          <div className="text-4xl font-bold text-green-600 mb-2">
-                            {(match.similarityScore * 100).toFixed(0)}%
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="text-4xl font-bold text-green-600">
+                              {(match.similarityScore * 100).toFixed(0)}%
+                            </div>
+                            <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
                           </div>
                           <p className="text-sm text-gray-600 font-semibold">類似度</p>
                           <p className="text-xs text-gray-500 mt-1">
@@ -480,13 +505,29 @@ export default function MatchingPage() {
                           />
                         </div>
 
-                        <button
-                          onClick={() => handleCreateMatch(match.userId, match.similarityScore)}
-                          disabled={creating === match.userId}
-                          className="w-full rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
-                        >
-                          {creating === match.userId ? '処理中...' : 'マッチング申請'}
-                        </button>
+                        {match.existingMatchStatus === 'accepted' ? (
+                          <Link
+                            href={`/messages/${match.existingMatchId}`}
+                            className="w-full block text-center rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
+                          >
+                            メッセージへ
+                          </Link>
+                        ) : match.existingMatchStatus === 'pending' ? (
+                          <button
+                            disabled
+                            className="w-full rounded-lg bg-yellow-500 px-4 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
+                          >
+                            承認待ち
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleCreateMatch(match.userId, match.similarityScore)}
+                            disabled={creating === match.userId}
+                            className="w-full rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
+                          >
+                            {creating === match.userId ? '処理中...' : 'マッチング申請'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
