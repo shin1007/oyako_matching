@@ -59,9 +59,6 @@ export default async function DashboardPage() {
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
           <h1 className={`text-3xl font-bold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>ダッシュボード</h1>
-          <p className={`mt-2 ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>
-            {userData?.role === 'parent' ? '親アカウント' : '子アカウント'}
-          </p>
         </div>
 
         {/* Pending Notifications */}
@@ -73,7 +70,12 @@ export default async function DashboardPage() {
           <div className="mb-6 lg:mb-0">
             <div className={`rounded-lg ${userData?.role === 'child' ? 'bg-orange-100 border-2 border-orange-200' : 'bg-green-100 border-2 border-green-200'} p-6 shadow`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-xl font-semibold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>プロフィール</h2>
+                <div>
+                  <h2 className={`text-xl font-semibold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>プロフィール</h2>
+                  <p className={`text-sm mt-1 font-medium ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>
+                    {userData?.role === 'parent' ? '親アカウント' : '子アカウント'}
+                  </p>
+                </div>
                 <Link
                   href="/dashboard/profile"
                   className={`text-sm font-medium ${userData?.role === 'child' ? 'text-orange-700 hover:text-orange-900' : 'text-green-700 hover:text-green-900'}`}
