@@ -4,21 +4,23 @@
  * 外部APIに依存せず、完全無料で動作
  */
 
-import { badWordsJa, violencePatterns, insultPatterns } from '../moderation/badwords-ja';
+import { badWordsJa, violencePatterns, insultPatterns, sexualPatterns } from '../moderation/badwords-ja';
 
 // bad-wordsライブラリは使用せず、シンプルなワードフィルターを実装
 // これによりESMインポートの問題を回避
 
 /**
  * テキストに不適切なワードが含まれているかチェック
+ * @returns 不適切なワードの配列（見つからない場合は空配列）
  */
-function containsBadWords(text: string): boolean {
+function findBadWords(text: string): string[] {
   const lowerText = text.toLowerCase();
+  const foundWords: string[] = [];
   
   // 日本語不適切ワード
   for (const word of badWordsJa) {
     if (text.includes(word)) {
-      return true;
+      foundWords.push(word);
     }
   }
   
@@ -26,11 +28,11 @@ function containsBadWords(text: string): boolean {
   const englishBadWords = ['fuck', 'shit', 'bitch', 'bastard', 'damn'];
   for (const word of englishBadWords) {
     if (lowerText.includes(word)) {
-      return true;
+      foundWords.push(word);
     }
   }
   
-  return false;
+  return foundWords;
 }
 
 /**
@@ -40,43 +42,75 @@ function containsBadWords(text: string): boolean {
 export async function moderateContent(text: string): Promise<{
   flagged: boolean;
   categories: Record<string, boolean>;
+  flaggedWords?: string[];
+  message?: string;
 }> {
   const categories: Record<string, boolean> = {
     profanity: false,    // 冒涜・不適切ワード
     violence: false,     // 暴力的表現
     insult: false,       // 侮辱的表現
+    sexual: false,       // 性的表現
   };
 
   let flagged = false;
+  const flaggedWords: string[] = [];
+  const messages: string[] = [];
 
   try {
     // 1. 不適切ワードのチェック
-    if (containsBadWords(text)) {
+    const badWords = findBadWords(text);
+    if (badWords.length > 0) {
       categories.profanity = true;
       flagged = true;
+      flaggedWords.push(...badWords);
+      messages.push(`不適切な表現が含まれています: 「${badWords.join('」「」')}」`);
     }
 
     // 2. 暴力的表現のパターンマッチング
     for (const pattern of violencePatterns) {
-      if (pattern.test(text)) {
+      const match = text.match(pattern);
+      if (match) {
         categories.violence = true;
         flagged = true;
+        const matchedWord = match[0];
+        flaggedWords.push(matchedWord);
+        messages.push(`暴力的な表現が含まれています: 「${matchedWord}」`);
         break;
       }
     }
 
     // 3. 侮辱的表現のパターンマッチング
     for (const pattern of insultPatterns) {
-      if (pattern.test(text)) {
+      const match = text.match(pattern);
+      if (match) {
         categories.insult = true;
         flagged = true;
+        const matchedWord = match[0];
+        flaggedWords.push(matchedWord);
+        messages.push(`侮辱的な表現が含まれています: 「${matchedWord}」`);
         break;
       }
     }
 
+    // 4. 性的表現のパターンマッチング
+    for (const pattern of sexualPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        categories.sexual = true;
+        flagged = true;
+        const matchedWord = match[0];
+        flaggedWords.push(matchedWord);
+        messages.push(`性的な表現が含まれています: 「${matchedWord}」`);
+        break;
+      }
+    }
+
+    
     return {
       flagged,
       categories,
+      flaggedWords: flaggedWords.length > 0 ? flaggedWords : undefined,
+      message: messages.length > 0 ? messages.join('、') : undefined,
     };
   } catch (error) {
     console.error('Moderation error:', error);
