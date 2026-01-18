@@ -8,7 +8,6 @@
 - npm または yarn
 - Supabase アカウント
 - Stripe アカウント
-- Google Cloud アカウント（Perspective API用）
 - xID API アカウント（マイナンバーカード認証用）
 
 ## 1. リポジトリのクローン
@@ -106,14 +105,11 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
 STRIPE_PRICE_ID=your_subscription_price_id
 
-# Perspective API (コンテンツモデレーション)
-PERSPECTIVE_API_KEY=your_perspective_api_key
-
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-> **📝 重要**: Perspective API のセットアップ方法については、[docs/PERSPECTIVE_API_SETUP.md](./docs/PERSPECTIVE_API_SETUP.md) を参照してください。
+> **📝 注意**: コンテンツモデレーション機能は追加の設定なしで動作します。詳細は [docs/CONTENT_MODERATION.md](./docs/CONTENT_MODERATION.md) を参照してください。
 
 ## 8. 開発サーバーの起動
 

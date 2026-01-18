@@ -1,65 +1,56 @@
 /**
- * Perspective APIを使用したコンテンツモデレーション
- * Google Cloud API Keyが必要です
+ * ローカルコンテンツモデレーション
+ * bad-wordsライブラリと日本語カスタム辞書を使用
+ * 外部APIに依存せず、完全無料で動作
  */
 
-const PERSPECTIVE_API_ENDPOINT = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
-const PERSPECTIVE_API_KEY = process.env.PERSPECTIVE_API_KEY;
+import Filter from 'bad-words';
+import { badWordsJa, violencePatterns, insultPatterns } from '../moderation/badwords-ja';
+
+// bad-wordsフィルターの初期化
+const filter = new Filter();
+
+// 日本語の不適切ワードを追加
+filter.addWords(...badWordsJa);
 
 /**
  * コンテンツのモデレーション
- * Perspective APIを使用して毒性、脅威、ハラスメントなどを検出
+ * 不適切なワード、暴力的表現、侮辱的表現を検出
  */
 export async function moderateContent(text: string): Promise<{
   flagged: boolean;
   categories: Record<string, boolean>;
 }> {
-  if (!PERSPECTIVE_API_KEY) {
-    console.warn('PERSPECTIVE_API_KEY is not set. Skipping moderation.');
-    return {
-      flagged: false,
-      categories: {},
-    };
-  }
+  const categories: Record<string, boolean> = {
+    profanity: false,    // 冒涜・不適切ワード
+    violence: false,     // 暴力的表現
+    insult: false,       // 侮辱的表現
+  };
+
+  let flagged = false;
 
   try {
-    const response = await fetch(`${PERSPECTIVE_API_ENDPOINT}?key=${PERSPECTIVE_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        comment: { text },
-        languages: ['ja', 'en'], // 日本語と英語に対応
-        requestedAttributes: {
-          TOXICITY: {},           // 毒性
-          SEVERE_TOXICITY: {},    // 重度の毒性
-          IDENTITY_ATTACK: {},    // 個人攻撃
-          INSULT: {},             // 侮辱
-          PROFANITY: {},          // 冒涜
-          THREAT: {},             // 脅迫
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Perspective API error: ${response.status}`);
+    // 1. bad-wordsライブラリでチェック（英語 + カスタム日本語ワード）
+    if (filter.isProfane(text)) {
+      categories.profanity = true;
+      flagged = true;
     }
 
-    const data = await response.json();
-    const scores = data.attributeScores;
-
-    // 各スコアをチェック（閾値: 0.7以上で不適切と判定）
-    const threshold = 0.7;
-    const categories: Record<string, boolean> = {};
-    let flagged = false;
-
-    for (const [attribute, scoreData] of Object.entries(scores)) {
-      const score = (scoreData as any).summaryScore.value;
-      const isFlagged = score >= threshold;
-      categories[attribute.toLowerCase()] = isFlagged;
-      if (isFlagged) {
+    // 2. 暴力的表現のパターンマッチング
+    for (const pattern of violencePatterns) {
+      if (pattern.test(text)) {
+        categories.violence = true;
         flagged = true;
+        break;
+      }
+    }
+
+    // 3. 侮辱的表現のパターンマッチング
+    for (const pattern of insultPatterns) {
+      if (pattern.test(text)) {
+        categories.insult = true;
+        flagged = true;
+        break;
       }
     }
 
@@ -69,7 +60,7 @@ export async function moderateContent(text: string): Promise<{
     };
   } catch (error) {
     console.error('Moderation error:', error);
-    // エラー時はモデレーションをスキップ（安全側に倒す場合は flagged: true に変更可能）
+    // エラー時はモデレーションをスキップ
     return {
       flagged: false,
       categories: {},
