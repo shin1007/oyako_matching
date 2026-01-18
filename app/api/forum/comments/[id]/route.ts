@@ -51,8 +51,8 @@ export async function PATCH(
       .eq('id', id)
       .select(`
         *,
-        author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
+        author:users!author_id(id, role),
+        author_profile:profiles!author_id(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
       `)
       .single();
 

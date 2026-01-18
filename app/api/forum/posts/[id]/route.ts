@@ -20,9 +20,9 @@ export async function GET(
       .from('forum_posts')
       .select(`
         *,
-        author:users!forum_posts_author_id_fkey(id, role),
-        author_profile:profiles!forum_posts_author_id_fkey(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url),
-        category:forum_categories(id, name, icon)
+        author:users!author_id(id, role),
+        author_profile:profiles!author_id(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url),
+        category:forum_categories!category_id(id, name, icon)
       `)
       .eq('id', id)
       .single();
@@ -48,8 +48,8 @@ export async function GET(
       .from('forum_comments')
       .select(`
         *,
-        author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
+        author:users!author_id(id, role),
+        author_profile:profiles!author_id(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
       `)
       .eq('post_id', id)
       .eq('moderation_status', 'approved')
