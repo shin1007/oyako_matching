@@ -10,6 +10,8 @@ export async function GET(
     const supabase = await createClient();
     const { id } = await params;
 
+    console.log('[POST DETAIL] Fetching post:', id);
+
     // Increment view count
     await supabase.rpc('increment_post_view_count', { post_id: id });
 
@@ -24,6 +26,9 @@ export async function GET(
       `)
       .eq('id', id)
       .single();
+
+    console.log('[POST DETAIL] Post data:', post);
+    console.log('[POST DETAIL] Error:', error);
 
     if (error) throw error;
 
