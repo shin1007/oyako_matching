@@ -18,6 +18,12 @@ interface MatchWithProfile extends Match {
   other_user_name: string;
   other_user_role: string;
   is_requester: boolean; // 現在のユーザーがリクエスター（申請者）か
+  unread_count?: number; // 未読メッセージ数
+  last_message?: {
+    content: string;
+    created_at: string;
+    is_own: boolean;
+  } | null;
 }
 
 export default function MessagesPage() {
@@ -198,14 +204,38 @@ export default function MessagesPage() {
                       {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {match.other_user_name}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {match.other_user_name}
+                        </h3>
+                        {match.unread_count && match.unread_count > 0 && (
+                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full">
+                            {match.unread_count > 9 ? '9+' : match.unread_count}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500">
                         類似度: {(match.similarity_score * 100).toFixed(0)}%
                       </p>
+                      {match.last_message ? (
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                          {match.last_message.is_own && '自分: '}
+                          {match.last_message.content}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-1">
+                          メッセージなし
+                        </p>
+                      )}
                       <p className="text-xs text-gray-400">
-                        {new Date(match.created_at).toLocaleDateString('ja-JP')}
+                        {match.last_message
+                          ? new Date(match.last_message.created_at).toLocaleString('ja-JP', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : new Date(match.created_at).toLocaleDateString('ja-JP')}
                       </p>
                     </div>
                   </div>

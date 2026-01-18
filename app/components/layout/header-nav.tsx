@@ -11,6 +11,7 @@ interface HeaderNavProps {
 
 export function HeaderNav({ user, displayName }: HeaderNavProps) {
   const [pendingCount, setPendingCount] = useState(0);
+  const [totalNotifications, setTotalNotifications] = useState(0);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -18,24 +19,25 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
     if (!user) return;
 
     // 初回読み込み
-    fetchPendingCount();
+    fetchNotifications();
 
     // 30秒ごとにポーリング
-    const interval = setInterval(fetchPendingCount, 30000);
+    const interval = setInterval(fetchNotifications, 30000);
 
     return () => clearInterval(interval);
   }, [user]);
 
-  const fetchPendingCount = async () => {
+  const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications/pending-matches');
+      const response = await fetch('/api/notifications/summary');
       if (response.ok) {
         const data = await response.json();
-        setPendingCount(data.pending_count || 0);
+        setPendingCount(data.pending_matches_count || 0);
+        setTotalNotifications(data.total_notifications || 0);
       }
     } catch (err) {
-      console.error('Failed to fetch pending count:', err);
+      console.error('Failed to fetch notifications:', err);
     } finally {
       setLoading(false);
     }
@@ -64,9 +66,9 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
             className="relative rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100"
           >
             💬 メッセージ
-            {pendingCount > 0 && (
+            {totalNotifications > 0 && (
               <span className="absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full">
-                {pendingCount > 9 ? '9+' : pendingCount}
+                {totalNotifications > 9 ? '9+' : totalNotifications}
               </span>
             )}
           </Link>

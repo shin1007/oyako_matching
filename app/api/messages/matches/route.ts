@@ -43,11 +43,44 @@ export async function GET(request: NextRequest) {
         // 親がマッチング申請する場合が多いため、parent_id === user.id なら申請者
         const is_requester = match.parent_id === user.id;
 
+        // 未読メッセージ数を取得
+        let unread_count = 0;
+        let last_message = null;
+        if (match.status === 'accepted') {
+          const { data: unreadMessages } = await admin
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('match_id', match.id)
+            .neq('sender_id', user.id)
+            .is('read_at', null);
+
+          unread_count = unreadMessages?.length || 0;
+
+          // 最後のメッセージを取得
+          const { data: lastMsg } = await admin
+            .from('messages')
+            .select('content, created_at, sender_id')
+            .eq('match_id', match.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (lastMsg) {
+            last_message = {
+              content: lastMsg.content,
+              created_at: lastMsg.created_at,
+              is_own: lastMsg.sender_id === user.id,
+            };
+          }
+        }
+
         return {
           ...match,
           other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
           other_user_role: userData?.role || 'unknown',
           is_requester,
+          unread_count,
+          last_message,
         };
       })
     );
