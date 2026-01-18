@@ -35,6 +35,14 @@ export default async function DashboardPage() {
     subscription = sub;
   }
 
+  // テストモードチェック（開発環境のみ）
+  const bypassVerification = process.env.NODE_ENV === 'development' && process.env.TEST_MODE_BYPASS_VERIFICATION === 'true';
+  const bypassSubscription = process.env.NODE_ENV === 'development' && process.env.TEST_MODE_BYPASS_SUBSCRIPTION === 'true';
+  
+  // テストモードでは本人確認とサブスクリプションをバイパス
+  const isVerified = bypassVerification || userData?.mynumber_verified;
+  const isSubscriptionActive = bypassSubscription || subscription?.status === 'active';
+
   // Get matching candidates
   const matchingData = await getMatchingCandidates();
 
@@ -169,7 +177,7 @@ export default async function DashboardPage() {
           <div className="space-y-6">
 
             {/* Matching Candidates Notification */}
-            {userData?.mynumber_verified && (
+            {isVerified && (
               <>
                 {matchingData.missingRequiredData ? (
                   <div className={`rounded-lg border-2 ${userData?.role === 'child' ? 'border-orange-300 bg-orange-100' : 'border-green-300 bg-green-100'} p-4`}>
@@ -250,12 +258,12 @@ export default async function DashboardPage() {
                   <div className="rounded-lg border-2 border-orange-200 bg-orange-50 p-6">
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold text-orange-900 mb-2">
-                        {userData?.mynumber_verified ? '🔓 利用可能な機能' : '🔒 利用条件が必要な機能'}
+                        {isVerified ? '🔓 利用可能な機能' : '🔒 利用条件が必要な機能'}
                       </h3>
                       
                       {/* Requirements Status */}
                       <div className="mb-4 space-y-2">
-                        {!userData?.mynumber_verified && (
+                        {!isVerified && (
                           <div className="text-sm text-orange-800 flex items-center gap-3">
                             <div>
                               <span className="font-medium">① マイナンバー認証：</span>
@@ -269,7 +277,7 @@ export default async function DashboardPage() {
                             </Link>
                           </div>
                         )}
-                        {userData?.mynumber_verified && (
+                        {isVerified && (
                           <div className="text-sm text-orange-800 flex items-center gap-3">
                             <div>
                               <span className="font-medium">① マイナンバー認証：</span>
@@ -285,7 +293,7 @@ export default async function DashboardPage() {
                         )}
                       </div>
 
-                      {userData?.mynumber_verified && (
+                      {isVerified && (
                         <p className="text-sm text-orange-800">
                           すべての条件が満たされています - すべての機能がご利用いただけます
                         </p>
@@ -294,7 +302,7 @@ export default async function DashboardPage() {
 
                     <div className="space-y-3">
                       {/* Matching Card */}
-                      {userData?.mynumber_verified ? (
+                      {isVerified ? (
                         <Link
                           href="/matching"
                           className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
@@ -327,7 +335,7 @@ export default async function DashboardPage() {
                       )}
 
                       {/* Messages Card */}
-                      {userData?.mynumber_verified ? (
+                      {isVerified ? (
                         <Link
                           href="/messages"
                           className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
@@ -384,63 +392,63 @@ export default async function DashboardPage() {
                   <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6">
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold text-green-900 mb-2">
-                        {userData?.mynumber_verified && subscription?.status === 'active' ? '🔓 プレミアム機能' : '🔒 利用条件が必要な機能'}
+                        {isVerified && isSubscriptionActive ? '🔓 プレミアム機能' : '🔒 利用条件が必要な機能'}
                       </h3>
                       
                       {/* Requirements Status */}
                       <div className="mb-4 space-y-2">
-                        {!userData?.mynumber_verified && (
-                          <div className="text-sm text-green-800 flex items-center gap-3">
-                            <div className="flex-none w-56">
+                        {!isVerified && (
+                          <div className="text-sm text-green-800 flex items-center justify-between gap-3">
+                            <div>
                               <span className="font-medium">① マイナンバー認証：</span>
                               <span className="text-red-600 font-semibold ml-2">未完了</span>
                             </div>
                             <Link
                               href="/auth/verification"
-                              className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap"
+                              className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap flex-shrink-0"
                             >
                               認証する
                             </Link>
                           </div>
                         )}
-                        {userData?.mynumber_verified && (
-                          <div className="text-sm text-green-800 flex items-center gap-3">
-                            <div className="flex-none w-56">
+                        {isVerified && (
+                          <div className="text-sm text-green-800 flex items-center justify-between gap-3">
+                            <div>
                               <span className="font-medium">① マイナンバー認証：</span>
                               <span className="text-green-600 font-semibold ml-2">✓ 完了</span>
                             </div>
                             <button
                               disabled
-                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap"
+                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap flex-shrink-0"
                             >
                               認証済み
                             </button>
                           </div>
                         )}
                         
-                        {!subscription && (
-                          <div className="text-sm text-green-800 flex items-center gap-3">
-                            <div className="flex-none w-56">
+                        {!isSubscriptionActive && (
+                          <div className="text-sm text-green-800 flex items-center justify-between gap-3">
+                            <div>
                               <span className="font-medium">② サブスクリプション：</span>
                               <span className="text-red-600 font-semibold ml-2">未登録</span>
                             </div>
                             <Link
                               href="/payments/subscribe"
-                              className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap"
+                              className="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm text-white font-medium transition whitespace-nowrap flex-shrink-0"
                             >
                               980円/月
                             </Link>
                           </div>
                         )}
-                        {subscription?.status === 'active' && (
-                          <div className="text-sm text-green-800 flex items-center gap-3">
-                            <div className="flex-none w-56">
+                        {isSubscriptionActive && (
+                          <div className="text-sm text-green-800 flex items-center justify-between gap-3">
+                            <div>
                               <span className="font-medium">② サブスクリプション：</span>
                               <span className="text-green-600 font-semibold ml-2">✓ 登録済み</span>
                             </div>
                             <button
                               disabled
-                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap"
+                              className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap flex-shrink-0"
                             >
                               登録済み
                             </button>
@@ -448,7 +456,7 @@ export default async function DashboardPage() {
                         )}
                       </div>
 
-                      {userData?.mynumber_verified && subscription?.status === 'active' && (
+                      {isVerified && isSubscriptionActive && (
                         <p className="text-sm text-green-800">
                           すべての条件が満たされています - すべての機能がご利用いただけます
                         </p>
@@ -457,7 +465,7 @@ export default async function DashboardPage() {
 
                     <div className="space-y-3">
                       {/* Matching Card */}
-                      {userData?.mynumber_verified && subscription?.status === 'active' ? (
+                      {isVerified && isSubscriptionActive ? (
                         <Link
                           href="/matching"
                           className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
@@ -490,7 +498,7 @@ export default async function DashboardPage() {
                       )}
 
                       {/* Messages Card */}
-                      {userData?.mynumber_verified && subscription?.status === 'active' ? (
+                      {isVerified && isSubscriptionActive ? (
                         <Link
                           href="/messages"
                           className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
