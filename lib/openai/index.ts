@@ -4,15 +4,34 @@
  * 外部APIに依存せず、完全無料で動作
  */
 
-import * as BadWordsPackage from 'bad-words';
 import { badWordsJa, violencePatterns, insultPatterns } from '../moderation/badwords-ja';
 
-// bad-wordsフィルターの初期化
-const Filter = (BadWordsPackage as any).default || BadWordsPackage;
-const filter = new Filter();
+// bad-wordsライブラリは使用せず、シンプルなワードフィルターを実装
+// これによりESMインポートの問題を回避
 
-// 日本語の不適切ワードを追加
-filter.addWords(...badWordsJa);
+/**
+ * テキストに不適切なワードが含まれているかチェック
+ */
+function containsBadWords(text: string): boolean {
+  const lowerText = text.toLowerCase();
+  
+  // 日本語不適切ワード
+  for (const word of badWordsJa) {
+    if (text.includes(word)) {
+      return true;
+    }
+  }
+  
+  // 英語の基本的な不適切ワード（一部）
+  const englishBadWords = ['fuck', 'shit', 'bitch', 'bastard', 'damn'];
+  for (const word of englishBadWords) {
+    if (lowerText.includes(word)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
 
 /**
  * コンテンツのモデレーション
@@ -31,8 +50,8 @@ export async function moderateContent(text: string): Promise<{
   let flagged = false;
 
   try {
-    // 1. bad-wordsライブラリでチェック（英語 + カスタム日本語ワード）
-    if (filter.isProfane(text)) {
+    // 1. 不適切ワードのチェック
+    if (containsBadWords(text)) {
       categories.profanity = true;
       flagged = true;
     }
