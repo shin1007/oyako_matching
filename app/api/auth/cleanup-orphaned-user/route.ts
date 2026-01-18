@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * POST /api/auth/cleanup-orphaned-user
  * Clean up orphaned auth.users records that don't have corresponding public.users entries
  * This can happen when registration fails after auth.users is created but before public.users insert
+ * 
+ * セキュリティ: このエンドポイントは認証が必要です。
+ * ユーザーは自分自身の孤立アカウントのみをクリーンアップできます。
  */
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +22,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[CleanupOrphanedUser] Attempting cleanup for:', email);
+    // 認証チェック: ログインしているユーザーを取得
+    const supabase = await createClient();
+    const {
+      data: { user: authenticatedUser },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    // 認証されていない場合はエラー
+    if (authError || !authenticatedUser) {
+      console.warn('[CleanupOrphanedUser] Unauthorized access attempt for email:', email);
+      return NextResponse.json(
+        { error: '認証が必要です。ログインしてください。' },
+        { status: 401 }
+      );
+    }
+
+    // ユーザーは自分自身のメールアドレスのみクリーンアップ可能
+    if (authenticatedUser.email !== email) {
+      console.warn(
+        '[CleanupOrphanedUser] Forbidden: User',
+        authenticatedUser.email,
+        'attempted to cleanup',
+        email
+      );
+      return NextResponse.json(
+        { error: '他のユーザーのアカウントをクリーンアップすることはできません。' },
+        { status: 403 }
+      );
+    }
+
+    console.log('[CleanupOrphanedUser] Authenticated cleanup attempt for:', email);
 
     const admin = createAdminClient();
 
@@ -70,16 +104,23 @@ export async function POST(request: NextRequest) {
     // User exists in auth.users but not in public.users - this is orphaned
     console.log('[CleanupOrphanedUser] Found orphaned auth user, deleting...');
 
+    // 監査ログ: 削除操作を記録
+    console.log('[CleanupOrphanedUser] AUDIT: User', authenticatedUser.email, 'is deleting orphaned account with ID:', authUser.id);
+
     const { error: deleteError } = await admin.auth.admin.deleteUser(authUser.id);
 
     if (deleteError) {
       console.error('[CleanupOrphanedUser] Error deleting orphaned user:', deleteError);
+      // 監査ログ: 削除失敗を記録
+      console.error('[CleanupOrphanedUser] AUDIT: Failed to delete orphaned account for', email, 'Error:', deleteError.message);
       return NextResponse.json(
         { error: '孤立したユーザーの削除に失敗しました' },
         { status: 500 }
       );
     }
 
+    // 監査ログ: 削除成功を記録
+    console.log('[CleanupOrphanedUser] AUDIT: Successfully deleted orphaned account for', email);
     console.log('[CleanupOrphanedUser] Successfully deleted orphaned user');
 
     return NextResponse.json({
