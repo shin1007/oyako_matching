@@ -250,11 +250,14 @@ export interface User {
 export interface Profile {
   id: string;
   userId: string;
-  fullName: string;
   birthDate: string;
   profileImageUrl?: string;
   bio?: string;
   gender?: Gender;
+  lastNameKanji?: string;
+  lastNameHiragana?: string;
+  firstNameKanji?: string;
+  firstNameHiragana?: string;
   searchingChildBirthDate?: string;
   searchingChildNameHiragana?: string;
   searchingChildNameKanji?: string;

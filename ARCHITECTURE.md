@@ -54,10 +54,17 @@
 ```sql
 - id (UUID, PK)
 - user_id (UUID, FK -> users)
-- full_name (TEXT)
+- last_name_kanji (TEXT)
+- last_name_hiragana (TEXT)
+- first_name_kanji (TEXT)
+- first_name_hiragana (TEXT)
 - birth_date (DATE)
+- birthplace_prefecture (TEXT)
+- birthplace_municipality (TEXT)
+- gender (TEXT)
 - profile_image_url (TEXT)
 - bio (TEXT)
+- forum_display_name (TEXT)
 - created_at (TIMESTAMP)
 - updated_at (TIMESTAMP)
 ```
