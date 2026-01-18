@@ -10,8 +10,7 @@ interface Post {
   title: string;
   content: string;
   author_profile: {
-    last_name_kanji: string;
-    first_name_kanji: string;
+    forum_display_name: string;
     profile_image_url?: string;
   };
   category: {
@@ -30,8 +29,7 @@ interface Comment {
   id: string;
   content: string;
   author_profile: {
-    last_name_kanji: string;
-    first_name_kanji: string;
+    forum_display_name: string;
   };
   created_at: string;
   updated_at: string;
@@ -378,7 +376,7 @@ export default function PostDetailPage() {
               <h1 className="mb-4 text-3xl font-bold text-gray-900">{post.title}</h1>
 
               <div className="mb-6 flex items-center gap-4 text-sm text-gray-500">
-                <span>👤 {post.author_profile.last_name_kanji}{post.author_profile.first_name_kanji}</span>
+                <span>👤 {post.author_profile.forum_display_name}</span>
                 <span>👁️ {post.view_count}回閲覧</span>
                 <span>🕒 {formatDate(post.created_at)}</span>
                 {post.updated_at !== post.created_at && (
@@ -533,7 +531,7 @@ export default function PostDetailPage() {
                     <>
                       <div className="mb-2 flex items-center gap-4 text-sm text-gray-500">
                         <span className="font-semibold text-gray-700">
-                          {comment.author_profile.last_name_kanji}{comment.author_profile.first_name_kanji}
+                          {comment.author_profile.forum_display_name}
                         </span>
                         <span>🕒 {formatDate(comment.created_at)}</span>
                         {comment.updated_at !== comment.created_at && (

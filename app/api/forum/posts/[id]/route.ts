@@ -19,7 +19,7 @@ export async function GET(
       .select(`
         *,
         author:users!forum_posts_author_id_fkey(id, role),
-        author_profile:profiles!forum_posts_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url),
+        author_profile:profiles!forum_posts_author_id_fkey(forum_display_name, profile_image_url),
         category:forum_categories(id, name, icon)
       `)
       .eq('id', id)
@@ -33,7 +33,7 @@ export async function GET(
       .select(`
         *,
         author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url)
+        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, profile_image_url)
       `)
       .eq('post_id', id)
       .eq('moderation_status', 'approved')

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const authorIds = [...new Set(postsData.map(post => post.author_id))];
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('user_id, last_name_kanji, first_name_kanji, profile_image_url')
+      .select('user_id, forum_display_name, profile_image_url')
       .in('user_id', authorIds);
 
     if (profilesError) throw profilesError;

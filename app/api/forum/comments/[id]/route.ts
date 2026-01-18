@@ -52,7 +52,7 @@ export async function PATCH(
       .select(`
         *,
         author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url)
+        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, profile_image_url)
       `)
       .single();
 
