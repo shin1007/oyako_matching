@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isTestModeEnabled } from '@/lib/utils/testMode';
+import { isTestModeBypassVerificationEnabled, isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 
 // マッチングスコアの定数
 const DEFAULT_PROFILE_MATCH_SCORE = 0.5; // 基本スコア
@@ -350,10 +350,11 @@ export async function GET(request: NextRequest) {
     }
 
     // テストモードチェック（開発環境のみ有効）
-    const isTestMode = isTestModeEnabled();
+    const bypassVerification = isTestModeBypassVerificationEnabled();
+    const bypassSubscription = isTestModeBypassSubscriptionEnabled();
 
     // 早期リターン: 本人確認チェック（テストモードではスキップ）
-    if (!isTestMode && userData.verification_status !== 'verified') {
+    if (!bypassVerification && userData.verification_status !== 'verified') {
       return NextResponse.json(
         { error: '本人確認が必要です' },
         { status: 403 }
@@ -361,7 +362,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 早期リターン: サブスクリプションチェック（テストモードではスキップ）
-    if (!isTestMode && userData.role === 'parent') {
+    if (!bypassSubscription && userData.role === 'parent') {
       const { data: subscription } = await admin
         .from('subscriptions')
         .select('status')

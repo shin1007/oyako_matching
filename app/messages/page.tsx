@@ -23,11 +23,14 @@ export default function MessagesPage() {
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
+  const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     checkAuth();
+    checkTestMode();
     loadMatches();
   }, []);
 
@@ -35,6 +38,20 @@ export default function MessagesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/auth/login');
+    }
+  };
+
+  const checkTestMode = async () => {
+    try {
+      const response = await fetch('/api/test-mode/status');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[MessagesPage] Test mode status:', data);
+        setTestModeBypassVerification(data.bypassVerification);
+        setTestModeBypassSubscription(data.bypassSubscription);
+      }
+    } catch (err) {
+      console.error('[MessagesPage] Failed to check test mode:', err);
     }
   };
 
@@ -136,6 +153,24 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8">
+        {testModeBypassVerification && (
+          <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
+            </div>
+          </div>
+        )}
+
+        {testModeBypassSubscription && (
+          <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">メッセージ</h1>
           <p className="mt-2 text-gray-600">

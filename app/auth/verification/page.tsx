@@ -70,11 +70,6 @@ export default function VerificationPage() {
     }
   };
 
-  const handleSkip = () => {
-    // For development/testing, allow skipping verification
-    router.push('/dashboard');
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-2xl">
@@ -110,13 +105,6 @@ export default function VerificationPage() {
               className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? '認証開始中...' : 'マイナンバーカード認証を開始'}
-            </button>
-
-            <button
-              onClick={handleSkip}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-50"
-            >
-              後で認証する（テスト用）
             </button>
           </div>
 

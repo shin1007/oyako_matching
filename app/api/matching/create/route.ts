@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isTestModeEnabled } from '@/lib/utils/testMode';
+import { isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,10 +44,10 @@ export async function POST(request: NextRequest) {
     const childId = currentUser.role === 'child' ? user.id : targetUserId;
 
     // テストモードチェック（開発環境のみ有効）
-    const isTestMode = isTestModeEnabled();
+    const bypassSubscription = isTestModeBypassSubscriptionEnabled();
     
     // 決済チェック（テストモードではスキップ）
-    if (!isTestMode && currentUser.role === 'parent') {
+    if (!bypassSubscription && currentUser.role === 'parent') {
       // 親がマッチングを申請する場合、アクティブなサブスクリプションを確認
       const { data: subscription } = await supabase
         .from('subscriptions')
