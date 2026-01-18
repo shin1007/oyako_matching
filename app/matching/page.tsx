@@ -397,7 +397,7 @@ export default function MatchingPage() {
                                     href={`/messages/${match.existingMatchId}`}
                                     className="w-full block text-center rounded-lg bg-blue-600 px-3 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
                                   >
-                                    メッセージを見る
+                                    メッセージへ
                                   </Link>
                                 ) : match.existingMatchStatus === 'pending' ? (
                                   <button
@@ -510,7 +510,7 @@ export default function MatchingPage() {
                             href={`/messages/${match.existingMatchId}`}
                             className="w-full block text-center rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
                           >
-                            メッセージを見る
+                            メッセージへ
                           </Link>
                         ) : match.existingMatchStatus === 'pending' ? (
                           <button
