@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { linkifyText } from '@/lib/utils/linkify';
 
 interface Message {
   id: string;
@@ -257,7 +258,9 @@ export default function MessageDetailPage() {
                             : 'bg-gray-200 text-gray-900'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        <p className="whitespace-pre-wrap break-words">
+                          {linkifyText(message.content)}
+                        </p>
                         <div className={`flex items-center justify-between gap-2 mt-1`}>
                           <p
                             className={`text-xs ${
