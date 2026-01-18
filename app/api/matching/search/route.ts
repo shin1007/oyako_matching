@@ -260,7 +260,91 @@ function calculateChildMatchScore(
 }
 
 /**
- * 子アカウント用：親候補に対するマッチングスコアを計算
+ * 子アカウント用：子が探している親の条件と親候補のマッチングスコアを計算（子→親方向）
+ */
+async function calculateParentToChildReverseScore(
+  admin: any,
+  childUserId: string,
+  parentProfile: any
+): Promise<number | null> {
+  // 子が探している親の情報を取得（searching_childrenテーブルを使用）
+  const { data: searchingParents } = await admin
+    .from('searching_children')
+    .select('gender, birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture')
+    .eq('user_id', childUserId);
+
+  if (!searchingParents || searchingParents.length === 0) {
+    // 子が親を探す情報を登録していない場合はnull
+    return null;
+  }
+
+  // 複数の親候補から最も高いスコアを選択
+  let maxScore = 0;
+
+  for (const searchingParent of searchingParents) {
+    let score = 0.20; // 基本スコア
+
+    // 性別チェック（重要）
+    if (searchingParent.gender && parentProfile.gender) {
+      if (searchingParent.gender !== parentProfile.gender) {
+        continue; // 性別不一致の場合はスキップ
+      }
+      // 性別一致の場合は継続
+    } else {
+      // 性別情報がない場合は軽微なペナルティ
+      score += 0.10;
+    }
+
+    // 生年の近さ（寛容）
+    if (searchingParent.birth_date && parentProfile.birth_date) {
+      const searchingYear = new Date(searchingParent.birth_date).getFullYear();
+      const parentYear = new Date(parentProfile.birth_date).getFullYear();
+      const yearDiff = Math.abs(searchingYear - parentYear);
+
+      if (yearDiff <= 5) {
+        score += 0.30;
+      } else if (yearDiff <= 10) {
+        score += 0.20;
+      } else if (yearDiff <= 15) {
+        score += 0.10;
+      }
+    } else {
+      score += 0.10; // データなしの場合は軽微なボーナス
+    }
+
+    // ひらがな氏名の一致（寛容）
+    if (searchingParent.last_name_hiragana && parentProfile.last_name_hiragana) {
+      const searchingHiragana = (searchingParent.last_name_hiragana + (searchingParent.first_name_hiragana || '')).trim();
+      const parentHiragana = (parentProfile.last_name_hiragana + (parentProfile.first_name_hiragana || '')).trim();
+      
+      if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
+        score += 0.15;
+      } else if (searchingHiragana && parentHiragana) {
+        // 部分一致チェック
+        const commonChars = searchingHiragana.split('').filter(char => parentHiragana.includes(char));
+        if (commonChars.length > 0) {
+          score += 0.05;
+        }
+      }
+    }
+
+    // 出身地の一致（寛容）
+    if (searchingParent.birthplace_prefecture && parentProfile.birthplace_prefecture) {
+      if (searchingParent.birthplace_prefecture === parentProfile.birthplace_prefecture) {
+        score += 0.15;
+      }
+    } else if (!searchingParent.birthplace_prefecture) {
+      score += 0.05; // データなしの場合は軽微なボーナス
+    }
+
+    maxScore = Math.max(maxScore, score);
+  }
+
+  return maxScore > 0 ? Math.min(0.80, maxScore) : null; // 最大80%
+}
+
+/**
+ * 子アカウント用：親候補に対するマッチングスコアを計算（親→子方向）
  */
 async function calculateChildToParentMatchScore(
   admin: any,
@@ -499,16 +583,37 @@ export async function GET(request: NextRequest) {
         const scorePerChild: Record<string, number> = {};
         let detailedScore = match.similarity_score;
 
-        // For child users, calculate detailed matching score
+        // For child users, calculate bidirectional matching score
         if (userData.role === 'child' && currentUserProfile && targetUserData?.role === 'parent') {
-          detailedScore = await calculateChildToParentMatchScore(
+          // 親→子方向のスコア（親が探している子どもと自分のプロフィールの一致度）
+          const parentToChildScore = await calculateChildToParentMatchScore(
             admin,
             match.matched_user_id,
             currentUserProfile
           );
-          console.log(
-            `[Matching] Child user detailed score for parent ${match.matched_user_id}: ${detailedScore.toFixed(2)}`
+          
+          // 子→親方向のスコア（子が探している親と相手のプロフィールの一致度）
+          const childToParentScore = await calculateParentToChildReverseScore(
+            admin,
+            user.id,
+            profile
           );
+
+          if (childToParentScore === null) {
+            // 子が親を探す情報を登録していない場合は親→子のスコアのみ使用
+            detailedScore = parentToChildScore;
+            console.log(
+              `[Matching] Child user score (parent→child only) for parent ${match.matched_user_id}: ${detailedScore.toFixed(2)}`
+            );
+          } else {
+            // 双方向スコアの加重平均（親→子: 60%, 子→親: 40%）
+            detailedScore = (parentToChildScore * 0.60) + (childToParentScore * 0.40);
+            console.log(
+              `[Matching] Child user bidirectional score for parent ${match.matched_user_id}: ` +
+              `parent→child=${parentToChildScore.toFixed(2)}, child→parent=${childToParentScore.toFixed(2)}, ` +
+              `final=${detailedScore.toFixed(2)}`
+            );
+          }
         }
 
         // For parents, calculate scores per child
