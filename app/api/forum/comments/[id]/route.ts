@@ -40,7 +40,7 @@ export async function PATCH(
     const moderation = await moderateContent(content);
     if (moderation.flagged) {
       return NextResponse.json(
-        { error: 'Content contains inappropriate material' },
+        { error: moderation.message || '不適切な内容が含まれています' },
         { status: 400 }
       );
     }

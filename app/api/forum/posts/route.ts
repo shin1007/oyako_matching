@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     const moderation = await moderateContent(`${title} ${content}`);
     if (moderation.flagged) {
       return NextResponse.json(
-        { error: 'Content contains inappropriate material' },
+        { error: moderation.message || '不適切な内容が含まれています' },
         { status: 400 }
       );
     }
