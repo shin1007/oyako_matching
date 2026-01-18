@@ -66,16 +66,19 @@ export async function updateSession(request: NextRequest) {
 
   // 現在のパスが保護されたルートかチェック
   const pathname = request.nextUrl.pathname;
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
+  const isProtectedRoute = protectedRoutes.some((route) => {
+    // 完全一致または子パス（/dashboard/profile など）をチェック
+    return pathname === route || pathname.startsWith(route + '/');
+  });
 
   // 保護されたルートで未認証の場合、ログインページにリダイレクト
   if (isProtectedRoute && !user) {
     const redirectUrl = new URL('/auth/login', request.url);
     // リダイレクト後に元のページに戻れるよう、リダイレクト先URLをクエリパラメータに含める
-    redirectUrl.searchParams.set('redirect', pathname);
-    
+    // オープンリダイレクト脆弱性を防ぐため、相対パスのみを許可
+    if (pathname && !pathname.includes('://')) {
+      redirectUrl.searchParams.set('redirect', pathname);
+    }
     const response = NextResponse.redirect(redirectUrl);
     // クッキーを保持
     const cookies = supabaseResponse.cookies.getAll();
