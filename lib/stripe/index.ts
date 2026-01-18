@@ -5,9 +5,9 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   typescript: true,
 });
 
-// 月額1,000円のサブスクリプション
+// 月額980円のサブスクリプション
 export const SUBSCRIPTION_PRICE_ID = process.env.STRIPE_PRICE_ID || 'price_parent_subscription';
-export const SUBSCRIPTION_AMOUNT = 1000; // ¥1,000
+export const SUBSCRIPTION_AMOUNT = 980; // ¥980
 
 export async function createCheckoutSession(
   customerId: string,
