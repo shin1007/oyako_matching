@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
+import { checkRateLimit, recordRateLimitAction, POST_RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -150,6 +151,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      user.id,
+      'post',
+      POST_RATE_LIMITS
+    );
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          error: rateLimitResult.message,
+          retryAfter: rateLimitResult.retryAfter?.toISOString()
+        },
+        { status: 429 }
+      );
+    }
+
     // Moderate content
     const moderation = await moderateContent(`${title} ${content}`);
     if (moderation.flagged) {
@@ -172,6 +191,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    // Record rate limit action
+    await recordRateLimitAction(supabase, user.id, 'post');
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (error: any) {

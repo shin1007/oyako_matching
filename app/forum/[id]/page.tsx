@@ -46,6 +46,8 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [retryAfter, setRetryAfter] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState<string>('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isParent, setIsParent] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -75,6 +77,41 @@ export default function PostDetailPage() {
       checkReportedItems();
     }
   }, [currentUserId, post]);
+
+  useEffect(() => {
+    if (!retryAfter) return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = retryAfter.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setRetryAfter(null);
+        setCountdown('');
+        setError('');
+        return;
+      }
+
+      const seconds = Math.ceil(diff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      
+      if (hours > 0) {
+        const remainingMinutes = minutes % 60;
+        setCountdown(`${hours}時間${remainingMinutes > 0 ? remainingMinutes + '分' : ''}後にコメント可能`);
+      } else if (minutes > 0) {
+        const remainingSeconds = seconds % 60;
+        setCountdown(`${minutes}分${remainingSeconds > 0 ? remainingSeconds + '秒' : ''}後にコメント可能`);
+      } else {
+        setCountdown(`${seconds}秒後にコメント可能`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [retryAfter]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -135,6 +172,7 @@ export default function PostDetailPage() {
 
     setSubmitting(true);
     setError('');
+    setRetryAfter(null);
 
     try {
       const response = await fetch('/api/forum/comments', {
@@ -150,6 +188,9 @@ export default function PostDetailPage() {
 
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 429 && data.retryAfter) {
+          setRetryAfter(new Date(data.retryAfter));
+        }
         throw new Error(data.error || 'コメントの投稿に失敗しました');
       }
 
@@ -359,6 +400,14 @@ export default function PostDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto max-w-4xl px-4 py-8">
+        <div className="mb-4">
+          <Link
+            href="/forum"
+            className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100"
+          >
+            ← ピアサポート掲示板に戻る
+          </Link>
+        </div>
         {/* Post */}
         <div className="mb-8 rounded-lg bg-white p-8 shadow">
           {editingPostId === post.id ? (
@@ -542,8 +591,13 @@ export default function PostDetailPage() {
           </h2>
 
           {error && (
-            <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-600">
-              {error}
+            <div className="mb-6 rounded-lg bg-red-50 p-4">
+              <p className="text-sm text-red-600">{error}</p>
+              {countdown && (
+                <p className="mt-2 text-sm font-semibold text-red-700">
+                  ⏱️ {countdown}
+                </p>
+              )}
             </div>
           )}
 
@@ -555,14 +609,15 @@ export default function PostDetailPage() {
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="コメントを入力..."
                 rows={4}
-                className="mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                disabled={!!retryAfter}
+                className="mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <button
                 type="submit"
-                disabled={submitting || !newComment.trim()}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={submitting || !newComment.trim() || !!retryAfter}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? 'コメント中...' : 'コメントする'}
+                {submitting ? 'コメント中...' : retryAfter ? countdown : 'コメントする'}
               </button>
             </form>
           ) : (
