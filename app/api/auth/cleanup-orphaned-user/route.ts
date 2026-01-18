@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
 
     // 認証されていない場合はエラー
     if (authError || !authenticatedUser) {
-      console.warn('[CleanupOrphanedUser] Unauthorized access attempt to cleanup endpoint');
+      // セキュリティ監視のため、内部ログには対象メールを記録
+      // ただし、ユーザーには一般的なエラーメッセージのみを返す
+      console.warn('[CleanupOrphanedUser] Unauthorized access attempt to cleanup endpoint. Target:', email);
       return NextResponse.json(
         { error: '認証が必要です。ログインしてください。' },
         { status: 401 }
@@ -110,8 +112,8 @@ export async function POST(request: NextRequest) {
 
     if (deleteError) {
       console.error('[CleanupOrphanedUser] Error deleting orphaned user:', deleteError);
-      // 監査ログ: 削除失敗を記録
-      console.error('[CleanupOrphanedUser] AUDIT: Failed to delete orphaned account for', email, 'Error:', deleteError.message);
+      // 監査ログ: 削除失敗を記録（エラーの種類のみ、詳細は含めない）
+      console.error('[CleanupOrphanedUser] AUDIT: Failed to delete orphaned account for', email, 'Error type:', deleteError.name || 'Unknown');
       return NextResponse.json(
         { error: '孤立したユーザーの削除に失敗しました' },
         { status: 500 }
