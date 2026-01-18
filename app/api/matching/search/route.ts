@@ -492,7 +492,24 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    return NextResponse.json({ candidates: filteredMatchDetails, userRole: userData.role, searchingChildren });
+    // 各候補について既存のマッチング状態を確認
+    const candidatesWithMatchStatus = await Promise.all(
+      filteredMatchDetails.map(async (candidate) => {
+        const { data: existingMatch } = await admin
+          .from('matches')
+          .select('id, status')
+          .or(`and(parent_id.eq.${user.id},child_id.eq.${candidate.userId}),and(parent_id.eq.${candidate.userId},child_id.eq.${user.id})`)
+          .maybeSingle();
+
+        return {
+          ...candidate,
+          existingMatchId: existingMatch?.id || null,
+          existingMatchStatus: existingMatch?.status || null,
+        };
+      })
+    );
+
+    return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, searchingChildren });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(
