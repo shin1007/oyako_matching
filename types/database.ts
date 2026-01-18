@@ -5,6 +5,9 @@ export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplet
 export type VerificationStatus = 'pending' | 'verified' | 'failed';
 export type SearchingChildGender = 'male' | 'female' | 'other';
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
+export type ReportReason = 'spam' | 'harassment' | 'personal_info' | 'inappropriate' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+export type ReportContentType = 'post' | 'comment';
 
 export interface Database {
   public: {
@@ -202,6 +205,35 @@ export interface Database {
           display_order?: number;
         };
       };
+      forum_reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          reported_content_type: ReportContentType;
+          reported_content_id: string;
+          report_reason: ReportReason;
+          report_details: string | null;
+          status: ReportStatus;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          reporter_id: string;
+          reported_content_type: ReportContentType;
+          reported_content_id: string;
+          report_reason: ReportReason;
+          report_details?: string | null;
+          status?: ReportStatus;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+        };
+        Update: {
+          status?: ReportStatus;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+        };
+      };
     };
   };
 }
@@ -266,4 +298,17 @@ export interface SearchingChild {
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ForumReport {
+  id: string;
+  reporterId: string;
+  reportedContentType: ReportContentType;
+  reportedContentId: string;
+  reportReason: ReportReason;
+  reportDetails?: string;
+  status: ReportStatus;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
 }

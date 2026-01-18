@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import ReportModal from '@/app/components/forum/ReportModal';
+import type { ReportContentType } from '@/types/database';
 
 interface Post {
   id: string;
@@ -53,6 +55,11 @@ export default function PostDetailPage() {
   const [editCommentContent, setEditCommentContent] = useState('');
   const [showDeletePostDialog, setShowDeletePostDialog] = useState(false);
   const [showDeleteCommentDialog, setShowDeleteCommentDialog] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportContentType, setReportContentType] = useState<ReportContentType>('post');
+  const [reportContentId, setReportContentId] = useState('');
+  const [reportContentPreview, setReportContentPreview] = useState('');
+  const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
   const router = useRouter();
   const supabase = createClient();
 
@@ -62,6 +69,12 @@ export default function PostDetailPage() {
       loadPost();
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (currentUserId && post) {
+      checkReportedItems();
+    }
+  }, [currentUserId, post]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -79,6 +92,23 @@ export default function PostDetailPage() {
       .single();
 
     setIsParent(userData?.role === 'parent');
+  };
+
+  const checkReportedItems = async () => {
+    if (!currentUserId) return;
+
+    const { data: reports } = await supabase
+      .from('forum_reports')
+      .select('reported_content_type, reported_content_id')
+      .eq('reporter_id', currentUserId)
+      .in('status', ['pending', 'reviewed']);
+
+    if (reports) {
+      const reported = new Set(
+        reports.map(r => `${r.reported_content_type}:${r.reported_content_id}`)
+      );
+      setReportedItems(reported);
+    }
   };
 
   const loadPost = async () => {
@@ -273,6 +303,28 @@ export default function PostDetailPage() {
     }
   };
 
+  const handleReportPost = (post: Post) => {
+    setReportContentType('post');
+    setReportContentId(post.id);
+    setReportContentPreview(post.title);
+    setShowReportModal(true);
+  };
+
+  const handleReportComment = (comment: Comment) => {
+    setReportContentType('comment');
+    setReportContentId(comment.id);
+    setReportContentPreview(comment.content);
+    setShowReportModal(true);
+  };
+
+  const handleReportSuccess = () => {
+    checkReportedItems();
+  };
+
+  const isReported = (type: ReportContentType, id: string) => {
+    return reportedItems.has(`${type}:${id}`);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('ja-JP', {
       year: 'numeric',
@@ -390,23 +442,37 @@ export default function PostDetailPage() {
                 {post.content}
               </div>
 
-              {/* Edit/Delete Buttons - Only for post author */}
-              {currentUserId === post.author_id && (
-                <div className="flex gap-2 pt-4 border-t border-gray-200">
+              {/* Edit/Delete/Report Buttons */}
+              <div className="flex gap-2 pt-4 border-t border-gray-200">
+                {currentUserId === post.author_id ? (
+                  <>
+                    <button
+                      onClick={handleEditPost}
+                      className="rounded-lg bg-blue-100 px-4 py-2 text-sm text-blue-700 hover:bg-blue-200"
+                    >
+                      ✏️ 編集
+                    </button>
+                    <button
+                      onClick={() => setShowDeletePostDialog(true)}
+                      className="rounded-lg bg-red-100 px-4 py-2 text-sm text-red-700 hover:bg-red-200"
+                    >
+                      🗑️ 削除
+                    </button>
+                  </>
+                ) : (
                   <button
-                    onClick={handleEditPost}
-                    className="rounded-lg bg-blue-100 px-4 py-2 text-sm text-blue-700 hover:bg-blue-200"
+                    onClick={() => handleReportPost(post)}
+                    disabled={isReported('post', post.id)}
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                      isReported('post', post.id)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-red-50 text-red-600 hover:bg-red-100'
+                    }`}
                   >
-                    ✏️ 編集
+                    {isReported('post', post.id) ? '✓ 通報済み' : '🚨 通報'}
                   </button>
-                  <button
-                    onClick={() => setShowDeletePostDialog(true)}
-                    className="rounded-lg bg-red-100 px-4 py-2 text-sm text-red-700 hover:bg-red-200"
-                  >
-                    🗑️ 削除
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
         </div>
@@ -556,23 +622,37 @@ export default function PostDetailPage() {
                       </div>
                       <p className="whitespace-pre-wrap text-gray-700 mb-2">{comment.content}</p>
                       
-                      {/* Edit/Delete Buttons - Only for comment author */}
-                      {currentUserId === comment.author_id && (
-                        <div className="flex gap-2 mt-2">
+                      {/* Edit/Delete/Report Buttons */}
+                      <div className="flex gap-2 mt-2">
+                        {currentUserId === comment.author_id ? (
+                          <>
+                            <button
+                              onClick={() => handleEditComment(comment)}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              ✏️ 編集
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteCommentDialog(comment.id)}
+                              className="text-xs text-red-600 hover:text-red-800"
+                            >
+                              🗑️ 削除
+                            </button>
+                          </>
+                        ) : (
                           <button
-                            onClick={() => handleEditComment(comment)}
-                            className="text-xs text-blue-600 hover:text-blue-800"
+                            onClick={() => handleReportComment(comment)}
+                            disabled={isReported('comment', comment.id)}
+                            className={`text-xs ${
+                              isReported('comment', comment.id)
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-red-600 hover:text-red-800'
+                            }`}
                           >
-                            ✏️ 編集
+                            {isReported('comment', comment.id) ? '✓ 通報済み' : '🚨 通報'}
                           </button>
-                          <button
-                            onClick={() => setShowDeleteCommentDialog(comment.id)}
-                            className="text-xs text-red-600 hover:text-red-800"
-                          >
-                            🗑️ 削除
-                          </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </>
                   )}
 
@@ -635,6 +715,16 @@ export default function PostDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Report Modal */}
+        <ReportModal
+          contentType={reportContentType}
+          contentId={reportContentId}
+          contentPreview={reportContentPreview}
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          onSuccess={handleReportSuccess}
+        />
       </main>
     </div>
   );
