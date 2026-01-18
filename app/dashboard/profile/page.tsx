@@ -350,14 +350,14 @@ export default function ProfilePage() {
                     <li className="flex items-start gap-2">
                       <span className="text-blue-600 font-bold mt-0.5">👤</span>
                       <div>
-                        <strong>氏名（ひらがな）</strong> - 追加で+10〜15点
+                        <strong>氏名（ひらがな）</strong> - 追加で+10点
                         <div className="text-xs text-gray-600 mt-0.5">部分一致でもスコアが向上します</div>
                       </div>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-blue-600 font-bold mt-0.5">📍</span>
                       <div>
-                        <strong>出身地</strong> - 追加で+10〜15点
+                        <strong>出身地</strong> - 追加で+10点
                         <div className="text-xs text-gray-600 mt-0.5">都道府県一致で+10点、市区町村まで一致でさらに向上</div>
                       </div>
                     </li>
