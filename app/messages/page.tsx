@@ -198,18 +198,18 @@ export default function MessagesPage() {
                 key={match.id}
                 className="rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl flex-shrink-0">
                       {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">
                           {match.other_user_name}
                         </h3>
                         {match.unread_count && match.unread_count > 0 && (
-                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full">
+                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full flex-shrink-0">
                             {match.unread_count > 9 ? '9+' : match.unread_count}
                           </span>
                         )}
@@ -239,7 +239,7 @@ export default function MessagesPage() {
                       </p>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex-shrink-0">
                     {getStatusBadge(match.status)}
                   </div>
                 </div>
