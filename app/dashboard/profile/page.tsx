@@ -9,8 +9,6 @@ import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures'
 interface SearchingChild {
   id?: string;
   birthDate: string;
-  nameHiragana: string;
-  nameKanji: string;
   lastNameKanji: string;
   lastNameHiragana: string;
   firstNameKanji: string;
@@ -38,8 +36,6 @@ export default function ProfilePage() {
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
     { 
       birthDate: '', 
-      nameHiragana: '', 
-      nameKanji: '',
       lastNameKanji: '',
       lastNameHiragana: '',
       firstNameKanji: '',
@@ -121,8 +117,6 @@ export default function ProfilePage() {
         setSearchingChildren(childrenData.map(child => ({
           id: child.id,
           birthDate: child.birth_date || '',
-          nameHiragana: child.name_hiragana || '',
-          nameKanji: child.name_kanji || '',
           lastNameKanji: (child as any).last_name_kanji || '',
           lastNameHiragana: (child as any).last_name_hiragana || '',
           firstNameKanji: (child as any).first_name_kanji || '',
@@ -191,15 +185,13 @@ export default function ProfilePage() {
       const childrenToInsert = searchingChildren
         .filter(child => 
           child.lastNameKanji || child.firstNameKanji ||
-          child.birthDate || child.nameHiragana || child.nameKanji || 
+          child.birthDate || 
           child.lastNameHiragana || child.firstNameHiragana || 
           child.gender || child.birthplacePrefecture || child.birthplaceMunicipality
         )
         .map((child, index) => ({
           user_id: user.id,
           birth_date: child.birthDate || null,
-          name_hiragana: child.nameHiragana || null,
-          name_kanji: child.nameKanji || null,
           last_name_kanji: child.lastNameKanji || null,
           last_name_hiragana: child.lastNameHiragana || null,
           first_name_kanji: child.firstNameKanji || null,
@@ -246,8 +238,6 @@ export default function ProfilePage() {
       ...searchingChildren,
       { 
         birthDate: '', 
-        nameHiragana: '', 
-        nameKanji: '',
         lastNameKanji: '',
         lastNameHiragana: '',
         firstNameKanji: '',
@@ -571,38 +561,6 @@ export default function ProfilePage() {
                             <option value="female">女性</option>
                             <option value="other">その他</option>
                           </select>
-                        </div>
-
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <h5 className="text-xs font-semibold text-gray-600 mb-3">詳細な氏名（後方互換性用）</h5>
-                          <div className="grid grid-cols-2 gap-2 mb-3">
-                            <div>
-                              <label htmlFor={`searchingChildNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
-                                名前（ひらがな）
-                              </label>
-                              <input
-                                id={`searchingChildNameHiragana-${index}`}
-                                type="text"
-                                value={child.nameHiragana}
-                                onChange={(e) => updateSearchingChild(index, 'nameHiragana', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                placeholder="例: たろう"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor={`searchingChildNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
-                                名前（漢字）
-                              </label>
-                              <input
-                                id={`searchingChildNameKanji-${index}`}
-                                type="text"
-                                value={child.nameKanji}
-                                onChange={(e) => updateSearchingChild(index, 'nameKanji', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                placeholder="例: 太郎"
-                              />
-                            </div>
-                          </div>
                         </div>
 
                         <div>

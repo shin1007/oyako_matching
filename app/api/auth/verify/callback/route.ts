@@ -54,10 +54,16 @@ export async function GET(request: NextRequest) {
 
     // Create or update profile
     if (result.fullName && result.birthDate) {
+      // xIDから取得したフルネームを姓と名に分割（スペースで分割）
+      const nameParts = result.fullName.trim().split(/\s+/);
+      const lastName = nameParts[0] || '';
+      const firstName = nameParts.slice(1).join(' ') || '';
+      
       // @ts-ignore - Supabase types not fully configured
       await supabase.from('profiles').upsert({
         user_id: user.id,
-        full_name: result.fullName,
+        last_name_kanji: lastName,
+        first_name_kanji: firstName,
         birth_date: result.birthDate,
       });
     }
