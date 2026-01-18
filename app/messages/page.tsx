@@ -17,6 +17,7 @@ interface Match {
 interface MatchWithProfile extends Match {
   other_user_name: string;
   other_user_role: string;
+  is_requester: boolean; // 現在のユーザーがリクエスター（申請者）か
 }
 
 export default function MessagesPage() {
@@ -60,44 +61,21 @@ export default function MessagesPage() {
     setError('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // APIを通じてマッチ情報を取得（管理者権限で他ユーザー情報も取得）
+      const response = await fetch('/api/messages/matches', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // Get matches where user is involved
-      const { data: matchesData, error: matchesError } = await supabase
-        .from('matches')
-        .select('*')
-        .or(`parent_id.eq.${user.id},child_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'マッチングの読み込みに失敗しました');
+      }
 
-      if (matchesError) throw matchesError;
-
-      // Get profiles for other users
-      const matchesWithProfiles = await Promise.all(
-        (matchesData || []).map(async (match) => {
-          const otherUserId = match.parent_id === user.id ? match.child_id : match.parent_id;
-          
-          const { data: userData } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', otherUserId)
-            .single();
-
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('last_name_kanji, first_name_kanji')
-            .eq('user_id', otherUserId)
-            .single();
-
-          return {
-            ...match,
-            other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
-            other_user_role: userData?.role || 'unknown',
-          };
-        })
-      );
-
-      setMatches(matchesWithProfiles);
+      const data = await response.json();
+      setMatches(data.matches);
     } catch (err: any) {
       setError(err.message || 'マッチングの読み込みに失敗しました');
     } finally {
@@ -236,7 +214,7 @@ export default function MessagesPage() {
                   </div>
                 </div>
 
-                {match.status === 'pending' && (
+                {match.status === 'pending' && !match.is_requester && (
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => handleAccept(match.id)}
@@ -250,6 +228,14 @@ export default function MessagesPage() {
                     >
                       拒否
                     </button>
+                  </div>
+                )}
+
+                {match.status === 'pending' && match.is_requester && (
+                  <div className="mt-4">
+                    <div className="rounded-lg bg-yellow-50 px-4 py-2 text-center text-sm text-yellow-800">
+                      相手の返信を待っています...
+                    </div>
                   </div>
                 )}
 
