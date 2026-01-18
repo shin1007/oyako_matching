@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
+import { checkRateLimit, recordRateLimitAction, POST_RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     const authorIds = [...new Set(postsData.map(post => post.author_id))];
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('user_id, last_name_kanji, first_name_kanji, profile_image_url')
+      .select('user_id, forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
       .in('user_id', authorIds);
 
     if (profilesError) throw profilesError;
@@ -75,7 +76,14 @@ export async function GET(request: NextRequest) {
 
     // プロフィールとカテゴリをマップに変換
     const profileMap = profiles?.reduce((acc, profile) => {
-      acc[profile.user_id] = profile;
+      // フォールバック: forum_display_nameがない場合はフルネームを使用
+      const displayName = profile.forum_display_name || 
+        `${profile.last_name_kanji || ''}${profile.first_name_kanji || '名無し'}`;
+      
+      acc[profile.user_id] = {
+        forum_display_name: displayName,
+        profile_image_url: profile.profile_image_url
+      };
       return acc;
     }, {} as Record<string, any>) || {};
 
@@ -143,11 +151,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      user.id,
+      'post',
+      POST_RATE_LIMITS
+    );
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          error: rateLimitResult.message,
+          retryAfter: rateLimitResult.retryAfter?.toISOString()
+        },
+        { status: 429 }
+      );
+    }
+
     // Moderate content
     const moderation = await moderateContent(`${title} ${content}`);
     if (moderation.flagged) {
       return NextResponse.json(
-        { error: 'Content contains inappropriate material' },
+        { error: moderation.message || '不適切な内容が含まれています' },
         { status: 400 }
       );
     }
@@ -165,6 +191,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    // Record rate limit action
+    await recordRateLimitAction(supabase, user.id, 'post');
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (error: any) {

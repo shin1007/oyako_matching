@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
+import { checkRateLimit, recordRateLimitAction, COMMENT_RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,11 +36,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      user.id,
+      'comment',
+      COMMENT_RATE_LIMITS,
+      post_id
+    );
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          error: rateLimitResult.message,
+          retryAfter: rateLimitResult.retryAfter?.toISOString()
+        },
+        { status: 429 }
+      );
+    }
+
     // Moderate content
     const moderation = await moderateContent(content);
     if (moderation.flagged) {
       return NextResponse.json(
-        { error: 'Content contains inappropriate material' },
+        { error: moderation.message || '不適切な内容が含まれています' },
         { status: 400 }
       );
     }
@@ -52,16 +72,35 @@ export async function POST(request: NextRequest) {
         content,
         moderation_status: 'approved'
       })
-      .select(`
-        *,
-        author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(last_name_kanji, first_name_kanji, profile_image_url)
-      `)
+      .select('*')
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json({ comment }, { status: 201 });
+    // Record rate limit action
+    await recordRateLimitAction(supabase, user.id, 'comment', post_id);
+
+    // Fetch author profile
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
+      .eq('user_id', user.id)
+      .single();
+
+    // フォールバック: forum_display_nameがない場合はフルネームを使用
+    const displayName = authorProfile?.forum_display_name || 
+      `${authorProfile?.last_name_kanji || ''}${authorProfile?.first_name_kanji || '名無し'}`;
+
+    // Enrich comment with profile
+    const enrichedComment = {
+      ...comment,
+      author_profile: {
+        forum_display_name: displayName,
+        profile_image_url: authorProfile?.profile_image_url
+      }
+    };
+
+    return NextResponse.json({ comment: enrichedComment }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating comment:', error);
     return NextResponse.json(

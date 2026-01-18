@@ -18,6 +18,8 @@ export default function NewPostPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [retryAfter, setRetryAfter] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState<string>('');
   const router = useRouter();
   const supabase = createClient();
 
@@ -25,6 +27,41 @@ export default function NewPostPage() {
     checkAuth();
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (!retryAfter) return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = retryAfter.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setRetryAfter(null);
+        setCountdown('');
+        setError('');
+        return;
+      }
+
+      const seconds = Math.ceil(diff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      
+      if (hours > 0) {
+        const remainingMinutes = minutes % 60;
+        setCountdown(`${hours}時間${remainingMinutes > 0 ? remainingMinutes + '分' : ''}後に投稿可能`);
+      } else if (minutes > 0) {
+        const remainingSeconds = seconds % 60;
+        setCountdown(`${minutes}分${remainingSeconds > 0 ? remainingSeconds + '秒' : ''}後に投稿可能`);
+      } else {
+        setCountdown(`${seconds}秒後に投稿可能`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [retryAfter]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -59,6 +96,7 @@ export default function NewPostPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setRetryAfter(null);
 
     try {
       const response = await fetch('/api/forum/posts', {
@@ -75,11 +113,16 @@ export default function NewPostPage() {
 
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 429 && data.retryAfter) {
+          setRetryAfter(new Date(data.retryAfter));
+        }
         throw new Error(data.error || '投稿に失敗しました');
       }
 
       const data = await response.json();
-      router.push(`/forum/${data.post.id}`);
+      // 投稿作成後は掲示板一覧にリダイレクト（詳細ページへの直接遷移は避ける）
+      router.push('/forum');
+      router.refresh(); // キャッシュをリフレッシュ
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -90,6 +133,14 @@ export default function NewPostPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto max-w-3xl px-4 py-8">
+        <div className="mb-4">
+          <Link
+            href="/forum"
+            className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100"
+          >
+            ← ピアサポート掲示板に戻る
+          </Link>
+        </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">新規投稿</h1>
           <p className="mt-2 text-gray-600">
@@ -100,8 +151,13 @@ export default function NewPostPage() {
         <div className="rounded-lg bg-white p-8 shadow">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
-                {error}
+              <div className="rounded-lg bg-red-50 p-4">
+                <p className="text-sm text-red-600">{error}</p>
+                {countdown && (
+                  <p className="mt-2 text-sm font-semibold text-red-700">
+                    ⏱️ {countdown}
+                  </p>
+                )}
               </div>
             )}
 
@@ -170,10 +226,10 @@ export default function NewPostPage() {
             <div className="flex gap-4">
               <button
                 type="submit"
-                disabled={submitting}
-                className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={submitting || !!retryAfter}
+                className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? '投稿中...' : '投稿する'}
+                {submitting ? '投稿中...' : retryAfter ? countdown : '投稿する'}
               </button>
               <Link
                 href="/forum"
