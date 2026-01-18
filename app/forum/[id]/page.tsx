@@ -414,7 +414,7 @@ export default function PostDetailPage() {
         {/* Delete Post Confirmation Dialog */}
         {showDeletePostDialog && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm" 
+            className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md" 
             role="dialog" 
             aria-modal="true" 
             aria-labelledby="delete-post-dialog-title"
@@ -579,7 +579,7 @@ export default function PostDetailPage() {
                   {/* Delete Comment Confirmation Dialog */}
                   {showDeleteCommentDialog === comment.id && (
                     <div 
-                      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" 
+                      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md" 
                       role="dialog" 
                       aria-modal="true" 
                       aria-labelledby="delete-comment-dialog-title"
@@ -589,10 +589,21 @@ export default function PostDetailPage() {
                           setShowDeleteCommentDialog(null);
                         }
                       }}
+                      onClick={() => !submitting && setShowDeleteCommentDialog(null)}
                     >
-                      <div className="rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
-                        <h3 id="delete-comment-dialog-title" className="mb-4 text-lg font-bold text-gray-900">コメントを削除しますか？</h3>
-                        <p id="delete-comment-dialog-description" className="mb-6 text-sm text-gray-600">
+                      <div 
+                        className="rounded-lg bg-white p-6 shadow-2xl max-w-md mx-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <h3 id="delete-comment-dialog-title" className="mb-4 text-lg font-bold text-red-600">⚠️ コメントを削除しますか？</h3>
+                        
+                        {/* Preview of comment to be deleted */}
+                        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                          <p className="text-sm text-gray-600 mb-1">削除するコメント:</p>
+                          <p className="text-sm text-gray-700 line-clamp-4">{comment.content}</p>
+                        </div>
+                        
+                        <p id="delete-comment-dialog-description" className="mb-4 text-sm text-gray-600">
                           この操作は取り消せません。
                         </p>
                         {error && (
