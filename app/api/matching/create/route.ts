@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isTestModeEnabled } from '@/lib/utils/testMode';
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,9 +44,7 @@ export async function POST(request: NextRequest) {
     const childId = currentUser.role === 'child' ? user.id : targetUserId;
 
     // テストモードチェック（開発環境のみ有効）
-    const isTestMode = process.env.NODE_ENV === 'development' && 
-                       process.env.ENABLE_TEST_MODE === 'true';
-    console.log('[Matching Create] NODE_ENV:', process.env.NODE_ENV, 'isTestMode:', isTestMode);
+    const isTestMode = isTestModeEnabled();
     
     // 決済チェック（テストモードではスキップ）
     if (!isTestMode && currentUser.role === 'parent') {

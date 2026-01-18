@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isTestModeEnabled } from '@/lib/utils/testMode';
 
 // マッチングスコアの定数
 const DEFAULT_PROFILE_MATCH_SCORE = 0.5; // 基本スコア
@@ -349,8 +350,7 @@ export async function GET(request: NextRequest) {
     }
 
     // テストモードチェック（開発環境のみ有効）
-    const isTestMode = process.env.NODE_ENV === 'development' && 
-                       process.env.ENABLE_TEST_MODE === 'true';
+    const isTestMode = isTestModeEnabled();
 
     // 早期リターン: 本人確認チェック（テストモードではスキップ）
     if (!isTestMode && userData.verification_status !== 'verified') {
