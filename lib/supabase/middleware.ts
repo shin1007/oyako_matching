@@ -1,6 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
+// 保護されたルートのパターン定義（パフォーマンス最適化のためモジュールレベルで定義）
+const PROTECTED_ROUTES = [
+  '/dashboard',
+  '/matching',
+  '/messages',
+  '/forum',
+  '/payments',
+] as const;
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -55,18 +64,9 @@ export async function updateSession(request: NextRequest) {
     console.warn('Supabase auth.getUser failed in middleware:', e);
   }
 
-  // 保護されたルートのパターン定義
-  const protectedRoutes = [
-    '/dashboard',
-    '/matching',
-    '/messages',
-    '/forum',
-    '/payments',
-  ];
-
   // 現在のパスが保護されたルートかチェック
   const pathname = request.nextUrl.pathname;
-  const isProtectedRoute = protectedRoutes.some((route) => {
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => {
     // 完全一致または子パス（/dashboard/profile など）をチェック
     return pathname === route || pathname.startsWith(route + '/');
   });
@@ -75,8 +75,9 @@ export async function updateSession(request: NextRequest) {
   if (isProtectedRoute && !user) {
     const redirectUrl = new URL('/auth/login', request.url);
     // リダイレクト後に元のページに戻れるよう、リダイレクト先URLをクエリパラメータに含める
-    // オープンリダイレクト脆弱性を防ぐため、相対パスのみを許可
-    if (pathname && !pathname.includes('://')) {
+    // オープンリダイレクト脆弱性を防ぐため、絶対パスのみを許可
+    // プロトコル相対URL（//evil.com）もブロック
+    if (pathname && pathname.startsWith('/') && !pathname.startsWith('//')) {
       redirectUrl.searchParams.set('redirect', pathname);
     }
     const response = NextResponse.redirect(redirectUrl);

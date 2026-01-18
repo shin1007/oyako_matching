@@ -118,7 +118,11 @@ export default async function DashboardPage() {
 
 開発環境では、テストモードを使用して認証チェックをバイパスできます。
 
-**注意**: テストモードは`NODE_ENV=development`の場合のみ有効です。
+**⚠️ 重要なセキュリティ警告:**
+- テストモードは**開発環境でのみ使用**してください
+- **本番環境では絶対に有効にしないでください**
+- これらの環境変数が本番環境で設定されていると、重大なセキュリティリスクになります
+- 本番環境では`NODE_ENV=production`が設定され、テスト用環境変数は自動的に無効化されます
 
 ### 環境変数
 
@@ -127,6 +131,12 @@ export default async function DashboardPage() {
 TEST_MODE_BYPASS_VERIFICATION=true  # マイナンバー認証をバイパス
 TEST_MODE_BYPASS_SUBSCRIPTION=true  # サブスクリプションをバイパス
 ```
+
+**セキュリティチェックリスト:**
+- [ ] `.env.local`は`.gitignore`に含まれている
+- [ ] 本番環境の環境変数にテストモード設定が含まれていない
+- [ ] CI/CDパイプラインがテストモード環境変数を設定していない
+- [ ] 本番デプロイ前にテストモード設定を削除している
 
 詳細は`TEST_MODE.md`を参照してください。
 
