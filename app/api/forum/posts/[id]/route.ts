@@ -15,61 +15,85 @@ export async function GET(
     // Increment view count
     await supabase.rpc('increment_post_view_count', { post_id: id });
 
-    // Fetch post with author details
-    const { data: post, error } = await supabase
+    // Fetch post with basic info
+    const { data: post, error: postError } = await supabase
       .from('forum_posts')
-      .select(`
-        *,
-        author:users!author_id(id, role),
-        author_profile:profiles!author_id(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url),
-        category:forum_categories!category_id(id, name, icon)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
     console.log('[POST DETAIL] Post data:', post);
-    console.log('[POST DETAIL] Error:', error);
+    console.log('[POST DETAIL] Error:', postError);
 
-    if (error) throw error;
+    if (postError) throw postError;
+    if (!post) throw new Error('Post not found');
+
+    // Fetch author profile
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
+      .eq('user_id', post.author_id)
+      .single();
 
     // フォールバック: forum_display_nameがない場合はフルネームを使用
-    if (post && post.author_profile) {
-      if (!post.author_profile.forum_display_name) {
-        post.author_profile.forum_display_name = 
-          `${post.author_profile.last_name_kanji || ''}${post.author_profile.first_name_kanji || '名無し'}`;
-      }
-      // 不要なフィールドを削除
-      delete post.author_profile.last_name_kanji;
-      delete post.author_profile.first_name_kanji;
+    const displayName = authorProfile?.forum_display_name || 
+      `${authorProfile?.last_name_kanji || ''}${authorProfile?.first_name_kanji || '名無し'}`;
+
+    // Fetch category if exists
+    let category = null;
+    if (post.category_id) {
+      const { data: categoryData } = await supabase
+        .from('forum_categories')
+        .select('id, name, icon')
+        .eq('id', post.category_id)
+        .single();
+      category = categoryData;
     }
+
+    // Construct post with profile
+    const enrichedPost = {
+      ...post,
+      author_profile: {
+        forum_display_name: displayName,
+        profile_image_url: authorProfile?.profile_image_url
+      },
+      category
+    };
 
     // Fetch comments
     const { data: comments } = await supabase
       .from('forum_comments')
-      .select(`
-        *,
-        author:users!author_id(id, role),
-        author_profile:profiles!author_id(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
-      `)
+      .select('*')
       .eq('post_id', id)
       .eq('moderation_status', 'approved')
       .order('created_at', { ascending: true });
 
-    // フォールバック: forum_display_nameがない場合はフルネームを使用
-    const processedComments = (comments || []).map(comment => {
-      if (comment.author_profile) {
-        if (!comment.author_profile.forum_display_name) {
-          comment.author_profile.forum_display_name = 
-            `${comment.author_profile.last_name_kanji || ''}${comment.author_profile.first_name_kanji || '名無し'}`;
-        }
-        // 不要なフィールドを削除
-        delete comment.author_profile.last_name_kanji;
-        delete comment.author_profile.first_name_kanji;
-      }
-      return comment;
-    });
+    // Fetch comment authors' profiles
+    const authorIds = [...new Set((comments || []).map(c => c.author_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
+      .in('user_id', authorIds);
 
-    return NextResponse.json({ post, comments: processedComments });
+    // Create profile map with fallback
+    const profileMap = (profiles || []).reduce((acc, profile) => {
+      const displayName = profile.forum_display_name || 
+        `${profile.last_name_kanji || ''}${profile.first_name_kanji || '名無し'}`;
+      
+      acc[profile.user_id] = {
+        forum_display_name: displayName,
+        profile_image_url: profile.profile_image_url
+      };
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Enrich comments with profiles
+    const enrichedComments = (comments || []).map(comment => ({
+      ...comment,
+      author_profile: profileMap[comment.author_id] || { forum_display_name: '名無し' }
+    }));
+
+    return NextResponse.json({ post: enrichedPost, comments: enrichedComments });
   } catch (error: any) {
     console.error('Error fetching post:', error);
     return NextResponse.json(
