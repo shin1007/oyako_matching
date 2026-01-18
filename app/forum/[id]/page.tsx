@@ -400,6 +400,14 @@ export default function PostDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto max-w-4xl px-4 py-8">
+        <div className="mb-4">
+          <Link
+            href="/forum"
+            className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100"
+          >
+            ← ピアサポート掲示板に戻る
+          </Link>
+        </div>
         {/* Post */}
         <div className="mb-8 rounded-lg bg-white p-8 shadow">
           {editingPostId === post.id ? (

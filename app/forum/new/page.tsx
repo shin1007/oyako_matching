@@ -133,6 +133,14 @@ export default function NewPostPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto max-w-3xl px-4 py-8">
+        <div className="mb-4">
+          <Link
+            href="/forum"
+            className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100"
+          >
+            ← ピアサポート掲示板に戻る
+          </Link>
+        </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">新規投稿</h1>
           <p className="mt-2 text-gray-600">
