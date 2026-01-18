@@ -4,10 +4,11 @@
  * 外部APIに依存せず、完全無料で動作
  */
 
-import Filter from 'bad-words';
+import * as BadWordsPackage from 'bad-words';
 import { badWordsJa, violencePatterns, insultPatterns } from '../moderation/badwords-ja';
 
 // bad-wordsフィルターの初期化
+const Filter = (BadWordsPackage as any).default || BadWordsPackage;
 const filter = new Filter();
 
 // 日本語の不適切ワードを追加
