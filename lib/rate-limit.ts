@@ -25,6 +25,33 @@ export interface RateLimitResult {
 }
 
 /**
+ * 投稿のレート制限設定
+ */
+export const POST_RATE_LIMITS: RateLimitConfig[] = [
+  { windowSeconds: 60, maxActions: 1 },      // 1分間に1投稿
+  { windowSeconds: 3600, maxActions: 5 },    // 1時間に5投稿
+  { windowSeconds: 86400, maxActions: 20 }   // 1日に20投稿
+];
+
+/**
+ * コメントのレート制限設定
+ */
+export const COMMENT_RATE_LIMITS: RateLimitConfig[] = [
+  { windowSeconds: 60, maxActions: 3 },      // 1分間に3コメント
+  { windowSeconds: 3600, maxActions: 30 }    // 1時間に30コメント
+];
+
+/**
+ * 同一投稿への連続コメントの最小間隔（秒）
+ */
+export const SAME_POST_COMMENT_INTERVAL_SECONDS = 30;
+
+/**
+ * フォールバック: エラー時の再試行までの待機時間（ミリ秒）
+ */
+const FALLBACK_RETRY_AFTER_MS = 60000; // 1分
+
+/**
  * レート制限をチェックする
  * 
  * @param supabase - Supabaseクライアント
@@ -58,8 +85,13 @@ export async function checkRateLimit(
       
       if (error) {
         console.error('Rate limit check error:', error);
-        // エラーの場合は制限をスキップ（サービス継続性を優先）
-        continue;
+        // データベースエラーの場合は制限を適用（セキュリティ優先）
+        // サービス障害時の悪用を防ぐため
+        return {
+          allowed: false,
+          message: '現在、一時的にサービスが混み合っています。しばらくしてから再度お試しください。',
+          retryAfter: new Date(Date.now() + FALLBACK_RETRY_AFTER_MS)
+        };
       }
       
       if (count !== null && count >= config.maxActions) {
@@ -76,7 +108,7 @@ export async function checkRateLimit(
         
         const retryAfter = oldestAction?.action_timestamp
           ? new Date(new Date(oldestAction.action_timestamp).getTime() + config.windowSeconds * 1000)
-          : new Date(Date.now() + 60000); // フォールバック: 1分後
+          : new Date(Date.now() + FALLBACK_RETRY_AFTER_MS);
         
         const windowLabel = getWindowLabel(config.windowSeconds);
         return {
@@ -90,7 +122,6 @@ export async function checkRateLimit(
     
     // コメントの場合、同一投稿への連続コメントをチェック
     if (actionType === 'comment' && postId) {
-      const minInterval = 30; // 30秒
       const { data: lastComment, error } = await supabase
         .from('rate_limits')
         .select('action_timestamp')
@@ -103,11 +134,11 @@ export async function checkRateLimit(
       
       if (!error && lastComment) {
         const timeSinceLastComment = Date.now() - new Date(lastComment.action_timestamp).getTime();
-        if (timeSinceLastComment < minInterval * 1000) {
-          const retryAfter = new Date(new Date(lastComment.action_timestamp).getTime() + minInterval * 1000);
+        if (timeSinceLastComment < SAME_POST_COMMENT_INTERVAL_SECONDS * 1000) {
+          const retryAfter = new Date(new Date(lastComment.action_timestamp).getTime() + SAME_POST_COMMENT_INTERVAL_SECONDS * 1000);
           return {
             allowed: false,
-            message: `同じ投稿への連続コメントは30秒以上間隔を空けてください。次のコメントは ${formatRetryTime(retryAfter)} 以降に可能です。`,
+            message: `同じ投稿への連続コメントは${SAME_POST_COMMENT_INTERVAL_SECONDS}秒以上間隔を空けてください。次のコメントは ${formatRetryTime(retryAfter)} 以降に可能です。`,
             retryAfter
           };
         }
@@ -117,8 +148,12 @@ export async function checkRateLimit(
     return { allowed: true };
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    // エラーの場合は制限をスキップ（サービス継続性を優先）
-    return { allowed: true };
+    // エラーの場合は制限を適用（セキュリティ優先）
+    return {
+      allowed: false,
+      message: '現在、一時的にサービスが混み合っています。しばらくしてから再度お試しください。',
+      retryAfter: new Date(Date.now() + FALLBACK_RETRY_AFTER_MS)
+    };
   }
 }
 
@@ -197,17 +232,12 @@ function formatRetryTime(date: Date): string {
 
 /**
  * 投稿のレート制限設定
+ * @deprecated 定数は上部に移動しました
  */
-export const POST_RATE_LIMITS: RateLimitConfig[] = [
-  { windowSeconds: 60, maxActions: 1 },      // 1分間に1投稿
-  { windowSeconds: 3600, maxActions: 5 },    // 1時間に5投稿
-  { windowSeconds: 86400, maxActions: 20 }   // 1日に20投稿
-];
+export const POST_RATE_LIMITS_DEPRECATED = POST_RATE_LIMITS;
 
 /**
  * コメントのレート制限設定
+ * @deprecated 定数は上部に移動しました
  */
-export const COMMENT_RATE_LIMITS: RateLimitConfig[] = [
-  { windowSeconds: 60, maxActions: 3 },      // 1分間に3コメント
-  { windowSeconds: 3600, maxActions: 30 }    // 1時間に30コメント
-];
+export const COMMENT_RATE_LIMITS_DEPRECATED = COMMENT_RATE_LIMITS;

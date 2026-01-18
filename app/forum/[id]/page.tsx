@@ -186,15 +186,15 @@ export default function PostDetailPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         if (response.status === 429 && data.retryAfter) {
           setRetryAfter(new Date(data.retryAfter));
         }
         throw new Error(data.error || 'コメントの投稿に失敗しました');
       }
 
+      const data = await response.json();
       setComments([...comments, data.comment]);
       setNewComment('');
     } catch (err: any) {
