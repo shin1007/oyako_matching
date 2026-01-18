@@ -79,7 +79,9 @@ export default function NewPostPage() {
       }
 
       const data = await response.json();
-      router.push(`/forum/${data.post.id}`);
+      // 投稿作成後は掲示板一覧にリダイレクト（詳細ページへの直接遷移は避ける）
+      router.push('/forum');
+      router.refresh(); // キャッシュをリフレッシュ
     } catch (err: any) {
       setError(err.message);
     } finally {
