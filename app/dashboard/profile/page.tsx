@@ -325,6 +325,62 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="rounded-lg bg-white p-8 shadow">
+            {/* マッチング計算式の説明セクション */}
+            <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 p-6 border border-blue-200">
+              <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="text-2xl">🎯</span>
+                プロフィールとマッチング精度について
+              </h2>
+              <div className="space-y-3 text-sm text-gray-700">
+                <p className="leading-relaxed">
+                  このプラットフォームでは、親子の再会の可能性を高めるため、入力された情報をもとに<strong className="text-blue-700">マッチング度を自動計算</strong>しています。
+                  より詳しい情報を入力するほど、正確なマッチングが可能になります。
+                </p>
+                
+                <div className="bg-white rounded-lg p-4 mt-3">
+                  <h3 className="font-semibold text-gray-800 mb-2">📊 マッチング度の計算方法</h3>
+                  <ul className="space-y-2 ml-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-0.5">🎂</span>
+                      <div>
+                        <strong>生年月日</strong> - 最重要（最大80点）
+                        <div className="text-xs text-gray-600 mt-0.5">完全一致で80点、年月一致で60点、年のみ一致で50点</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-0.5">👤</span>
+                      <div>
+                        <strong>氏名（ひらがな）</strong> - 追加で+10〜15点
+                        <div className="text-xs text-gray-600 mt-0.5">部分一致でもスコアが向上します</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-0.5">📍</span>
+                      <div>
+                        <strong>出身地</strong> - 追加で+10〜15点
+                        <div className="text-xs text-gray-600 mt-0.5">都道府県一致で+10点、市区町村まで一致でさらに向上</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-600 font-bold mt-0.5">⚖️</span>
+                      <div>
+                        <strong>双方向スコア</strong> - 親→子（60%）+ 子→親（40%）
+                        <div className="text-xs text-gray-600 mt-0.5">親の記憶をより重視した計算式を採用しています</div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-yellow-50 rounded-lg p-3 border-l-4 border-yellow-400 mt-3">
+                  <p className="text-xs">
+                    <strong className="text-yellow-800">💡 ポイント：</strong>
+                    すべての情報が必須ではありません。覚えている範囲で入力することで、少しずつマッチング精度が向上します。
+                    わからない項目は空欄のままでも問題ありません。
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
@@ -375,6 +431,7 @@ export default function ProfilePage() {
                     <div>
                       <label htmlFor="lastNameHiragana" className="block text-sm font-medium text-gray-700">
                         苗字（ひらがな）
+                        <span className="ml-2 text-xs text-blue-600">+10点</span>
                       </label>
                       <input
                         id="lastNameHiragana"
@@ -388,6 +445,7 @@ export default function ProfilePage() {
                     <div>
                       <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
                         名前（ひらがな）
+                        <span className="ml-2 text-xs text-blue-600">+10点</span>
                       </label>
                       <input
                         id="firstNameHiragana"
@@ -399,12 +457,16 @@ export default function ProfilePage() {
                       />
                     </div>
                   </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    氏名が一致するとマッチング度が+10点向上します。
+                  </p>
                 </div>
               </div>
 
               <div>
                 <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
                   生年月日
+                  <span className="ml-2 text-xs text-blue-600">🎯 マッチングで最重要</span>
                 </label>
                 <input
                   id="birthDate"
@@ -414,10 +476,16 @@ export default function ProfilePage() {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  完全一致で基本スコア80点。年月のみ一致でも60点。マッチングに最も重要な項目です。
+                </p>
               </div>
 
               <div className="border-t border-gray-200 pt-4 mt-4">
-                <h3 className="text-md font-medium text-gray-900 mb-3">出身地</h3>
+                <h3 className="text-md font-medium text-gray-900 mb-3">
+                  出身地
+                  <span className="ml-2 text-xs text-blue-600">+10点</span>
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="birthplacePrefecture" className="block text-sm font-medium text-gray-700">
@@ -453,11 +521,15 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  都道府県が一致するとマッチング度が+10点向上します。市区町村まで一致するとさらに精度が上がります。
+                </p>
               </div>
 
               <div>
                 <label htmlFor="parentGender" className="block text-sm font-medium text-gray-700">
                   性別（親）
+                  <span className="ml-2 text-xs text-blue-600">⚠️ 逆方向マッチングで必須</span>
                 </label>
                 <select
                   id="parentGender"
@@ -471,6 +543,9 @@ export default function ProfilePage() {
                   <option value="other">その他</option>
                   <option value="prefer_not_to_say">回答しない</option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  相手が親を探している場合、性別が一致しないと候補から除外されます。
+                </p>
               </div>
 
               <div>
@@ -505,14 +580,22 @@ export default function ProfilePage() {
               </div>
 
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
                   {userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {userRole === 'child' 
-                    ? '親子マッチングのための情報です。任意項目です。' 
-                    : '親子マッチングのための情報です。任意項目です。最大5人まで登録できます。'}
-                </p>
+                <div className="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-400">
+                  <p className="text-sm text-gray-700 mb-2">
+                    {userRole === 'child' 
+                      ? <><strong>親を探す情報（任意）：</strong>この情報を登録すると、双方向マッチングで精度が向上します。登録しない場合は、親があなたを探す情報のみでマッチングされます。</> 
+                      : <><strong>子どもを探す情報（任意）：</strong>この情報がマッチングの基準になります。覚えている範囲で詳しく入力するほど、正確なマッチングが可能になります。最大5人まで登録できます。</>}
+                  </p>
+                  <ul className="text-xs text-gray-600 space-y-1 ml-4">
+                    <li>• <strong>生年月日</strong>が最も重要な情報です（最大80点）</li>
+                    <li>• <strong>氏名</strong>を入力すると+10点のボーナス</li>
+                    <li>• <strong>出身地</strong>を入力すると+10点のボーナス</li>
+                    <li>• {userRole === 'child' ? '性別が不一致の場合は候補から除外されます' : 'すべての項目が任意です'}</li>
+                  </ul>
+                </div>
 
                 <div className="space-y-6">
                   {searchingChildren.map((child, index) => (
@@ -536,6 +619,7 @@ export default function ProfilePage() {
                         <div>
                           <label htmlFor={`searchingChildBirthDate-${index}`} className="block text-sm font-medium text-gray-700">
                             生年月日
+                            <span className="ml-2 text-xs text-blue-600">🎯 最重要（最大80点）</span>
                           </label>
                           <input
                             id={`searchingChildBirthDate-${index}`}
@@ -549,6 +633,7 @@ export default function ProfilePage() {
                         <div>
                           <label htmlFor={`searchingChildGender-${index}`} className="block text-sm font-medium text-gray-700">
                             性別
+                            {userRole === 'child' && <span className="ml-2 text-xs text-red-600">⚠️ 必須チェック</span>}
                           </label>
                           <select
                             id={`searchingChildGender-${index}`}
@@ -561,10 +646,18 @@ export default function ProfilePage() {
                             <option value="female">女性</option>
                             <option value="other">その他</option>
                           </select>
+                          {userRole === 'child' && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              性別が不一致の場合、候補から除外されます
+                            </p>
+                          )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">新形式：詳細な氏名</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            新形式：詳細な氏名
+                            <span className="ml-2 text-xs text-blue-600">+10点</span>
+                          </label>
                           <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
                               <div>
@@ -626,7 +719,10 @@ export default function ProfilePage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">出身地</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            出身地
+                            <span className="ml-2 text-xs text-blue-600">+10点</span>
+                          </label>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label htmlFor={`searchingChildBirthplacePrefecture-${index}`} className="block text-xs font-medium text-gray-600">
