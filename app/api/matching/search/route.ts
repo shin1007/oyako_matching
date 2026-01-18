@@ -260,6 +260,86 @@ function calculateChildMatchScore(
 }
 
 /**
+ * 子アカウント用：親候補に対するマッチングスコアを計算
+ */
+async function calculateChildToParentMatchScore(
+  admin: any,
+  parentUserId: string,
+  childProfile: any
+): Promise<number> {
+  // 親が探している子ども情報を取得
+  const { data: searchingChildren } = await admin
+    .from('searching_children')
+    .select('birth_date, gender, last_name_kanji, first_name_kanji, name_kanji, name_hiragana, last_name_hiragana, first_name_hiragana, birthplace_prefecture, birthplace_municipality')
+    .eq('user_id', parentUserId);
+
+  if (!searchingChildren || searchingChildren.length === 0) {
+    return DEFAULT_PROFILE_MATCH_SCORE;
+  }
+
+  // 子どもの生年月日でマッチする searching_children を探す
+  const matchingChild = searchingChildren.find(
+    (child: any) => child.birth_date === childProfile.birth_date
+  );
+
+  if (!matchingChild) {
+    // 生年月日が一致しない場合は年齢ベースのスコアを返す
+    return DEFAULT_PROFILE_MATCH_SCORE;
+  }
+
+  // 生年月日が完全一致している場合の詳細スコア計算
+  let score = 0.80; // 生年月日完全一致の基本スコア
+
+  // 氏名の一致チェック
+  const childFullNameKanji = (childProfile.last_name_kanji || '') + (childProfile.first_name_kanji || '');
+  const childFullNameHiragana = (childProfile.last_name_hiragana || '') + (childProfile.first_name_hiragana || '');
+  
+  const searchingNameKanji = (matchingChild.last_name_kanji || '') + (matchingChild.first_name_kanji || '');
+  const searchingNameKanjiAlt = matchingChild.name_kanji || '';
+  const searchingNameHiragana = (matchingChild.last_name_hiragana || '') + (matchingChild.first_name_hiragana || '');
+  const searchingNameHiraganaAlt = matchingChild.name_hiragana || '';
+
+  // 漢字氏名の一致
+  const kanjiMatch = 
+    (searchingNameKanji && childFullNameKanji.includes(searchingNameKanji)) ||
+    (searchingNameKanjiAlt && childFullNameKanji.includes(searchingNameKanjiAlt)) ||
+    (childFullNameKanji && searchingNameKanji && searchingNameKanji.includes(childFullNameKanji));
+
+  // ひらがな氏名の一致
+  const hiraganaMatch = 
+    (searchingNameHiragana && childFullNameHiragana.includes(searchingNameHiragana)) ||
+    (searchingNameHiraganaAlt && childFullNameHiragana.includes(searchingNameHiraganaAlt)) ||
+    (childFullNameHiragana && searchingNameHiragana && searchingNameHiragana.includes(childFullNameHiragana));
+
+  if (kanjiMatch || hiraganaMatch) {
+    score += 0.10;
+    console.log(
+      `[Matching] Child name match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
+    );
+  }
+
+  // 出身地の一致チェック
+  if (matchingChild.birthplace_prefecture && childProfile.birthplace_prefecture &&
+      matchingChild.birthplace_prefecture === childProfile.birthplace_prefecture) {
+    score += 0.10;
+    console.log(
+      `[Matching] Child birthplace match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
+    );
+  }
+
+  // 性別の一致チェック（あれば追加ボーナス）
+  if (matchingChild.gender && childProfile.gender &&
+      matchingChild.gender === childProfile.gender) {
+    // 性別一致は既に高いスコアなので小さなボーナス
+    console.log(
+      `[Matching] Child gender match confirmed. Parent ${parentUserId}`
+    );
+  }
+
+  return Math.min(1.0, score);
+}
+
+/**
  * 逆方向マッチングスコアの計算（子→親）
  */
 async function calculateReverseMatchingScore(
@@ -415,8 +495,23 @@ export async function GET(request: NextRequest) {
           .eq('user_id', user.id)
           .single();
 
-        // For parents, calculate scores per child
+        // Calculate detailed score based on user role
         const scorePerChild: Record<string, number> = {};
+        let detailedScore = match.similarity_score;
+
+        // For child users, calculate detailed matching score
+        if (userData.role === 'child' && currentUserProfile && targetUserData?.role === 'parent') {
+          detailedScore = await calculateChildToParentMatchScore(
+            admin,
+            match.matched_user_id,
+            currentUserProfile
+          );
+          console.log(
+            `[Matching] Child user detailed score for parent ${match.matched_user_id}: ${detailedScore.toFixed(2)}`
+          );
+        }
+
+        // For parents, calculate scores per child
         if (userData.role === 'parent' && searchingChildren.length > 0 && profile?.birth_date) {
           const matchBirthDate = new Date(profile.birth_date);
           const matchYear = matchBirthDate.getFullYear();
@@ -474,8 +569,8 @@ export async function GET(request: NextRequest) {
 
         return {
           userId: match.matched_user_id,
-          similarityScore: match.similarity_score,
-          scorePerChild, // 子どもごとのスコア
+          similarityScore: userData.role === 'child' ? detailedScore : match.similarity_score,
+          scorePerChild, // 子どもごとのスコア（親の場合のみ使用）
           role: targetUserData?.role,
           profile,
           searchingChildrenInfo, // 相手親が探している子ども情報
