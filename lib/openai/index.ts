@@ -68,29 +68,39 @@ export async function moderateContent(text: string): Promise<{
 
     // 2. 暴力的表現のパターンマッチング
     for (const pattern of violencePatterns) {
-      if (pattern.test(text)) {
+      const match = text.match(pattern);
+      if (match) {
         categories.violence = true;
         flagged = true;
-        messages.push('暴力的な表現が含まれています');
+        const matchedWord = match[0];
+        flaggedWords.push(matchedWord);
+        messages.push(`暴力的な表現が含まれています: 「${matchedWord}」`);
         break;
       }
     }
 
     // 3. 侮辱的表現のパターンマッチング
     for (const pattern of insultPatterns) {
-      if (pattern.test(text)) {
+      const match = text.match(pattern);
+      if (match) {
         categories.insult = true;
         flagged = true;
-        messages.push('侮辱的な表現が含まれています');
+        const matchedWord = match[0];
+        flaggedWords.push(matchedWord);
+        messages.push(`侮辱的な表現が含まれています: 「${matchedWord}」`);
         break;
       }
     }
-// 4. 性的表現のパターンマッチング
+
+    // 4. 性的表現のパターンマッチング
     for (const pattern of sexualPatterns) {
-      if (pattern.test(text)) {
+      const match = text.match(pattern);
+      if (match) {
         categories.sexual = true;
         flagged = true;
-        messages.push('性的な表現が含まれています');
+        const matchedWord = match[0];
+        flaggedWords.push(matchedWord);
+        messages.push(`性的な表現が含まれています: 「${matchedWord}」`);
         break;
       }
     }
