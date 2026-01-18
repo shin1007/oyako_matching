@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { UserRole } from '@/types/database';
+import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
 
 interface Match {
   userId: string;
@@ -364,8 +365,11 @@ export default function MatchingPage() {
 
                               <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">
                                 <div className="text-center mb-3">
-                                  <div className="text-3xl font-bold text-green-600 mb-1">
-                                    {(childScore * 100).toFixed(0)}%
+                                  <div className="flex items-center justify-center gap-2 mb-1">
+                                    <div className="text-3xl font-bold text-green-600">
+                                      {(childScore * 100).toFixed(0)}%
+                                    </div>
+                                    <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
                                   </div>
                                   <p className="text-xs text-gray-600 font-semibold">類似度</p>
                                   <p className="text-xs text-gray-500 mt-1">
@@ -474,8 +478,11 @@ export default function MatchingPage() {
                       {/* Right side - Matching info & button */}
                       <div className="w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-6 flex flex-col items-center justify-center border-l">
                         <div className="text-center mb-4">
-                          <div className="text-4xl font-bold text-green-600 mb-2">
-                            {(match.similarityScore * 100).toFixed(0)}%
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="text-4xl font-bold text-green-600">
+                              {(match.similarityScore * 100).toFixed(0)}%
+                            </div>
+                            <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
                           </div>
                           <p className="text-sm text-gray-600 font-semibold">類似度</p>
                           <p className="text-xs text-gray-500 mt-1">
