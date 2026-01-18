@@ -19,7 +19,7 @@ export async function GET(
       .select(`
         *,
         author:users!forum_posts_author_id_fkey(id, role),
-        author_profile:profiles!forum_posts_author_id_fkey(forum_display_name, profile_image_url),
+        author_profile:profiles!forum_posts_author_id_fkey(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url),
         category:forum_categories(id, name, icon)
       `)
       .eq('id', id)
@@ -27,19 +27,44 @@ export async function GET(
 
     if (error) throw error;
 
+    // フォールバック: forum_display_nameがない場合はフルネームを使用
+    if (post && post.author_profile) {
+      if (!post.author_profile.forum_display_name) {
+        post.author_profile.forum_display_name = 
+          `${post.author_profile.last_name_kanji || ''}${post.author_profile.first_name_kanji || '名無し'}`;
+      }
+      // 不要なフィールドを削除
+      delete post.author_profile.last_name_kanji;
+      delete post.author_profile.first_name_kanji;
+    }
+
     // Fetch comments
     const { data: comments } = await supabase
       .from('forum_comments')
       .select(`
         *,
         author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, profile_image_url)
+        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
       `)
       .eq('post_id', id)
       .eq('moderation_status', 'approved')
       .order('created_at', { ascending: true });
 
-    return NextResponse.json({ post, comments: comments || [] });
+    // フォールバック: forum_display_nameがない場合はフルネームを使用
+    const processedComments = (comments || []).map(comment => {
+      if (comment.author_profile) {
+        if (!comment.author_profile.forum_display_name) {
+          comment.author_profile.forum_display_name = 
+            `${comment.author_profile.last_name_kanji || ''}${comment.author_profile.first_name_kanji || '名無し'}`;
+        }
+        // 不要なフィールドを削除
+        delete comment.author_profile.last_name_kanji;
+        delete comment.author_profile.first_name_kanji;
+      }
+      return comment;
+    });
+
+    return NextResponse.json({ post, comments: processedComments });
   } catch (error: any) {
     console.error('Error fetching post:', error);
     return NextResponse.json(

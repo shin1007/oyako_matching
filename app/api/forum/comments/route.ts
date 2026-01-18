@@ -55,11 +55,22 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         author:users!forum_comments_author_id_fkey(id, role),
-        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, profile_image_url)
+        author_profile:profiles!forum_comments_author_id_fkey(forum_display_name, last_name_kanji, first_name_kanji, profile_image_url)
       `)
       .single();
 
     if (error) throw error;
+
+    // フォールバック: forum_display_nameがない場合はフルネームを使用
+    if (comment && comment.author_profile) {
+      if (!comment.author_profile.forum_display_name) {
+        comment.author_profile.forum_display_name = 
+          `${comment.author_profile.last_name_kanji || ''}${comment.author_profile.first_name_kanji || '名無し'}`;
+      }
+      // 不要なフィールドを削除
+      delete comment.author_profile.last_name_kanji;
+      delete comment.author_profile.first_name_kanji;
+    }
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error: any) {

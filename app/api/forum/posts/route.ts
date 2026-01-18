@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const authorIds = [...new Set(postsData.map(post => post.author_id))];
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('user_id, forum_display_name, profile_image_url')
+      .select('user_id, forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
       .in('user_id', authorIds);
 
     if (profilesError) throw profilesError;
@@ -75,7 +75,14 @@ export async function GET(request: NextRequest) {
 
     // プロフィールとカテゴリをマップに変換
     const profileMap = profiles?.reduce((acc, profile) => {
-      acc[profile.user_id] = profile;
+      // フォールバック: forum_display_nameがない場合はフルネームを使用
+      const displayName = profile.forum_display_name || 
+        `${profile.last_name_kanji || ''}${profile.first_name_kanji || '名無し'}`;
+      
+      acc[profile.user_id] = {
+        forum_display_name: displayName,
+        profile_image_url: profile.profile_image_url
+      };
       return acc;
     }, {} as Record<string, any>) || {};
 
