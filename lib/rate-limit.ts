@@ -47,7 +47,7 @@ export async function checkRateLimit(
       const windowStart = new Date(Date.now() - config.windowSeconds * 1000);
       
       // 時間ウィンドウ内のアクション数を取得
-      let query = supabase
+      const query = supabase
         .from('rate_limits')
         .select('action_timestamp', { count: 'exact' })
         .eq('user_id', userId)
