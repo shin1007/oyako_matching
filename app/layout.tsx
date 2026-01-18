@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { HeaderNav } from "@/app/components/layout/header-nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -51,28 +52,7 @@ export default async function RootLayout({
                 親子マッチング - 親子の再会を支援
               </h1>
             </Link>
-            <nav className="flex items-center gap-3 text-sm text-slate-700">
-              {user ? (
-                <>
-                  <span className="font-medium">{displayName}</span>
-                  <form action={handleSignOut}>
-                    <button
-                      type="submit"
-                      className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100"
-                    >
-                      ログアウト
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <Link
-                  href="/auth/login"
-                  className="rounded-lg border border-blue-600 px-4 py-2 font-semibold text-blue-700 hover:bg-blue-50"
-                >
-                  ログイン
-                </Link>
-              )}
-            </nav>
+            <HeaderNav user={user} displayName={displayName} />
           </div>
         </header>
         <main className="min-h-screen bg-gray-50 pt-4 md:pt-6 lg:pt-8">

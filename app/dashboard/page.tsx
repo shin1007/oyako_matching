@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { getMatchingCandidates } from '@/lib/matching/candidates';
+import { PendingNotification } from '@/app/components/dashboard/pending-notification';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -62,6 +63,9 @@ export default async function DashboardPage() {
             {userData?.role === 'parent' ? '親アカウント' : '子アカウント'}
           </p>
         </div>
+
+        {/* Pending Notifications */}
+        <PendingNotification userRole={userData?.role} />
 
         {/* Profile Display Section - Mobile: Top, Desktop: Left Side */}
         <div className="lg:grid lg:grid-cols-[350px_550px] lg:gap-6 mb-6">
