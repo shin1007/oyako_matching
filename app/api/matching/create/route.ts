@@ -42,10 +42,13 @@ export async function POST(request: NextRequest) {
     const parentId = currentUser.role === 'parent' ? user.id : targetUserId;
     const childId = currentUser.role === 'child' ? user.id : targetUserId;
 
-    // 決済チェック（本番環境でのみ実行）
-    const isDev = process.env.NODE_ENV === 'development';
-    console.log('[Matching Create] NODE_ENV:', process.env.NODE_ENV, 'isDev:', isDev);
-    if (!isDev && currentUser.role === 'parent') {
+    // テストモードチェック（開発環境のみ有効）
+    const isTestMode = process.env.NODE_ENV === 'development' && 
+                       process.env.ENABLE_TEST_MODE === 'true';
+    console.log('[Matching Create] NODE_ENV:', process.env.NODE_ENV, 'isTestMode:', isTestMode);
+    
+    // 決済チェック（テストモードではスキップ）
+    if (!isTestMode && currentUser.role === 'parent') {
       // 親がマッチングを申請する場合、アクティブなサブスクリプションを確認
       const { data: subscription } = await supabase
         .from('subscriptions')

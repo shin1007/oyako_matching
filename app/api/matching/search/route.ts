@@ -348,17 +348,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 早期リターン: 本人確認チェック
-    if (userData.verification_status !== 'verified') {
+    // テストモードチェック（開発環境のみ有効）
+    const isTestMode = process.env.NODE_ENV === 'development' && 
+                       process.env.ENABLE_TEST_MODE === 'true';
+
+    // 早期リターン: 本人確認チェック（テストモードではスキップ）
+    if (!isTestMode && userData.verification_status !== 'verified') {
       return NextResponse.json(
         { error: '本人確認が必要です' },
         { status: 403 }
       );
     }
 
-    // 早期リターン: サブスクリプションチェック (dev環境ではスキップ)
-    const isDev = process.env.NODE_ENV === 'development';
-    if (!isDev && userData.role === 'parent') {
+    // 早期リターン: サブスクリプションチェック（テストモードではスキップ）
+    if (!isTestMode && userData.role === 'parent') {
       const { data: subscription } = await admin
         .from('subscriptions')
         .select('status')
