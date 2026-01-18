@@ -94,10 +94,11 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ report }, { status: 201 });
-  } catch (error: any) {
-    console.error('Error creating report:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error creating report:', err);
     return NextResponse.json(
-      { error: error.message || 'Failed to create report' },
+      { error: err.message || 'Failed to create report' },
       { status: 500 }
     );
   }
@@ -148,10 +149,11 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / perPage)
       }
     });
-  } catch (error: any) {
-    console.error('Error fetching reports:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error fetching reports:', err);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch reports' },
+      { error: err.message || 'Failed to fetch reports' },
       { status: 500 }
     );
   }

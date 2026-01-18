@@ -49,10 +49,11 @@ export async function PUT(
     }
 
     return NextResponse.json({ report });
-  } catch (error: any) {
-    console.error('Error updating report:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error updating report:', err);
     return NextResponse.json(
-      { error: error.message || 'Failed to update report' },
+      { error: err.message || 'Failed to update report' },
       { status: 500 }
     );
   }
@@ -89,10 +90,11 @@ export async function GET(
     }
 
     return NextResponse.json({ report });
-  } catch (error: any) {
-    console.error('Error fetching report:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error fetching report:', err);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch report' },
+      { error: err.message || 'Failed to fetch report' },
       { status: 500 }
     );
   }

@@ -20,6 +20,7 @@ interface Post {
   author_profile: {
     last_name_kanji: string;
     first_name_kanji: string;
+    forum_display_name?: string;
   };
   category: {
     id: string;
