@@ -58,7 +58,12 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
     <nav className="flex items-center gap-3 text-sm text-slate-700">
       {user ? (
         <>
-          <span className="font-medium">{displayName}</span>
+          <Link
+            href="/dashboard"
+            className="font-medium text-slate-800 hover:text-slate-600 hover:underline"
+          >
+            {displayName}
+          </Link>
           
           {/* Notifications - Messages Link with Badge */}
           <Link
