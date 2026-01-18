@@ -414,7 +414,7 @@ export default function PostDetailPage() {
         {/* Delete Post Confirmation Dialog */}
         {showDeletePostDialog && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm" 
             role="dialog" 
             aria-modal="true" 
             aria-labelledby="delete-post-dialog-title"
@@ -424,11 +424,25 @@ export default function PostDetailPage() {
                 setShowDeletePostDialog(false);
               }
             }}
+            onClick={() => !submitting && setShowDeletePostDialog(false)}
           >
-            <div className="rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
-              <h3 id="delete-post-dialog-title" className="mb-4 text-lg font-bold text-gray-900">投稿を削除しますか？</h3>
-              <p id="delete-post-dialog-description" className="mb-6 text-sm text-gray-600">
-                この操作は取り消せません。投稿とすべてのコメントが削除されます。
+            <div 
+              className="rounded-lg bg-white p-6 shadow-2xl max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 id="delete-post-dialog-title" className="mb-4 text-lg font-bold text-red-600">⚠️ 投稿を削除しますか？</h3>
+              
+              {/* Preview of post to be deleted */}
+              {post && (
+                <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-sm text-gray-600 mb-1">削除する投稿:</p>
+                  <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">{post.title}</h4>
+                  <p className="text-sm text-gray-700 line-clamp-3">{post.content}</p>
+                </div>
+              )}
+              
+              <p id="delete-post-dialog-description" className="mb-4 text-sm text-gray-600">
+                この操作は取り消せません。投稿とすべてのコメント（{comments.length}件）が削除されます。
               </p>
               {error && (
                 <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600">

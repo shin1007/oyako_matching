@@ -155,7 +155,39 @@ export async function PATCH(
 
     if (error) throw error;
 
-    return NextResponse.json({ post: updatedPost });
+    // Fetch author profile
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
+      .eq('user_id', updatedPost.author_id)
+      .single();
+
+    // フォールバック: forum_display_nameがない場合はフルネームを使用
+    const displayName = authorProfile?.forum_display_name || 
+      `${authorProfile?.last_name_kanji || ''}${authorProfile?.first_name_kanji || '名無し'}`;
+
+    // Fetch category if exists
+    let category = null;
+    if (updatedPost.category_id) {
+      const { data: categoryData } = await supabase
+        .from('forum_categories')
+        .select('id, name, icon')
+        .eq('id', updatedPost.category_id)
+        .single();
+      category = categoryData;
+    }
+
+    // Construct post with profile
+    const enrichedPost = {
+      ...updatedPost,
+      author_profile: {
+        forum_display_name: displayName,
+        profile_image_url: authorProfile?.profile_image_url
+      },
+      category
+    };
+
+    return NextResponse.json({ post: enrichedPost });
   } catch (error: any) {
     console.error('Error updating post:', error);
     return NextResponse.json(
