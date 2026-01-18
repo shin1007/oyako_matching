@@ -35,7 +35,6 @@ CREATE POLICY "Authenticated users can create reports" ON public.forum_reports
 -- 注意: UPDATE操作には明示的なポリシーを設定していないため、
 -- 一般ユーザーは通報のステータスを変更できません。
 -- 将来的に管理者機能を実装する際は、管理者用のUPDATEポリシーを追加してください。
-  );
 
 -- 重複通報防止用のユニーク制約
 CREATE UNIQUE INDEX idx_unique_report_per_user_content 
