@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // 認証されていない場合はエラー
     if (authError || !authenticatedUser) {
-      console.warn('[CleanupOrphanedUser] Unauthorized access attempt for email:', email);
+      console.warn('[CleanupOrphanedUser] Unauthorized access attempt to cleanup endpoint');
       return NextResponse.json(
         { error: '認証が必要です。ログインしてください。' },
         { status: 401 }
@@ -43,8 +43,7 @@ export async function POST(request: NextRequest) {
       console.warn(
         '[CleanupOrphanedUser] Forbidden: User',
         authenticatedUser.email,
-        'attempted to cleanup',
-        email
+        'attempted to cleanup a different account'
       );
       return NextResponse.json(
         { error: '他のユーザーのアカウントをクリーンアップすることはできません。' },
