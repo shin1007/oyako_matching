@@ -57,17 +57,17 @@ function HomeContent() {
                 <p className="mt-2">
                   • 親同士の情報交換
                   <br />
+                  • マイナンバーカード認証
+                  <br />
                   <br />
                 </p>
                 <p className="font-semibold">以下の機能は月額 ¥980</p>
                 <p className="mt-2">
-                  • マイナンバーカード認証
+                  • AI成長写真生成
                   <br />
-                  • AI成長写真生成（有料）
+                  • 子どもとのマッチング機能
                   <br />
-                  • マッチング機能（有料）
-                  <br />
-                  • 安全なメッセージ機能（有料）
+                  • 安全なメッセージ機能
                 </p>
               </div>
               <Link
@@ -95,7 +95,7 @@ function HomeContent() {
                   <br />
                   • マイナンバーカード認証
                   <br />
-                  • マッチング機能
+                  • 親とのマッチング機能
                   <br />
                   • 安全なメッセージ機能
                 </p>
