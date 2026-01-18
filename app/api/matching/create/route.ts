@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const admin = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -21,7 +23,8 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    const { data: targetUser } = await supabase
+    // ターゲットユーザーはRLSで非公開なので管理者権限で取得
+    const { data: targetUser } = await admin
       .from('users')
       .select('role')
       .eq('id', targetUserId)
