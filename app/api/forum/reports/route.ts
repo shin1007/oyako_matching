@@ -61,16 +61,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 重複通報をチェック
-    const { data: existingReport } = await supabase
+    const { data: existingReports } = await supabase
       .from('forum_reports')
       .select('id')
       .eq('reporter_id', user.id)
       .eq('reported_content_type', reported_content_type)
       .eq('reported_content_id', reported_content_id)
-      .in('status', ['pending', 'reviewed'])
-      .single();
+      .in('status', ['pending', 'reviewed']);
 
-    if (existingReport) {
+    if (existingReports && existingReports.length > 0) {
       return NextResponse.json(
         { error: 'すでにこのコンテンツを通報しています' },
         { status: 400 }

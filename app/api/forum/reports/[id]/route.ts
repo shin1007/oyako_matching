@@ -15,7 +15,16 @@ export async function PUT(
     }
 
     // TODO: 将来的には管理者権限のチェックを追加
-    // 現状は通報者本人のみが自分の通報を閲覧可能
+    // 現在は通報ステータス更新機能は実装されていますが、
+    // 実際の運用では管理者ダッシュボードから呼び出されるべきです
+    // const { data: userData } = await supabase
+    //   .from('users')
+    //   .select('role, is_admin')
+    //   .eq('id', user.id)
+    //   .single();
+    // if (!userData?.is_admin) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const { id } = await params;
     const body = await request.json();
