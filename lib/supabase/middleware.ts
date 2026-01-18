@@ -1,6 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
+// 保護されたルートのパターン定義（パフォーマンス最適化のためモジュールレベルで定義）
+const PROTECTED_ROUTES = [
+  '/dashboard',
+  '/matching',
+  '/messages',
+  '/forum',
+  '/payments',
+] as const;
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -42,15 +51,42 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  let user = null;
   try {
     const {
-      data: { user },
+      data: { user: authUser },
     } = await supabase.auth.getUser();
+    user = authUser;
   } catch (e) {
     // In development, avoid crashing on network/auth fetch failures
     // Edge sandbox may intermittently fail to reach external services
     // Proceed without user to keep dev server running
     console.warn('Supabase auth.getUser failed in middleware:', e);
+  }
+
+  // 現在のパスが保護されたルートかチェック
+  const pathname = request.nextUrl.pathname;
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => {
+    // 完全一致または子パス（/dashboard/profile など）をチェック
+    return pathname === route || pathname.startsWith(route + '/');
+  });
+
+  // 保護されたルートで未認証の場合、ログインページにリダイレクト
+  if (isProtectedRoute && !user) {
+    const redirectUrl = new URL('/auth/login', request.url);
+    // リダイレクト後に元のページに戻れるよう、リダイレクト先URLをクエリパラメータに含める
+    // オープンリダイレクト脆弱性を防ぐため、絶対パスのみを許可
+    // プロトコル相対URL（//evil.com）もブロック
+    if (pathname && pathname.startsWith('/') && !pathname.startsWith('//')) {
+      redirectUrl.searchParams.set('redirect', pathname);
+    }
+    const response = NextResponse.redirect(redirectUrl);
+    // クッキーを保持
+    const cookies = supabaseResponse.cookies.getAll();
+    cookies.forEach(({ name, value, ...options }) => {
+      response.cookies.set(name, value, options);
+    });
+    return response;
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

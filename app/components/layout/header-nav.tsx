@@ -13,6 +13,7 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
   const [pendingCount, setPendingCount] = useState(0);
   const [totalNotifications, setTotalNotifications] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,12 +46,27 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
 
   const handleSignOut = async () => {
     try {
+      setSigningOut(true);
+      console.log('[HeaderNav] Attempting to sign out...');
       const response = await fetch('/api/auth/signout', { method: 'POST' });
+      console.log('[HeaderNav] SignOut response:', response.status);
+      
       if (response.ok) {
+        console.log('[HeaderNav] SignOut successful, refreshing page and redirecting to home');
+        // Refresh to clear server-side session data
+        router.refresh();
+        // Redirect to home
         router.push('/');
+      } else {
+        const data = await response.json();
+        console.error('[HeaderNav] SignOut failed:', data.error);
+        alert('ログアウトに失敗しました。もう一度お試しください。');
       }
     } catch (err) {
-      console.error('Failed to sign out:', err);
+      console.error('[HeaderNav] Failed to sign out:', err);
+      alert('ログアウトに失敗しました。もう一度お試しください。');
+    } finally {
+      setSigningOut(false);
     }
   };
 
@@ -80,9 +96,10 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
 
           <button
             onClick={handleSignOut}
-            className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100"
+            disabled={signingOut}
+            className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ログアウト
+            {signingOut ? 'ログアウト中...' : 'ログアウト'}
           </button>
         </>
       ) : (
