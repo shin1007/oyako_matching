@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -146,6 +148,13 @@ export default function LoginPage() {
 
         <div className="rounded-lg bg-white p-8 shadow-lg">
           <form onSubmit={handleLogin} className="space-y-6">
+                        <div>
+                          <Turnstile
+                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
+                            onSuccess={setCaptchaToken}
+                            options={{ theme: 'light' }}
+                          />
+                        </div>
             {message && (
               <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
                 {message}
