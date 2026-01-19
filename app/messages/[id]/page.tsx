@@ -40,6 +40,7 @@ export default function MessageDetailPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [match, setMatch] = useState<Match | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [newMessage, setNewMessage] = useState('');
@@ -92,6 +93,17 @@ export default function MessageDetailPage() {
       return;
     }
     setCurrentUserId(user.id);
+
+    // Get user role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userData) {
+      setUserRole(userData.role);
+    }
   };
 
   const loadMatchAndMessages = async () => {
@@ -186,7 +198,7 @@ export default function MessageDetailPage() {
           </div>
           <Link
             href="/messages"
-            className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -204,7 +216,7 @@ export default function MessageDetailPage() {
           </div>
           <Link
             href="/messages"
-            className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -296,7 +308,9 @@ export default function MessageDetailPage() {
                       <div
                         className={`max-w-[70%] rounded-lg px-4 py-2 ${
                           isOwnMessage
-                            ? 'bg-blue-600 text-white'
+                            ? userRole === 'child' 
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-green-600 text-white'
                             : 'bg-gray-200 text-gray-900'
                         }`}
                       >
@@ -306,7 +320,11 @@ export default function MessageDetailPage() {
                         <div className={`flex items-center justify-between gap-2 mt-1`}>
                           <p
                             className={`text-xs ${
-                              isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                              isOwnMessage 
+                                ? userRole === 'child'
+                                  ? 'text-orange-100'
+                                  : 'text-green-100'
+                                : 'text-gray-500'
                             }`}
                           >
                             {new Date(message.created_at).toLocaleString('ja-JP', {
@@ -319,7 +337,13 @@ export default function MessageDetailPage() {
                           {isOwnMessage && (
                             <span
                               className={`text-xs ${
-                                message.read_at ? 'text-blue-200' : 'text-blue-300'
+                                message.read_at 
+                                  ? userRole === 'child'
+                                    ? 'text-orange-200'
+                                    : 'text-green-200'
+                                  : userRole === 'child'
+                                    ? 'text-orange-300'
+                                    : 'text-green-300'
                               }`}
                             >
                               {message.read_at ? '既読' : '未読'}
@@ -341,7 +365,7 @@ export default function MessageDetailPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="メッセージを入力..."
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none resize-none"
+                  className={`flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none resize-none ${userRole === 'child' ? 'focus:border-orange-500' : 'focus:border-green-500'}`}
                   rows={2}
                   disabled={sending}
                   onKeyDown={(e) => {
@@ -354,7 +378,7 @@ export default function MessageDetailPage() {
                 <button
                   type="submit"
                   disabled={!newMessage.trim() || sending}
-                  className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`rounded-lg px-6 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                 >
                   {sending ? '送信中...' : '送信'}
                 </button>

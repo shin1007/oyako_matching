@@ -33,10 +33,10 @@ export function PendingNotification({ userRole }: PendingNotificationProps) {
     return null;
   }
 
-  const bgColor = userRole === 'child' ? 'bg-orange-100 border-orange-300' : 'bg-blue-100 border-blue-300';
-  const textColor = userRole === 'child' ? 'text-orange-900' : 'text-blue-900';
-  const subTextColor = userRole === 'child' ? 'text-orange-800' : 'text-blue-800';
-  const buttonColor = userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700';
+  const bgColor = userRole === 'child' ? 'bg-orange-100 border-orange-300' : 'bg-green-100 border-green-300';
+  const textColor = userRole === 'child' ? 'text-orange-900' : 'text-green-900';
+  const subTextColor = userRole === 'child' ? 'text-orange-800' : 'text-green-800';
+  const buttonColor = userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700';
 
   return (
     <div className={`rounded-lg border-2 ${bgColor} p-4 mb-6`}>

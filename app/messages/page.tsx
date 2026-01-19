@@ -34,6 +34,7 @@ export default function MessagesPage() {
   const [error, setError] = useState('');
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -47,6 +48,18 @@ export default function MessagesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/auth/login');
+      return;
+    }
+
+    // Get user role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userData) {
+      setUserRole(userData.role);
     }
   };
 
@@ -196,7 +209,7 @@ export default function MessagesPage() {
             </p>
             <Link
               href="/matching"
-              className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
             >
               マッチングを探す
             </Link>
@@ -266,7 +279,7 @@ export default function MessagesPage() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => handleAccept(match.id)}
-                      className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                      className={`flex-1 rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                     >
                       承認
                     </button>
@@ -291,7 +304,7 @@ export default function MessagesPage() {
                   <div className="mt-4">
                     <Link
                       href={`/messages/${match.id}`}
-                      className="block w-full rounded-lg bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
+                      className={`block w-full rounded-lg px-4 py-2 text-center text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                     >
                       メッセージを見る
                     </Link>
