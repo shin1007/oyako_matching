@@ -168,8 +168,18 @@ export default function ProfilePage() {
         
         // 既存の画像を削除
         if (profileImageUrl) {
-          const oldPath = profileImageUrl.split('/').slice(-2).join('/');
-          await supabase.storage.from('profile-images').remove([oldPath]);
+          try {
+            // Supabase Storage URLから相対パスを抽出
+            // URL形式: https://{project}.supabase.co/storage/v1/object/public/profile-images/{user_id}/profile-xxx.jpg
+            const urlParts = profileImageUrl.split('/profile-images/');
+            if (urlParts.length > 1) {
+              const oldPath = urlParts[1];
+              await supabase.storage.from('profile-images').remove([oldPath]);
+            }
+          } catch (deleteError) {
+            console.error('既存画像の削除に失敗しました:', deleteError);
+            // 削除に失敗しても続行
+          }
         }
 
         // 新しい画像をアップロード
@@ -434,7 +444,15 @@ export default function ProfilePage() {
                 <h3 className="text-md font-medium text-gray-900 mb-3">プロフィール画像</h3>
                 <ImageUpload
                   currentImageUrl={profileImageUrl}
-                  onImageSelect={(file) => setSelectedImageFile(file)}
+                  onImageSelect={(file) => {
+                    setSelectedImageFile(file);
+                    setSuccess('画像が選択されました。プロフィールを保存してください。');
+                    setTimeout(() => setSuccess(''), 3000);
+                  }}
+                  onError={(message) => {
+                    setError(message);
+                    setTimeout(() => setError(''), 5000);
+                  }}
                   userRole={userRole || undefined}
                 />
               </div>

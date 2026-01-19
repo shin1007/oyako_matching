@@ -8,10 +8,11 @@ import imageCompression from 'browser-image-compression';
 interface ImageUploadProps {
   currentImageUrl?: string | null;
   onImageSelect: (file: File) => void;
+  onError?: (message: string) => void;
   userRole?: 'parent' | 'child';
 }
 
-export default function ImageUpload({ currentImageUrl, onImageSelect, userRole }: ImageUploadProps) {
+export default function ImageUpload({ currentImageUrl, onImageSelect, onError, userRole }: ImageUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
@@ -22,6 +23,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, userRole }
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,15 +31,21 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, userRole }
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setErrorMessage('');
+
     // ファイルタイプのチェック
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
-      alert('JPEG、PNG、またはWebP形式の画像を選択してください。');
+      const error = 'JPEG、PNG、またはWebP形式の画像を選択してください。';
+      setErrorMessage(error);
+      onError?.(error);
       return;
     }
 
-    // ファイルサイズのチェック（10MB以下）
-    if (file.size > 10 * 1024 * 1024) {
-      alert('ファイルサイズが大きすぎます。10MB以下の画像を選択してください。');
+    // ファイルサイズのチェック（512KB = 0.5MB以下、アップロード前に圧縮するため緩めに5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      const error = 'ファイルサイズが大きすぎます。5MB以下の画像を選択してください。';
+      setErrorMessage(error);
+      onError?.(error);
       return;
     }
 
@@ -95,10 +103,14 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, userRole }
   const handleCropComplete = async () => {
     if (!completedCrop || !imgRef.current) return;
 
+    setErrorMessage('');
+
     try {
       const croppedBlob = await getCroppedImg(imgRef.current, completedCrop);
       if (!croppedBlob) {
-        alert('画像の処理に失敗しました。');
+        const error = '画像の処理に失敗しました。';
+        setErrorMessage(error);
+        onError?.(error);
         return;
       }
 
@@ -119,9 +131,12 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, userRole }
       onImageSelect(compressedFile);
       setShowCropper(false);
       setSelectedImage(null);
+      setErrorMessage('');
     } catch (error) {
       console.error('画像処理エラー:', error);
-      alert('画像の処理に失敗しました。もう一度お試しください。');
+      const errorMsg = '画像の処理に失敗しました。もう一度お試しください。';
+      setErrorMessage(errorMsg);
+      onError?.(errorMsg);
     }
   };
 
@@ -171,10 +186,17 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, userRole }
       </div>
 
       <p className="text-xs text-gray-500 text-center">
-        JPEG、PNG、WebP形式、最大10MB
+        JPEG、PNG、WebP形式、最大5MB
         <br />
         アップロード後、正方形に切り取れます
       </p>
+
+      {/* エラーメッセージ表示 */}
+      {errorMessage && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 text-center">
+          {errorMessage}
+        </div>
+      )}
 
       {/* クロッパーモーダル */}
       {showCropper && selectedImage && (
