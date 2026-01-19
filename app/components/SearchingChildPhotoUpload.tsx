@@ -35,6 +35,9 @@ export default function SearchingChildPhotoUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
+  // 写真の最大枚数（データベース制約と一致させる）
+  const MAX_PHOTOS_PER_CHILD = 1;
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -42,8 +45,8 @@ export default function SearchingChildPhotoUpload({
     setErrorMessage('');
 
     // 写真枚数制限チェック
-    if (photos.length + files.length > 5) {
-      const error = '写真は最大5枚までです。';
+    if (photos.length >= MAX_PHOTOS_PER_CHILD) {
+      const error = '写真は1枚のみ登録できます。既存の写真を削除してから新しい写真をアップロードしてください。';
       setErrorMessage(error);
       onError?.(error);
       return;
@@ -171,16 +174,15 @@ export default function SearchingChildPhotoUpload({
       <div className={`rounded-lg border-2 ${bgGradient} p-4`}>
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-medium text-gray-800">
-            写真 ({photos.length}/5)
+            写真 ({photos.length}/{MAX_PHOTOS_PER_CHILD})
           </h4>
-          {photos.length < 5 && (
+          {photos.length < MAX_PHOTOS_PER_CHILD && (
             <label className="cursor-pointer">
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleFileSelect}
-                multiple
                 className="hidden"
                 disabled={uploading}
               />
@@ -198,7 +200,7 @@ export default function SearchingChildPhotoUpload({
         </div>
 
         <p className="text-xs text-gray-600 mb-3">
-          JPEG、PNG、WebP形式、最大5MB、5枚まで登録可能
+          JPEG、PNG、WebP形式、最大5MB、1枚のみ登録可能
           <br />
           撮影日時と年齢を記録すると、将来的にAIで現在の姿を推定できるようになります。
         </p>

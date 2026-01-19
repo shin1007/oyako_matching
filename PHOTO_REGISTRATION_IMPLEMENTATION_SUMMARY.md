@@ -10,7 +10,7 @@
 
 **新規テーブル: `searching_children_photos`**
 - 写真URL、撮影日時、年齢情報を保存
-- 1つの子ども・親につき最大5枚まで
+- 1つの子ども・親につき1枚のみ（2026-01-19にサーバー負荷軽減のため5枚から変更）
 - RLSポリシーで保護
 
 **新規ストレージバケット: `searching-children-photos`**
@@ -21,7 +21,7 @@
 ### 2. フロントエンド
 
 **新規コンポーネント: `SearchingChildPhotoUpload.tsx`**
-- 複数枚同時アップロード対応
+- 単一写真アップロード（2026-01-19に1枚制限へ変更）
 - 画像自動圧縮（最大5MB）
 - 撮影日・年齢・説明の入力フォーム
 - 写真削除機能
@@ -74,7 +74,7 @@
 1. ダッシュボードから「プロフィール」へ移動
 2. 探している子ども・親の情報セクションまでスクロール
 3. 「+ 写真を追加」ボタンをクリック
-4. 画像を選択（最大5枚、JPEG/PNG/WebP、5MB以下）
+4. 画像を選択（1枚のみ、JPEG/PNG/WebP、5MB以下）
 5. 撮影日と年齢を入力（任意）
 6. 「プロフィールを保存」ボタンをクリック
 
@@ -106,7 +106,8 @@
 ## ファイル一覧
 
 ### 新規作成
-- `supabase/migrations/022_searching_children_photos.sql` - マイグレーション
+- `supabase/migrations/022_searching_children_photos.sql` - マイグレーション（初期実装：5枚制限）
+- `supabase/migrations/026_limit_photos_to_one.sql` - マイグレーション（1枚制限へ変更）
 - `app/components/SearchingChildPhotoUpload.tsx` - 写真アップロードコンポーネント
 - `docs/PHOTO_REGISTRATION_FEATURE.md` - 機能ドキュメント
 - `PHOTO_REGISTRATION_SETUP.md` - セットアップ手順
