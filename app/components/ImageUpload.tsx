@@ -286,12 +286,12 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
           onClick={handleCancel}
         >
           <div
-            className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-auto"
+            className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-medium mb-4">画像を切り取る</h3>
             
-            <div className="mb-4">
+            <div className="mb-4 flex-1 overflow-auto" style={{ minHeight: 0 }}>
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -309,7 +309,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
               </ReactCrop>
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3 justify-end pt-2 border-t border-gray-100 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleCancel}
