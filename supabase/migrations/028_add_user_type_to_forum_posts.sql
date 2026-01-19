@@ -5,6 +5,10 @@ ALTER TABLE public.forum_posts
 ADD COLUMN IF NOT EXISTS user_type TEXT NOT NULL DEFAULT 'parent';
 
 -- CHECK制約を追加（名前付き制約）
+-- 既存の制約があれば削除
+ALTER TABLE public.forum_posts DROP CONSTRAINT IF EXISTS chk_forum_posts_user_type;
+
+-- CHECK制約を追加（名前付き制約）
 ALTER TABLE public.forum_posts
 ADD CONSTRAINT chk_forum_posts_user_type CHECK (user_type IN ('parent', 'child'));
 

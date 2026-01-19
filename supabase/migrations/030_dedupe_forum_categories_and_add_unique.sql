@@ -12,5 +12,6 @@ DELETE FROM public.forum_categories
 WHERE id IN (SELECT id FROM to_delete);
 
 -- name に対するユニーク制約を追加（今後の重複挿入を防止）
+ALTER TABLE public.forum_categories DROP CONSTRAINT IF EXISTS uq_forum_categories_name;
 ALTER TABLE public.forum_categories
   ADD CONSTRAINT uq_forum_categories_name UNIQUE (name);
