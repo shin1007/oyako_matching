@@ -95,6 +95,13 @@ export default function MessageDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // メッセージを日付順にソートするヘルパー関数
+  const sortMessagesByDate = (messages: Message[]) => {
+    return [...messages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  };
+
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -134,17 +141,15 @@ export default function MessageDetailPage() {
       setMatch(matchData.match);
       
       // 降順で取得したメッセージを昇順に並び替えて表示
-      const sortedMessages = (matchData.messages || []).sort(
-        (a: Message, b: Message) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
+      const sortedMessages = sortMessagesByDate(matchData.messages || []);
       setMessages(sortedMessages);
       setPagination(matchData.pagination);
 
       // 未読メッセージを既読にする
       await markMessagesAsRead();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'マッチ情報の取得に失敗しました';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -182,16 +187,14 @@ export default function MessageDetailPage() {
       const data = await response.json();
       
       // 降順で取得したメッセージを昇順に並び替えて既存のメッセージの前に追加
-      const sortedOlderMessages = (data.messages || []).sort(
-        (a: Message, b: Message) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
+      const sortedOlderMessages = sortMessagesByDate(data.messages || []);
       
       setMessages((prev) => [...sortedOlderMessages, ...prev]);
       setPagination(data.pagination);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '古いメッセージの取得に失敗しました';
       console.error('Failed to load more messages:', err);
-      alert(err.message);
+      alert(errorMessage);
     } finally {
       setLoadingMore(false);
     }
@@ -224,8 +227,9 @@ export default function MessageDetailPage() {
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
       scrollToBottom();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'メッセージの送信に失敗しました';
+      alert(errorMessage);
     } finally {
       setSending(false);
     }

@@ -118,7 +118,7 @@ export async function GET(
     // まず総件数を取得
     const { count: totalCount, error: countError } = await admin
       .from('messages')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('match_id', matchId);
 
     if (countError) {
