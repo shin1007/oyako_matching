@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
+import ImageUpload from '@/app/components/ImageUpload';
 
 interface SearchingChild {
   id?: string;
@@ -31,6 +32,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
   const [parentGender, setParentGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
   const [forumDisplayName, setForumDisplayName] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // 子ども/親情報
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
@@ -104,6 +107,7 @@ export default function ProfilePage() {
         setBio(data.bio || '');
         setParentGender((data as any).gender || '');
         setForumDisplayName((data as any).forum_display_name || '');
+        setProfileImageUrl(data.profile_image_url || null);
       }
 
       // Load searching children
@@ -156,6 +160,36 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('ログインが必要です');
 
+      // 画像をアップロードする場合
+      let uploadedImageUrl = profileImageUrl;
+      if (selectedImageFile) {
+        const fileExt = selectedImageFile.name.split('.').pop() || 'jpg';
+        const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
+        
+        // 既存の画像を削除
+        if (profileImageUrl) {
+          const oldPath = profileImageUrl.split('/').slice(-2).join('/');
+          await supabase.storage.from('profile-images').remove([oldPath]);
+        }
+
+        // 新しい画像をアップロード
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, selectedImageFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        // 公開URLを取得
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-images')
+          .getPublicUrl(fileName);
+        
+        uploadedImageUrl = publicUrl;
+      }
+
       // Save profile with new fields (full_name は削除)
       const { error: profileError } = await supabase
         .from('profiles')
@@ -171,6 +205,7 @@ export default function ProfilePage() {
           bio: bio,
           gender: parentGender || null,
           forum_display_name: forumDisplayName || null,
+          profile_image_url: uploadedImageUrl,
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
@@ -393,6 +428,16 @@ export default function ProfilePage() {
                   {success}
                 </div>
               )}
+
+              {/* プロフィール画像 */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-md font-medium text-gray-900 mb-3">プロフィール画像</h3>
+                <ImageUpload
+                  currentImageUrl={profileImageUrl}
+                  onImageSelect={(file) => setSelectedImageFile(file)}
+                  userRole={userRole || undefined}
+                />
+              </div>
 
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>

@@ -88,12 +88,20 @@ export default async function DashboardPage() {
                 <div className="space-y-4">
                   {/* Profile Image */}
                   <div className="flex justify-center">
-                    <div className={`w-24 h-24 rounded-full ${userData?.role === 'child' ? 'bg-gradient-to-br from-orange-400 to-orange-600' : 'bg-gradient-to-br from-green-400 to-green-600'} flex items-center justify-center text-white text-3xl font-bold`}>
-                      {(profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) ? 
-                        (profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) : 
-                        <span className="text-5xl">👤</span>
-                      }
-                    </div>
+                    {profile.profile_image_url ? (
+                      <img
+                        src={profile.profile_image_url}
+                        alt="プロフィール画像"
+                        className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                      />
+                    ) : (
+                      <div className={`w-24 h-24 rounded-full ${userData?.role === 'child' ? 'bg-gradient-to-br from-orange-400 to-orange-600' : 'bg-gradient-to-br from-green-400 to-green-600'} flex items-center justify-center text-white text-3xl font-bold`}>
+                        {(profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) ? 
+                          (profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) : 
+                          <span className="text-5xl">👤</span>
+                        }
+                      </div>
+                    )}
                   </div>
 
                   {/* Name */}
