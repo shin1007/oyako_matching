@@ -156,27 +156,24 @@ function testPhotoMapping() {
 
   const photosMap = new Map();
   const userChildMap = new Map();
+  const childToUserMap = new Map();
   
   // 各ユーザーの最初の子どものIDを記録
   searchingChildren.forEach((child) => {
     if (!userChildMap.has(child.user_id)) {
       userChildMap.set(child.user_id, child.id);
     }
+    childToUserMap.set(child.id, child.user_id);
   });
 
-  // 最初の子どもの最初の写真のみを保持
+  // 最初の子どもの最初の写真のみを保持（効率的な実装）
   photos.forEach((photo) => {
-    const child = searchingChildren.find((c) => c.id === photo.searching_child_id);
-    if (child) {
-      const firstChildId = userChildMap.get(child.user_id);
-      if (photo.searching_child_id === firstChildId) {
-        if (!photosMap.has(child.user_id)) {
-          photosMap.set(child.user_id, []);
-        }
-        const existing = photosMap.get(child.user_id);
-        if (existing && existing.length === 0) {
-          existing.push(photo.photo_url);
-        }
+    const userId = childToUserMap.get(photo.searching_child_id);
+    if (userId) {
+      const firstChildId = userChildMap.get(userId);
+      // 最初の子どもの最初の写真のみを追加
+      if (photo.searching_child_id === firstChildId && !photosMap.has(userId)) {
+        photosMap.set(userId, [photo.photo_url]);
       }
     }
   });

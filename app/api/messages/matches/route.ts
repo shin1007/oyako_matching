@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
     // 最終メッセージを一括取得（acceptedマッチのみ）
     let lastMessagesMap = new Map<string, any>();
     if (acceptedMatchIds.length > 0) {
-      // 各マッチの最終メッセージを取得（サブクエリを使用）
+      // 全メッセージを新しい順に取得し、各マッチIDの最初（最新）のみを保持
+      // これは複数のクエリを実行するより効率的
       const { data: lastMessages } = await admin
         .from('messages')
         .select('match_id, content, created_at, sender_id')
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false });
 
       if (lastMessages) {
-        // 各マッチIDの最初（=最新）のメッセージのみを保持
+        // 各マッチIDで最初に出現したメッセージ（最新）のみを保持
         lastMessages.forEach((msg: any) => {
           if (!lastMessagesMap.has(msg.match_id)) {
             lastMessagesMap.set(msg.match_id, msg);
@@ -120,27 +121,25 @@ export async function GET(request: NextRequest) {
 
       if (photos) {
         // ユーザーIDごとに最初の子どもの最初の写真を保持
+        // 最初の子どものIDをマッピング（reduceで効率的に処理）
         const userChildMap = new Map<string, string>();
+        const childToUserMap = new Map<string, string>();
+        
         searchingChildren.forEach((child: any) => {
           if (!userChildMap.has(child.user_id)) {
             userChildMap.set(child.user_id, child.id);
           }
+          childToUserMap.set(child.id, child.user_id);
         });
 
+        // 写真を処理（O(n)で効率的）
         photos.forEach((photo: any) => {
-          const userId = searchingChildren.find(
-            (c: any) => c.id === photo.searching_child_id
-          )?.user_id;
+          const userId = childToUserMap.get(photo.searching_child_id);
           if (userId) {
             const firstChildId = userChildMap.get(userId);
-            if (photo.searching_child_id === firstChildId) {
-              if (!photosMap.has(userId)) {
-                photosMap.set(userId, []);
-              }
-              const existing = photosMap.get(userId);
-              if (existing && existing.length === 0) {
-                existing.push(photo.photo_url);
-              }
+            // 最初の子どもの最初の写真のみを追加
+            if (photo.searching_child_id === firstChildId && !photosMap.has(userId)) {
+              photosMap.set(userId, [photo.photo_url]);
             }
           }
         });
