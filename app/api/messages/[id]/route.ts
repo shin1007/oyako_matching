@@ -11,6 +11,34 @@ export async function GET(
     const admin = createAdminClient();
     const { id: matchId } = await params;
 
+    // ページネーションパラメータを取得
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get('limit');
+    const offsetParam = searchParams.get('offset');
+    const sortParam = searchParams.get('sort') || 'desc'; // デフォルトは降順（新しい順）
+
+    // limitのバリデーション（デフォルト50、最大100）
+    let limit = 50;
+    if (limitParam) {
+      const parsedLimit = parseInt(limitParam, 10);
+      if (!isNaN(parsedLimit) && parsedLimit > 0) {
+        limit = Math.min(parsedLimit, 100); // 最大100件に制限
+      }
+    }
+
+    // offsetのバリデーション（デフォルト0）
+    let offset = 0;
+    if (offsetParam) {
+      const parsedOffset = parseInt(offsetParam, 10);
+      if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+        offset = parsedOffset;
+      }
+    }
+
+    // sortのバリデーション（asc または desc のみ許可）
+    const sortOrder = sortParam === 'asc' ? 'asc' : 'desc';
+    const ascending = sortOrder === 'asc';
+
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -86,16 +114,31 @@ export async function GET(
       );
     }
 
-    // メッセージを取得
+    // メッセージを取得（ページネーション付き）
+    // まず総件数を取得
+    const { count: totalCount, error: countError } = await admin
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('match_id', matchId);
+
+    if (countError) {
+      console.error('Failed to count messages:', countError);
+    }
+
+    // メッセージをページネーションで取得
     const { data: messages, error: messagesError } = await admin
       .from('messages')
       .select('*')
       .eq('match_id', matchId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending })
+      .range(offset, offset + limit - 1);
 
     if (messagesError) {
       console.error('Failed to fetch messages:', messagesError);
     }
+
+    const total = totalCount ?? 0;
+    const hasMore = offset + limit < total;
 
     return NextResponse.json(
       {
@@ -107,6 +150,12 @@ export async function GET(
           searching_children: searchingChildrenWithPhotos,
         },
         messages: messages || [],
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore,
+        },
       },
       { status: 200 }
     );

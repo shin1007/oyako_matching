@@ -31,6 +31,13 @@ interface Match {
   }>;
 }
 
+interface PaginationInfo {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
 export default function MessageDetailPage() {
   const params = useParams();
   const matchId = params?.id as string;
@@ -45,6 +52,8 @@ export default function MessageDetailPage() {
   const [error, setError] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -86,6 +95,13 @@ export default function MessageDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // メッセージを日付順にソートするヘルパー関数
+  const sortMessagesByDate = (messages: Message[]) => {
+    return [...messages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  };
+
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -111,8 +127,8 @@ export default function MessageDetailPage() {
     setError('');
 
     try {
-      // マッチ情報を取得
-      const matchResponse = await fetch(`/api/messages/${matchId}`, {
+      // マッチ情報を取得（最新50件を降順で取得）
+      const matchResponse = await fetch(`/api/messages/${matchId}?limit=50&sort=desc`, {
         method: 'GET',
       });
 
@@ -123,12 +139,17 @@ export default function MessageDetailPage() {
 
       const matchData = await matchResponse.json();
       setMatch(matchData.match);
-      setMessages(matchData.messages || []);
+      
+      // 降順で取得したメッセージを昇順に並び替えて表示
+      const sortedMessages = sortMessagesByDate(matchData.messages || []);
+      setMessages(sortedMessages);
+      setPagination(matchData.pagination);
 
       // 未読メッセージを既読にする
       await markMessagesAsRead();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'マッチ情報の取得に失敗しました';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -141,6 +162,41 @@ export default function MessageDetailPage() {
       });
     } catch (err) {
       console.error('Failed to mark messages as read:', err);
+    }
+  };
+
+  const loadMoreMessages = async () => {
+    if (!pagination || !pagination.hasMore || loadingMore) return;
+
+    setLoadingMore(true);
+
+    try {
+      const newOffset = pagination.offset + pagination.limit;
+      const response = await fetch(
+        `/api/messages/${matchId}?limit=${pagination.limit}&offset=${newOffset}&sort=desc`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || '古いメッセージの取得に失敗しました');
+      }
+
+      const data = await response.json();
+      
+      // 降順で取得したメッセージを昇順に並び替えて既存のメッセージの前に追加
+      const sortedOlderMessages = sortMessagesByDate(data.messages || []);
+      
+      setMessages((prev) => [...sortedOlderMessages, ...prev]);
+      setPagination(data.pagination);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '古いメッセージの取得に失敗しました';
+      console.error('Failed to load more messages:', err);
+      alert(errorMessage);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -171,8 +227,9 @@ export default function MessageDetailPage() {
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
       scrollToBottom();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'メッセージの送信に失敗しました';
+      alert(errorMessage);
     } finally {
       setSending(false);
     }
@@ -291,6 +348,21 @@ export default function MessageDetailPage() {
           <div className="h-full flex flex-col">
             {/* Messages List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {pagination && pagination.hasMore && (
+                <div className="flex justify-center mb-4">
+                  <button
+                    onClick={loadMoreMessages}
+                    disabled={loadingMore}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+                      userRole === 'child' 
+                        ? 'bg-child-600 hover:bg-child-700' 
+                        : 'bg-parent-600 hover:bg-parent-700'
+                    }`}
+                  >
+                    {loadingMore ? '読み込み中...' : '古いメッセージを読み込む'}
+                  </button>
+                </div>
+              )}
               {messages.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <div className="text-4xl mb-2">💬</div>
