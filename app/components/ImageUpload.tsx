@@ -221,6 +221,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
   };
 
   const handleCancel = () => {
+    if (uploading) return;
     setShowCropper(false);
     setSelectedImage(null);
     if (fileInputRef.current) {
@@ -280,8 +281,14 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
 
       {/* クロッパーモーダル */}
       {showCropper && selectedImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+          onClick={handleCancel}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-medium mb-4">画像を切り取る</h3>
             
             <div className="mb-4">
