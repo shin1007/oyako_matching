@@ -97,6 +97,10 @@
   CREATE INDEX IF NOT EXISTS idx_users_verification ON public.users(verification_status);
   CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_birth_date ON public.profiles(birth_date);
+  CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
+  CREATE INDEX IF NOT EXISTS idx_users_verification ON public.users(verification_status);
+  CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
+  CREATE INDEX IF NOT EXISTS idx_profiles_birth_date ON public.profiles(birth_date);
   CREATE INDEX IF NOT EXISTS idx_episodes_user_id ON public.episodes(user_id);
   CREATE INDEX IF NOT EXISTS idx_episodes_moderation ON public.episodes(moderation_status);
   CREATE INDEX IF NOT EXISTS idx_matches_parent_id ON public.matches(parent_id);
@@ -106,9 +110,6 @@
   CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);
   CREATE INDEX IF NOT EXISTS idx_time_capsules_parent_id ON public.time_capsules(parent_id);
   CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id);
-
-  -- Vector similarity search index
-  CREATE INDEX IF NOT EXISTS idx_episodes_embedding ON public.episodes USING ivfflat (embedding vector_cosine_ops);
 
   -- Updated_at trigger function
   CREATE OR REPLACE FUNCTION update_updated_at_column()

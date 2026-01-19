@@ -89,12 +89,13 @@ ON CONFLICT (id) DO UPDATE SET
 -- テーブルのRLS有効化
 ALTER TABLE public.searching_children_photos ENABLE ROW LEVEL SECURITY;
 
--- ポリシー: 自分の写真のみ閲覧可能
+-- ポリシー: 認証済みユーザーは全ての写真を閲覧可能（マッチング機能で必要）
 DROP POLICY IF EXISTS "Users can view their own searching children photos" ON public.searching_children_photos;
-CREATE POLICY "Users can view their own searching children photos"
+DROP POLICY IF EXISTS "Authenticated users can view all searching children photos" ON public.searching_children_photos;
+CREATE POLICY "Authenticated users can view all searching children photos"
 ON public.searching_children_photos FOR SELECT
 TO authenticated
-USING (user_id = auth.uid());
+USING (true);
 
 -- ポリシー: 自分の写真のみ挿入可能
 DROP POLICY IF EXISTS "Users can insert their own searching children photos" ON public.searching_children_photos;

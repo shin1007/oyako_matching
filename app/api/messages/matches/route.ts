@@ -39,6 +39,33 @@ export async function GET(request: NextRequest) {
           .eq('user_id', otherUserId)
           .single();
 
+        // 探している子どもの写真を取得
+        const { data: searchingChildren } = await admin
+          .from('searching_children')
+          .select('id')
+          .eq('user_id', otherUserId)
+          .order('display_order', { ascending: true });
+
+        let searchingChildPhotos = [];
+        if (searchingChildren && searchingChildren.length > 0) {
+          console.log('[Messages API] Found searching children:', searchingChildren);
+          const childIds = searchingChildren.map((c: any) => c.id);
+          const { data: photos } = await admin
+            .from('searching_children_photos')
+            .select('searching_child_id, photo_url')
+            .in('searching_child_id', childIds)
+            .order('display_order', { ascending: true });
+
+          console.log('[Messages API] Found photos:', photos);
+          if (photos && photos.length > 0) {
+            // 最初の子どもの最初の写真を取得
+            const firstChildPhoto = photos.find((p: any) => p.searching_child_id === childIds[0]);
+            if (firstChildPhoto) {
+              searchingChildPhotos = [firstChildPhoto.photo_url];
+            }
+          }
+        }
+
         // 現在のユーザーが申請者か判定
         // 親がマッチング申請する場合が多いため、parent_id === user.id なら申請者
         const is_requester = match.parent_id === user.id;
@@ -79,6 +106,7 @@ export async function GET(request: NextRequest) {
           other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
           other_user_role: userData?.role || 'unknown',
           other_user_image: profile?.profile_image_url || null,
+          searching_child_photos: searchingChildPhotos,
           is_requester,
           unread_count,
           last_message,

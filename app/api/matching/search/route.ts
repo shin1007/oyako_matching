@@ -153,13 +153,39 @@ async function getSearchingChildrenInfo(
   targetRole: string
 ): Promise<any[]> {
   if (targetRole === 'parent') {
-    // 相手が親の場合、その親が探している子ども情報を取得
+    // 相手が親の場合、その親が探している子ども情報と写真を取得
     const { data: childrenData } = await admin
       .from('searching_children')
-      .select('id, last_name_kanji, first_name_kanji, birthplace_prefecture, birthplace_municipality')
+      .select(`
+        id, 
+        last_name_kanji, 
+        first_name_kanji, 
+        birthplace_prefecture, 
+        birthplace_municipality
+      `)
       .eq('user_id', matchedUserId)
       .order('display_order', { ascending: true });
-    return childrenData || [];
+    
+    if (!childrenData) return [];
+
+    // 各子どもの写真を取得
+    const childrenWithPhotos = await Promise.all(
+      childrenData.map(async (child: any) => {
+        const { data: photosData } = await admin
+          .from('searching_children_photos')
+          .select('photo_url')
+          .eq('searching_child_id', child.id)
+          .order('display_order', { ascending: true })
+          .limit(1); // 最初の写真のみ取得
+
+        return {
+          ...child,
+          photo_url: photosData && photosData.length > 0 ? photosData[0].photo_url : null
+        };
+      })
+    );
+
+    return childrenWithPhotos;
   }
 
   if (targetRole === 'child') {
@@ -174,13 +200,39 @@ async function getSearchingChildrenInfo(
       return [];
     }
 
-    // その親が探している他の子ども情報を取得
+    // その親が探している他の子ども情報と写真を取得
     const { data: parentChildrenData } = await admin
       .from('searching_children')
-      .select('id, last_name_kanji, first_name_kanji, birthplace_prefecture, birthplace_municipality')
+      .select(`
+        id, 
+        last_name_kanji, 
+        first_name_kanji, 
+        birthplace_prefecture, 
+        birthplace_municipality
+      `)
       .eq('user_id', childData.user_id)
       .order('display_order', { ascending: true });
-    return parentChildrenData || [];
+    
+    if (!parentChildrenData) return [];
+
+    // 各子どもの写真を取得
+    const childrenWithPhotos = await Promise.all(
+      parentChildrenData.map(async (child: any) => {
+        const { data: photosData } = await admin
+          .from('searching_children_photos')
+          .select('photo_url')
+          .eq('searching_child_id', child.id)
+          .order('display_order', { ascending: true })
+          .limit(1); // 最初の写真のみ取得
+
+        return {
+          ...child,
+          photo_url: photosData && photosData.length > 0 ? photosData[0].photo_url : null
+        };
+      })
+    );
+
+    return childrenWithPhotos;
   }
 
   return [];

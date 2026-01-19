@@ -1,6 +1,6 @@
 -- 通報機能テーブル
-CREATE TABLE public.forum_reports (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS public.forum_reports (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
   reporter_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   reported_content_type TEXT NOT NULL CHECK (reported_content_type IN ('post', 'comment')),
   reported_content_id UUID NOT NULL,
@@ -13,19 +13,21 @@ CREATE TABLE public.forum_reports (
 );
 
 -- インデックス作成
-CREATE INDEX idx_forum_reports_reporter_id ON public.forum_reports(reporter_id);
-CREATE INDEX idx_forum_reports_content ON public.forum_reports(reported_content_type, reported_content_id);
-CREATE INDEX idx_forum_reports_status ON public.forum_reports(status);
-CREATE INDEX idx_forum_reports_created_at ON public.forum_reports(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_forum_reports_reporter_id ON public.forum_reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_forum_reports_content ON public.forum_reports(reported_content_type, reported_content_id);
+CREATE INDEX IF NOT EXISTS idx_forum_reports_status ON public.forum_reports(status);
+CREATE INDEX IF NOT EXISTS idx_forum_reports_created_at ON public.forum_reports(created_at DESC);
 
 -- RLSポリシー有効化
 ALTER TABLE public.forum_reports ENABLE ROW LEVEL SECURITY;
 
 -- 通報者は自分の通報のみ閲覧可能
+DROP POLICY IF EXISTS "Users can view their own reports" ON public.forum_reports;
 CREATE POLICY "Users can view their own reports" ON public.forum_reports
   FOR SELECT USING (auth.uid() = reporter_id);
 
 -- 認証済みユーザーは通報を作成可能
+DROP POLICY IF EXISTS "Authenticated users can create reports" ON public.forum_reports;
 CREATE POLICY "Authenticated users can create reports" ON public.forum_reports
   FOR INSERT WITH CHECK (
     auth.uid() = reporter_id AND
@@ -37,7 +39,7 @@ CREATE POLICY "Authenticated users can create reports" ON public.forum_reports
 -- 将来的に管理者機能を実装する際は、管理者用のUPDATEポリシーを追加してください。
 
 -- 重複通報防止用のユニーク制約
-CREATE UNIQUE INDEX idx_unique_report_per_user_content 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_report_per_user_content 
   ON public.forum_reports(reporter_id, reported_content_type, reported_content_id)
   WHERE status IN ('pending', 'reviewed');
 

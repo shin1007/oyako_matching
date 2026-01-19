@@ -32,6 +32,7 @@ interface Match {
     first_name_kanji?: string;
     birthplace_prefecture?: string;
     birthplace_municipality?: string;
+    photo_url?: string | null;
   }>;
 }
 interface SearchingChild {
@@ -354,18 +355,27 @@ export default function MatchingPage() {
                                     {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
                                       <div className="mt-4 pt-4 border-t border-gray-200">
                                         <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
-                                        <div className="space-y-1">
+                                        <div className="space-y-2">
                                           {match.searchingChildrenInfo.map((child) => (
-                                            <div key={child.id} className="text-sm bg-blue-50 rounded p-2">
-                                              <p className="font-semibold text-gray-900">
-                                                {child.last_name_kanji || ''}{child.first_name_kanji || ''}
-                                              </p>
-                                              {(child.birthplace_prefecture || child.birthplace_municipality) && (
-                                                <p className="text-xs text-gray-600">
-                                                  出身地: {child.birthplace_prefecture || ''}
-                                                  {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
-                                                </p>
+                                            <div key={child.id} className="flex gap-3 bg-blue-50 rounded p-2">
+                                              {child.photo_url && (
+                                                <img
+                                                  src={child.photo_url}
+                                                  alt={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
+                                                  className="h-16 w-16 rounded object-cover border border-gray-200 flex-shrink-0"
+                                                />
                                               )}
+                                              <div className="flex-1">
+                                                <p className="font-semibold text-gray-900 text-sm">
+                                                  {child.last_name_kanji || ''}{child.first_name_kanji || ''}
+                                                </p>
+                                                {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                                                  <p className="text-xs text-gray-600">
+                                                    出身地: {child.birthplace_prefecture || ''}
+                                                    {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
+                                                  </p>
+                                                )}
+                                              </div>
                                             </div>
                                           ))}
                                         </div>
@@ -489,9 +499,40 @@ export default function MatchingPage() {
                         </div>
 
                         {match.profile.bio && (
-                          <p className="text-sm text-gray-600 line-clamp-2">
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-4">
                             {match.profile.bio}
                           </p>
+                        )}
+
+                        {/* 相手が探している子ども情報 */}
+                        {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している{role === 'parent' ? '子ども' : '親'}:</p>
+                            <div className="space-y-2">
+                              {match.searchingChildrenInfo.map((child) => (
+                                <div key={child.id} className="flex gap-3 bg-blue-50 rounded p-2">
+                                  {child.photo_url && (
+                                    <img
+                                      src={child.photo_url}
+                                      alt={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
+                                      className="h-16 w-16 rounded object-cover border border-gray-200 flex-shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-900 text-sm">
+                                      {child.last_name_kanji || ''}{child.first_name_kanji || ''}
+                                    </p>
+                                    {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                                      <p className="text-xs text-gray-600">
+                                        出身地: {child.birthplace_prefecture || ''}
+                                        {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
 

@@ -1,8 +1,8 @@
 -- Passkeys table for WebAuthn authentication
 -- This table stores passkey credentials for users to enable passwordless login
 
-CREATE TABLE public.passkeys (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS public.passkeys (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   credential_id TEXT UNIQUE NOT NULL,
   public_key TEXT NOT NULL,
@@ -15,9 +15,9 @@ CREATE TABLE public.passkeys (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_passkeys_user_id ON public.passkeys(user_id);
-CREATE INDEX idx_passkeys_credential_id ON public.passkeys(credential_id);
-CREATE INDEX idx_passkeys_last_used ON public.passkeys(last_used_at DESC);
+CREATE INDEX IF NOT EXISTS idx_passkeys_user_id ON public.passkeys(user_id);
+CREATE INDEX IF NOT EXISTS idx_passkeys_credential_id ON public.passkeys(credential_id);
+CREATE INDEX IF NOT EXISTS idx_passkeys_last_used ON public.passkeys(last_used_at DESC);
 
 -- Comments for documentation
 COMMENT ON TABLE public.passkeys IS 'Stores WebAuthn passkey credentials for passwordless authentication';
