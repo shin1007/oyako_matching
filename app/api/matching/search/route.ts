@@ -599,6 +599,7 @@ export async function GET(request: NextRequest) {
     console.log('[Matching] Final matches count:', matches.length);
 
     // For parents, fetch searching children to render cards even if no matches
+    // For children, fetch searching parents to render cards even if no matches
     let searchingChildren: any[] = [];
     if (userData.role === 'parent') {
       const { data: children } = await admin
@@ -607,6 +608,14 @@ export async function GET(request: NextRequest) {
         .eq('user_id', user.id)
         .order('display_order', { ascending: true });
       searchingChildren = children || [];
+    } else if (userData.role === 'child') {
+      // Child users also use searching_children table to store parent info they're looking for
+      const { data: parents } = await admin
+        .from('searching_children')
+        .select('id, last_name_kanji, first_name_kanji, name_kanji, name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality, display_order')
+        .eq('user_id', user.id)
+        .order('display_order', { ascending: true });
+      searchingChildren = parents || [];
     }
 
     // Get full details for each match

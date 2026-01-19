@@ -265,22 +265,25 @@ export default function MatchingPage() {
               プロフィールを編集
             </Link>
           </div>
-        ) : userRole === 'parent' && searchingChildren.length > 0 ? (
+        ) : searchingChildren.length > 0 ? (
           <div className="space-y-8 w-full max-w-5xl mx-auto">
             {searchingChildren.map((child) => {
-              const childMatches = groupedMatches['child'] || [];
+              // For child users, matches are parents; for parent users, matches are children
+              const childMatches = userRole === 'parent' 
+                ? (groupedMatches['child'] || [])
+                : (groupedMatches['parent'] || []);
               return (
                 <div key={child.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
                   <div className="flex flex-col gap-0 lg:flex-row">
                     <div className="w-full lg:max-w-xs border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50 px-6 py-5">
                       <p className="text-xs font-semibold uppercase tracking-wide text-green-600 mb-1">
-                        探している子ども
+                        {userRole === 'parent' ? '探している子ども' : '探している親'}
                       </p>
                       <h3 className="text-xl font-bold text-gray-900">
                         {child.last_name_kanji}{child.first_name_kanji || child.name_kanji || child.name_hiragana || '名前未設定'}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
-                        {child.gender ? getGenderLabel(child.gender, 'child') : '性別未設定'}
+                        {child.gender ? getGenderLabel(child.gender, userRole === 'parent' ? 'child' : 'parent') : '性別未設定'}
                         {child.birth_date && ` • ${calculateAge(child.birth_date)}歳`}
                       </p>
                       {child.birth_date && (
@@ -308,7 +311,7 @@ export default function MatchingPage() {
                       ) : (
                         <div className="space-y-4">
                           {childMatches.map((match) => {
-                            // Get the score for this specific child
+                            // Get the score for this specific child/parent
                             const childScore = match.scorePerChild?.[child.id] ?? match.similarityScore;
                             return (
                               <div
@@ -351,28 +354,30 @@ export default function MatchingPage() {
                                       </p>
                                     )}
                                     
-                                    {/* 相手親が探している子ども情報 */}
+                                    {/* 相手が探している子ども/親情報 */}
                                     {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
                                       <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
+                                        <p className="text-xs font-semibold text-gray-700 mb-2">
+                                          この方が探している{match.role === 'parent' ? '子ども' : '親'}:
+                                        </p>
                                         <div className="space-y-2">
-                                          {match.searchingChildrenInfo.map((child) => (
-                                            <div key={child.id} className="flex gap-3 bg-blue-50 rounded p-2">
-                                              {child.photo_url && (
+                                          {match.searchingChildrenInfo.map((searchingPerson) => (
+                                            <div key={searchingPerson.id} className="flex gap-3 bg-blue-50 rounded p-2">
+                                              {searchingPerson.photo_url && (
                                                 <img
-                                                  src={child.photo_url}
-                                                  alt={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
+                                                  src={searchingPerson.photo_url}
+                                                  alt={`${searchingPerson.last_name_kanji || ''}${searchingPerson.first_name_kanji || ''}`}
                                                   className="h-16 w-16 rounded object-cover border border-gray-200 flex-shrink-0"
                                                 />
                                               )}
                                               <div className="flex-1">
                                                 <p className="font-semibold text-gray-900 text-sm">
-                                                  {child.last_name_kanji || ''}{child.first_name_kanji || ''}
+                                                  {searchingPerson.last_name_kanji || ''}{searchingPerson.first_name_kanji || ''}
                                                 </p>
-                                                {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                                                {(searchingPerson.birthplace_prefecture || searchingPerson.birthplace_municipality) && (
                                                   <p className="text-xs text-gray-600">
-                                                    出身地: {child.birthplace_prefecture || ''}
-                                                    {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
+                                                    出身地: {searchingPerson.birthplace_prefecture || ''}
+                                                    {searchingPerson.birthplace_municipality ? ` ${searchingPerson.birthplace_municipality}` : ''}
                                                   </p>
                                                 )}
                                               </div>
@@ -449,152 +454,23 @@ export default function MatchingPage() {
             })}
           </div>
         ) : (
-          <div className="space-y-12 w-full max-w-5xl mx-auto">
-            {Object.entries(groupedMatches).map(([role, roleMatches]) => (
-              <div key={role}>
-                <div className="mb-6 border-b-2 border-green-600 pb-4">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {roleMatches[0]?.profile && (role === 'parent' ? '親を探す' : '子を探す')}
-                  </h2>
-                  <p className="mt-1 text-gray-600">
-                    {roleMatches.length}件のマッチが見つかりました
-                  </p>
-                </div>
-                <div className="grid gap-6">
-                  {roleMatches.map((match) => (
-                    <div
-                      key={match.userId}
-                      className="flex rounded-lg bg-white shadow-lg hover:shadow-2xl transition overflow-hidden"
-                    >
-                      {/* Left side - Profile info */}
-                      <div className="flex-1 p-6">
-                        <div className="flex gap-4 mb-4">
-                          {match.profile.profile_image_url && (
-                            <img
-                              src={match.profile.profile_image_url}
-                              alt={`${match.profile.last_name_kanji}${match.profile.first_name_kanji}`}
-                              className="h-24 w-24 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h3 className="text-2xl font-bold text-gray-900">
-                              {match.profile.last_name_kanji}{match.profile.first_name_kanji}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {getGenderLabel(match.profile.gender, role)}
-                              {' '} • {calculateAge(match.profile.birth_date)}歳
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 text-sm text-gray-600 mb-4">
-                          <p>
-                            <span className="font-semibold">生年月日：</span>
-                            {new Date(match.profile.birth_date).toLocaleDateString('ja-JP', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </p>
-                        </div>
-
-                        {match.profile.bio && (
-                          <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                            {match.profile.bio}
-                          </p>
-                        )}
-
-                        {/* 相手が探している子ども情報 */}
-                        {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している{role === 'parent' ? '子ども' : '親'}:</p>
-                            <div className="space-y-2">
-                              {match.searchingChildrenInfo.map((child) => (
-                                <div key={child.id} className="flex gap-3 bg-blue-50 rounded p-2">
-                                  {child.photo_url && (
-                                    <img
-                                      src={child.photo_url}
-                                      alt={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
-                                      className="h-16 w-16 rounded object-cover border border-gray-200 flex-shrink-0"
-                                    />
-                                  )}
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900 text-sm">
-                                      {child.last_name_kanji || ''}{child.first_name_kanji || ''}
-                                    </p>
-                                    {(child.birthplace_prefecture || child.birthplace_municipality) && (
-                                      <p className="text-xs text-gray-600">
-                                        出身地: {child.birthplace_prefecture || ''}
-                                        {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right side - Matching info & button */}
-                      <div className="w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-6 flex flex-col items-center justify-center border-l">
-                        <div className="text-center mb-4">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <div className="text-4xl font-bold text-green-600">
-                              {(match.similarityScore * 100).toFixed(0)}%
-                            </div>
-                            <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
-                          </div>
-                          <p className="text-sm text-gray-600 font-semibold">類似度</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {getSimilarityLabel(match.similarityScore)}
-                          </p>
-                        </div>
-
-                        <div className="w-full h-1 bg-gray-300 rounded-full mb-4 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              match.similarityScore >= 0.9
-                                ? 'bg-green-600'
-                                : match.similarityScore >= 0.8
-                                ? 'bg-blue-600'
-                                : match.similarityScore >= 0.7
-                                ? 'bg-yellow-600'
-                                : 'bg-gray-600'
-                            }`}
-                            style={{ width: `${match.similarityScore * 100}%` }}
-                          />
-                        </div>
-
-                        {match.existingMatchStatus === 'accepted' ? (
-                          <Link
-                            href={`/messages/${match.existingMatchId}`}
-                            className="w-full block text-center rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
-                          >
-                            メッセージへ
-                          </Link>
-                        ) : match.existingMatchStatus === 'pending' ? (
-                          <button
-                            disabled
-                            className="w-full rounded-lg bg-yellow-500 px-4 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
-                          >
-                            承認待ち
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleCreateMatch(match.userId, match.similarityScore)}
-                            disabled={creating === match.userId}
-                            className="w-full rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
-                          >
-                            {creating === match.userId ? '処理中...' : 'マッチング申請'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="rounded-lg bg-white p-12 text-center shadow">
+            <div className="mb-4 text-6xl">📝</div>
+            <h2 className="mb-2 text-xl font-semibold text-gray-900">
+              {userRole === 'parent' ? '探している子どもを登録してください' : '探している親を登録してください'}
+            </h2>
+            <p className="mb-6 text-gray-600">
+              {userRole === 'parent' 
+                ? '探している子どもの情報を登録すると、マッチングが表示されます'
+                : '探している親の情報を登録すると、マッチングが表示されます'
+              }
+            </p>
+            <Link
+              href="/dashboard/profile"
+              className="inline-block rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700"
+            >
+              プロフィールを編集
+            </Link>
           </div>
         )}
       </main>
