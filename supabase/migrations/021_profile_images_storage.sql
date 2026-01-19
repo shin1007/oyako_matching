@@ -9,9 +9,13 @@ VALUES (
   524288, -- 512KB (512 * 1024 bytes)
   ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 524288,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
 
 -- RLSポリシー：自分のプロフィール画像のみアップロード可能
+DROP POLICY IF EXISTS "Users can upload their own profile images" ON storage.objects;
 CREATE POLICY "Users can upload their own profile images"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -21,6 +25,7 @@ WITH CHECK (
 );
 
 -- RLSポリシー：自分のプロフィール画像のみ更新可能
+DROP POLICY IF EXISTS "Users can update their own profile images" ON storage.objects;
 CREATE POLICY "Users can update their own profile images"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -34,6 +39,7 @@ WITH CHECK (
 );
 
 -- RLSポリシー：自分のプロフィール画像のみ削除可能
+DROP POLICY IF EXISTS "Users can delete their own profile images" ON storage.objects;
 CREATE POLICY "Users can delete their own profile images"
 ON storage.objects FOR DELETE
 TO authenticated
@@ -43,6 +49,7 @@ USING (
 );
 
 -- RLSポリシー：すべてのユーザーが画像を閲覧可能（公開バケット）
+DROP POLICY IF EXISTS "Anyone can view profile images" ON storage.objects;
 CREATE POLICY "Anyone can view profile images"
 ON storage.objects FOR SELECT
 TO public
