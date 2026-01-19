@@ -74,7 +74,7 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES (
   'searching-children-photos',
   'searching-children-photos',
-  false, -- 非公開バケット（認証が必要）
+  true, -- 公開バケット（URLで直接アクセス可能だがRLSで制御）
   5242880, -- 5MB (5 * 1024 * 1024 bytes)
   ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
@@ -143,7 +143,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- ポリシー: 自分の写真のみ閲覧可能
+-- ポリシー: 自分の写真のみ閲覧可能（認証済みユーザー）
 CREATE POLICY "Users can view their own searching children photos"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -151,3 +151,9 @@ USING (
   bucket_id = 'searching-children-photos' AND
   (storage.foldername(name))[1] = auth.uid()::text
 );
+
+-- ポリシー: すべてのユーザーが写真を閲覧可能（公開バケット）
+CREATE POLICY "Anyone can view searching children photos"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'searching-children-photos');

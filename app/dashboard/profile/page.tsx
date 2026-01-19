@@ -316,15 +316,18 @@ export default function ProfilePage() {
         if (childrenError) throw childrenError;
 
         // Save photos for each child
-        if (insertedChildren) {
+        // Filter to get only non-empty children that were inserted
+        const nonEmptyChildren = searchingChildren.filter(child => 
+          child.lastNameKanji || child.firstNameKanji ||
+          child.birthDate || 
+          child.lastNameHiragana || child.firstNameHiragana || 
+          child.gender || child.birthplacePrefecture || child.birthplaceMunicipality
+        );
+
+        if (insertedChildren && insertedChildren.length === nonEmptyChildren.length) {
           for (let i = 0; i < insertedChildren.length; i++) {
             const insertedChild = insertedChildren[i];
-            const originalChild = searchingChildren.filter(child => 
-              child.lastNameKanji || child.firstNameKanji ||
-              child.birthDate || 
-              child.lastNameHiragana || child.firstNameHiragana || 
-              child.gender || child.birthplacePrefecture || child.birthplaceMunicipality
-            )[i];
+            const originalChild = nonEmptyChildren[i];
 
             if (originalChild.photos && originalChild.photos.length > 0) {
               // Delete existing photos for this child
@@ -351,6 +354,9 @@ export default function ProfilePage() {
               if (photosError) throw photosError;
             }
           }
+        } else if (insertedChildren) {
+          // Log warning if counts don't match
+          console.warn(`Mismatch in children count: inserted ${insertedChildren.length}, expected ${nonEmptyChildren.length}`);
         }
       }
 

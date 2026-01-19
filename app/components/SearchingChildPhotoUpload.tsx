@@ -52,6 +52,8 @@ export default function SearchingChildPhotoUpload({
     setUploading(true);
 
     try {
+      const newPhotos: Photo[] = [];
+      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
@@ -60,9 +62,9 @@ export default function SearchingChildPhotoUpload({
           throw new Error('JPEG、PNG、またはWebP形式の画像を選択してください。');
         }
 
-        // ファイルサイズのチェック（5MB以下、圧縮前なので緩めに10MB）
-        if (file.size > 10 * 1024 * 1024) {
-          throw new Error('ファイルサイズが大きすぎます。10MB以下の画像を選択してください。');
+        // ファイルサイズのチェック（5MB以下）
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error('ファイルサイズが大きすぎます。5MB以下の画像を選択してください。');
         }
 
         // 画像圧縮
@@ -88,23 +90,23 @@ export default function SearchingChildPhotoUpload({
 
         if (uploadError) throw uploadError;
 
-        // 認証付きURLを取得（非公開バケットのため）
+        // 公開URLを取得
         const { data: { publicUrl } } = supabase.storage
           .from('searching-children-photos')
           .getPublicUrl(fileName);
 
-        // 新しい写真を追加
-        const newPhoto: Photo = {
+        // 新しい写真を配列に追加
+        newPhotos.push({
           photoUrl: publicUrl,
           capturedAt: '',
           ageAtCapture: null,
           description: '',
           displayOrder: photos.length + i,
-        };
-
-        // 写真をstateに追加
-        onPhotosUpdate([...photos, newPhoto]);
+        });
       }
+
+      // すべての写真をまとめてstateに追加
+      onPhotosUpdate([...photos, ...newPhotos]);
 
       setErrorMessage('');
     } catch (error: any) {
