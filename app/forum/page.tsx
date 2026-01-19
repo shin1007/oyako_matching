@@ -124,7 +124,7 @@ export default function ForumPage() {
           {isParent && (
             <Link
               href="/forum/new"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              className={`rounded-lg px-4 py-2 text-white ${isParent ? 'bg-parent-600 hover:bg-parent-700' : 'bg-child-600 hover:bg-child-700'}`}
             >
               新規投稿
             </Link>
@@ -146,7 +146,9 @@ export default function ForumPage() {
               onClick={() => setSelectedCategory(null)}
               className={`rounded-full px-4 py-2 text-sm transition ${
                 selectedCategory === null
-                  ? 'bg-blue-600 text-white'
+                  ? isParent 
+                    ? 'bg-parent-600 text-white'
+                    : 'bg-child-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -158,7 +160,9 @@ export default function ForumPage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`rounded-full px-4 py-2 text-sm transition ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
+                    ? isParent 
+                      ? 'bg-parent-600 text-white'
+                      : 'bg-child-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >

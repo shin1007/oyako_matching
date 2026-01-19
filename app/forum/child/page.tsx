@@ -118,19 +118,19 @@ export default function ChildForumPage() {
   };
 
   return (
-    <div className="min-h-screen bg-orange-50">
+    <div className="min-h-screen bg-child-50">
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-orange-900">ピアサポート掲示板</h1>
-            <p className="mt-2 text-orange-800">
+            <h1 className="text-3xl font-bold text-child-900">ピアサポート掲示板</h1>
+            <p className="mt-2 text-child-800">
               子ども同士で情報交換や相談ができるコミュニティ
             </p>
           </div>
           {isChild && (
             <Link
               href="/forum/new?userType=child"
-              className="rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
+              className="rounded-lg bg-child-600 px-4 py-2 text-white hover:bg-child-700"
             >
               新規投稿
             </Link>
@@ -152,7 +152,7 @@ export default function ChildForumPage() {
               onClick={() => setSelectedCategory(null)}
               className={`rounded-full px-4 py-2 text-sm transition ${
                 selectedCategory === null
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-child-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -164,7 +164,7 @@ export default function ChildForumPage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`rounded-full px-4 py-2 text-sm transition ${
                   selectedCategory === category.id
-                    ? 'bg-orange-600 text-white'
+                    ? 'bg-child-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >

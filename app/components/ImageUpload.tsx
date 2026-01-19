@@ -260,7 +260,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
             onChange={handleFileSelect}
             className="hidden"
           />
-          <span className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 transition-colors">
+          <span className={`inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}>
             {currentImageUrl ? '画像を変更' : '画像をアップロード'}
           </span>
         </label>

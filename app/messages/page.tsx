@@ -34,6 +34,7 @@ export default function MessagesPage() {
   const [error, setError] = useState('');
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -47,6 +48,18 @@ export default function MessagesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/auth/login');
+      return;
+    }
+
+    // Get user role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userData) {
+      setUserRole(userData.role);
     }
   };
 
@@ -134,7 +147,7 @@ export default function MessagesPage() {
       case 'pending':
         return <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">保留中</span>;
       case 'accepted':
-        return <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">承認済み</span>;
+        return <span className="rounded-full bg-parent-100 px-3 py-1 text-xs font-medium text-parent-800">承認済み</span>;
       case 'rejected':
         return <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">拒否済み</span>;
       case 'blocked':
@@ -196,7 +209,7 @@ export default function MessagesPage() {
             </p>
             <Link
               href="/matching"
-              className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
             >
               マッチングを探す
             </Link>
@@ -266,7 +279,7 @@ export default function MessagesPage() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => handleAccept(match.id)}
-                      className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                      className={`flex-1 rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                     >
                       承認
                     </button>
@@ -291,7 +304,7 @@ export default function MessagesPage() {
                   <div className="mt-4">
                     <Link
                       href={`/messages/${match.id}`}
-                      className="block w-full rounded-lg bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
+                      className={`block w-full rounded-lg px-4 py-2 text-center text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                     >
                       メッセージを見る
                     </Link>
