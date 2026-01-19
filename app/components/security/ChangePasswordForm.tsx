@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -9,6 +10,27 @@ export default function ChangePasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [userRole, setUserRole] = useState<string>('parent');
+  const supabase = createClient();
+
+  useEffect(() => {
+    loadUserRole();
+  }, []);
+
+  const loadUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userData) {
+      setUserRole(userData.role);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,7 +167,7 @@ export default function ChangePasswordForm() {
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center">
+        <div className={`border px-4 py-3 rounded-lg text-sm flex items-center ${userRole === 'child' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
@@ -156,12 +178,12 @@ export default function ChangePasswordForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className={`w-full text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
       >
         {loading ? 'パスワード変更中...' : 'パスワードを変更'}
       </button>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
+      <div className={`border rounded-lg p-4 text-sm ${userRole === 'child' ? 'bg-orange-50 border-orange-200 text-orange-900' : 'bg-green-50 border-green-200 text-green-900'}`}>
         <p className="font-medium mb-2">セキュリティのヒント：</p>
         <ul className="list-disc list-inside space-y-1 text-xs">
           <li>大文字、小文字、数字を含むパスワードを使用してください</li>

@@ -560,7 +560,7 @@ export default function ProfilePage() {
               )}
 
               {success && (
-                <div className="rounded-lg bg-green-50 p-4 text-sm text-green-600">
+                <div className={`rounded-lg p-4 text-sm ${userRole === 'child' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
                   {success}
                 </div>
               )}
