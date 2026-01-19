@@ -32,6 +32,7 @@ interface Comment {
   content: string;
   author_profile: {
     forum_display_name: string;
+    profile_image_url?: string;
   };
   created_at: string;
   updated_at: string;
@@ -477,6 +478,13 @@ export default function PostDetailPage() {
               <h1 className="mb-4 text-3xl font-bold text-gray-900">{post.title}</h1>
 
               <div className="mb-6 flex items-center gap-4 text-sm text-gray-500">
+                {post.author_profile?.profile_image_url && (
+                  <img
+                    src={post.author_profile.profile_image_url}
+                    alt={post.author_profile.forum_display_name}
+                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                  />
+                )}
                 <span>👤 {post.author_profile.forum_display_name}</span>
                 <span>👁️ {post.view_count}回閲覧</span>
                 <span>🕒 {formatDate(post.created_at)}</span>
@@ -665,6 +673,13 @@ export default function PostDetailPage() {
                     /* Display Comment */
                     <>
                       <div className="mb-2 flex items-center gap-4 text-sm text-gray-500">
+                        {comment.author_profile?.profile_image_url && (
+                          <img
+                            src={comment.author_profile.profile_image_url}
+                            alt={comment.author_profile.forum_display_name}
+                            className="h-8 w-8 rounded-full object-cover border border-gray-200"
+                          />
+                        )}
                         <span className="font-semibold text-gray-700">
                           {comment.author_profile.forum_display_name}
                         </span>

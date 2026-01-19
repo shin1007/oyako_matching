@@ -21,6 +21,7 @@ interface Post {
     last_name_kanji: string;
     first_name_kanji: string;
     forum_display_name?: string;
+    profile_image_url?: string | null;
   };
   category: {
     id: string;
@@ -202,7 +203,14 @@ export default function ChildForumPage() {
                 href={`/forum/${post.id}?userType=child`}
                 className="block rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4 justify-between">
+                  {post.author_profile?.profile_image_url && (
+                    <img
+                      src={post.author_profile.profile_image_url}
+                      alt={post.author_profile.forum_display_name}
+                      className="h-12 w-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                    />
+                  )}
                   <div className="flex-1">
                     <div className="mb-2 flex items-center gap-2">
                       {post.is_pinned && (
