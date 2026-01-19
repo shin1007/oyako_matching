@@ -12,7 +12,17 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ categories });
+    // 同名カテゴリの重複を排除（最初に現れるものを採用）
+    const uniqueCategories = [] as Array<{ id: string; name: string; description?: string; icon?: string; order_index?: number }>;
+    const seen = new Set<string>();
+    for (const c of categories || []) {
+      if (!seen.has(c.name)) {
+        uniqueCategories.push(c);
+        seen.add(c.name);
+      }
+    }
+
+    return NextResponse.json({ categories: uniqueCategories });
   } catch (error: any) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(
