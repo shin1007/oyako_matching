@@ -25,6 +25,7 @@ interface Post {
   updated_at: string;
   is_pinned: boolean;
   author_id: string;
+  user_type: 'parent' | 'child';
 }
 
 interface Comment {
@@ -158,6 +159,28 @@ export default function PostDetailPage() {
       if (!response.ok) throw new Error('Failed to load post');
       
       const data = await response.json();
+      
+      // 現在のユーザーのロールを取得
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        // 投稿のuser_typeとユーザーのroleが一致しない場合はアクセス拒否
+        if (data.post.user_type && userData?.role && data.post.user_type !== userData.role) {
+          setError('この投稿にアクセスする権限がありません。');
+          setLoading(false);
+          // 適切なフォーラムページにリダイレクト
+          setTimeout(() => {
+            router.push(userData.role === 'parent' ? '/forum/parent' : '/forum/child');
+          }, 2000);
+          return;
+        }
+      }
+      
       setPost(data.post);
       setComments(data.comments || []);
     } catch (err: any) {
