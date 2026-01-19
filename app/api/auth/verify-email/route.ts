@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { maskSensitive } from '@/lib/utils/maskSensitive';
 
 // Supabase OTP types (email-related only)
 type EmailOtpType = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email' | 'email_change';
@@ -289,12 +290,14 @@ export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);
     
-    // Log all query parameters for debugging
+    // デバッグモード時のみクエリパラメータをログ出力（機密値はマスク）
     const allParams: Record<string, string | null> = {};
     requestUrl.searchParams.forEach((value, key) => {
       allParams[key] = value;
     });
-    console.log('[VerifyEmail] All query parameters:', allParams);
+    if (process.env.DEBUG_SHOW_SENSITIVE_DATA === 'true') {
+      console.log('[VerifyEmail] All query parameters:', maskSensitive(allParams));
+    }
     
     // Check for code parameter (PKCE flow)
     const code = requestUrl.searchParams.get('code');
@@ -302,7 +305,10 @@ export async function GET(request: NextRequest) {
     const type = requestUrl.searchParams.get('type');
     const next = requestUrl.searchParams.get('next') ?? '/dashboard';
 
-    console.log('[VerifyEmail] Processing verification request:', { code: !!code, token_hash: !!token_hash, type });
+    // デバッグモード時のみ検証リクエスト内容を出力
+    if (process.env.DEBUG_SHOW_SENSITIVE_DATA === 'true') {
+      console.log('[VerifyEmail] Processing verification request:', maskSensitive({ code, token_hash, type }));
+    }
 
     // 早期リターン: Supabaseからのエラーを処理
     const error = requestUrl.searchParams.get('error');
