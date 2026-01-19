@@ -9,10 +9,11 @@ interface ImageUploadProps {
   currentImageUrl?: string | null;
   onImageSelect: (file: File) => void;
   onError?: (message: string) => void;
+  onUploadComplete?: (publicUrl: string) => void;
   userRole?: 'parent' | 'child';
 }
 
-export default function ImageUpload({ currentImageUrl, onImageSelect, onError, userRole }: ImageUploadProps) {
+export default function ImageUpload({ currentImageUrl, onImageSelect, onError, onUploadComplete, userRole }: ImageUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
@@ -24,6 +25,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, u
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -104,6 +106,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, u
     if (!completedCrop || !imgRef.current) return;
 
     setErrorMessage('');
+    setUploading(true);
 
     try {
       const croppedBlob = await getCroppedImg(imgRef.current, completedCrop);
@@ -111,6 +114,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, u
         const error = '画像の処理に失敗しました。';
         setErrorMessage(error);
         onError?.(error);
+        setUploading(false);
         return;
       }
 
@@ -129,12 +133,68 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, u
       );
 
       onImageSelect(compressedFile);
+
+      // 即座にアップロード処理を実行
+      await uploadImage(compressedFile);
+
       setShowCropper(false);
       setSelectedImage(null);
       setErrorMessage('');
     } catch (error) {
       console.error('画像処理エラー:', error);
       const errorMsg = '画像の処理に失敗しました。もう一度お試しください。';
+      setErrorMessage(errorMsg);
+      onError?.(errorMsg);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const uploadImage = async (file: File) => {
+    try {
+      // Supabase client の取得
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('ユーザーが見つかりません');
+
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
+
+      // 既存の画像を削除
+      if (currentImageUrl) {
+        try {
+          const urlParts = currentImageUrl.split('/profile-images/');
+          if (urlParts.length > 1) {
+            const oldPath = urlParts[1];
+            await supabase.storage.from('profile-images').remove([oldPath]);
+          }
+        } catch (deleteError) {
+          console.error('既存画像の削除に失敗しました:', deleteError);
+        }
+      }
+
+      // 新しい画像をアップロード
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 公開URLを取得
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(fileName);
+
+      // アップロード完了を親コンポーネントに通知
+      onUploadComplete?.(publicUrl);
+    } catch (error) {
+      console.error('アップロードエラー:', error);
+      const errorMsg = 'アップロードに失敗しました。もう一度お試しください。';
       setErrorMessage(errorMsg);
       onError?.(errorMsg);
     }
@@ -225,16 +285,18 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, u
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                disabled={uploading}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
               >
                 キャンセル
               </button>
               <button
                 type="button"
                 onClick={handleCropComplete}
-                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                disabled={uploading}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                切り取りを確定
+                {uploading ? 'アップロード中...' : '切り取りを確定'}
               </button>
             </div>
           </div>
