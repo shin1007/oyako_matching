@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
         const { data: profile } = await admin
           .from('profiles')
-          .select('last_name_kanji, first_name_kanji')
+          .select('last_name_kanji, first_name_kanji, profile_image_url')
           .eq('user_id', otherUserId)
           .single();
 
@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
           ...match,
           other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
           other_user_role: userData?.role || 'unknown',
+          other_user_image: profile?.profile_image_url || null,
           is_requester,
           unread_count,
           last_message,
