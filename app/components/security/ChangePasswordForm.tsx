@@ -167,7 +167,7 @@ export default function ChangePasswordForm() {
       )}
 
       {success && (
-        <div className={`border px-4 py-3 rounded-lg text-sm flex items-center ${userRole === 'child' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+        <div className={`border px-4 py-3 rounded-lg text-sm flex items-center ${userRole === 'child' ? 'bg-child-50 border-child-200 text-child-700' : 'bg-parent-50 border-parent-200 text-parent-700'}`}>
           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
@@ -178,12 +178,12 @@ export default function ChangePasswordForm() {
       <button
         type="submit"
         disabled={loading}
-        className={`w-full text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+        className={`w-full text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
       >
         {loading ? 'パスワード変更中...' : 'パスワードを変更'}
       </button>
 
-      <div className={`border rounded-lg p-4 text-sm ${userRole === 'child' ? 'bg-orange-50 border-orange-200 text-orange-900' : 'bg-green-50 border-green-200 text-green-900'}`}>
+      <div className={`border rounded-lg p-4 text-sm ${userRole === 'child' ? 'bg-child-50 border-child-200 text-child-900' : 'bg-parent-50 border-parent-200 text-parent-900'}`}>
         <p className="font-medium mb-2">セキュリティのヒント：</p>
         <ul className="list-disc list-inside space-y-1 text-xs">
           <li>大文字、小文字、数字を含むパスワードを使用してください</li>

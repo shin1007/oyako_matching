@@ -169,7 +169,7 @@ export default function NewPostPage() {
                 id="category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-parent-500 focus:outline-none focus:ring-1 focus:ring-parent-500"
               >
                 <option value="">カテゴリを選択</option>
                 {categories.map((category) => (
@@ -191,7 +191,7 @@ export default function NewPostPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 required
                 maxLength={200}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-parent-500 focus:outline-none focus:ring-1 focus:ring-parent-500 text-gray-900"
                 placeholder="投稿のタイトルを入力"
               />
             </div>
@@ -206,7 +206,7 @@ export default function NewPostPage() {
                 onChange={(e) => setContent(e.target.value)}
                 required
                 rows={10}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-parent-500 focus:outline-none focus:ring-1 focus:ring-parent-500 text-gray-900"
                 placeholder="投稿の内容を詳しく記入してください"
               />
               <p className="mt-1 text-xs text-gray-500">

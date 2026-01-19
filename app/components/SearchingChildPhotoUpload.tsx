@@ -166,8 +166,8 @@ export default function SearchingChildPhotoUpload({
   };
 
   const bgGradient = userRole === 'child' 
-    ? 'bg-orange-50 border-orange-200' 
-    : 'bg-green-50 border-green-200';
+    ? 'bg-child-50 border-child-200' 
+    : 'bg-parent-50 border-parent-200';
 
   return (
     <div className="space-y-4">
@@ -190,8 +190,8 @@ export default function SearchingChildPhotoUpload({
                 uploading 
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : userRole === 'child'
-                    ? 'bg-orange-600 hover:bg-orange-700'
-                    : 'bg-green-600 hover:bg-green-700'
+                    ? 'bg-child-600 hover:bg-child-700'
+                    : 'bg-parent-600 hover:bg-parent-700'
               }`}>
                 {uploading ? 'アップロード中...' : '+ 写真を追加'}
               </span>
@@ -240,7 +240,7 @@ export default function SearchingChildPhotoUpload({
                           type="date"
                           value={photo.capturedAt}
                           onChange={(e) => handlePhotoUpdate(index, 'capturedAt', e.target.value)}
-                          className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className={`w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 ${userRole === 'child' ? 'focus:ring-child-500 focus:border-child-500' : 'focus:ring-parent-500 focus:border-parent-500'}`}
                         />
                       </div>
                       <div>
@@ -254,7 +254,7 @@ export default function SearchingChildPhotoUpload({
                           value={photo.ageAtCapture ?? ''}
                           onChange={(e) => handlePhotoUpdate(index, 'ageAtCapture', e.target.value ? parseInt(e.target.value) : null)}
                           placeholder="例: 5"
-                          className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className={`w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 ${userRole === 'child' ? 'focus:ring-child-500 focus:border-child-500' : 'focus:ring-parent-500 focus:border-parent-500'}`}
                         />
                       </div>
                     </div>
@@ -267,7 +267,7 @@ export default function SearchingChildPhotoUpload({
                         value={photo.description}
                         onChange={(e) => handlePhotoUpdate(index, 'description', e.target.value)}
                         placeholder="例: 保育園の運動会"
-                        className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 ${userRole === 'child' ? 'focus:ring-child-500 focus:border-child-500' : 'focus:ring-parent-500 focus:border-parent-500'}`}
                       />
                     </div>
                   </div>

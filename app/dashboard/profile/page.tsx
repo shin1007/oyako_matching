@@ -497,14 +497,14 @@ export default function ProfilePage() {
         ) : (
           <div className="rounded-lg bg-white p-8 shadow">
             {/* マッチング計算式の説明セクション */}
-            <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 p-6 border border-blue-200">
+            <div className={`mb-6 rounded-lg p-6 border ${userRole === 'child' ? 'bg-gradient-to-r from-child-50 to-orange-50 border-child-200' : 'bg-gradient-to-r from-parent-50 to-green-50 border-parent-200'}`}>
               <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                 <span className="text-2xl">🎯</span>
                 プロフィールとマッチング精度について
               </h2>
               <div className="space-y-3 text-sm text-gray-700">
                 <p className="leading-relaxed">
-                  このプラットフォームでは、親子の再会の可能性を高めるため、入力された情報をもとに<strong className="text-blue-700">マッチング度を自動計算</strong>しています。
+                  このプラットフォームでは、親子の再会の可能性を高めるため、入力された情報をもとに<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチング度を自動計算</strong>しています。
                   より詳しい情報を入力するほど、正確なマッチングが可能になります。
                 </p>
                 
@@ -512,28 +512,28 @@ export default function ProfilePage() {
                   <h3 className="font-semibold text-gray-800 mb-2">📊 マッチング度の計算方法</h3>
                   <ul className="space-y-2 ml-2">
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold mt-0.5">🎂</span>
+                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎂</span>
                       <div>
                         <strong>生年月日</strong> - 最重要（最大80点）
                         <div className="text-xs text-gray-600 mt-0.5">完全一致で80点、年月一致で60点、年のみ一致で50点</div>
                       </div>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold mt-0.5">👤</span>
+                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>👤</span>
                       <div>
                         <strong>氏名（ひらがな）</strong> - 追加で+10点
                         <div className="text-xs text-gray-600 mt-0.5">部分一致でもスコアが向上します</div>
                       </div>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold mt-0.5">📍</span>
+                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>📍</span>
                       <div>
                         <strong>出身地</strong> - 追加で+10点
                         <div className="text-xs text-gray-600 mt-0.5">都道府県一致で+10点、市区町村まで一致でさらに向上</div>
                       </div>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold mt-0.5">⚖️</span>
+                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>⚖️</span>
                       <div>
                         <strong>双方向スコア</strong> - 親→子（60%）+ 子→親（40%）
                         <div className="text-xs text-gray-600 mt-0.5">親の記憶をより重視した計算式を採用しています</div>
@@ -560,7 +560,7 @@ export default function ProfilePage() {
               )}
 
               {success && (
-                <div className={`rounded-lg p-4 text-sm ${userRole === 'child' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                <div className={`rounded-lg p-4 text-sm ${userRole === 'child' ? 'bg-child-50 text-child-600' : 'bg-parent-50 text-parent-600'}`}>
                   {success}
                 </div>
               )}
@@ -605,7 +605,7 @@ export default function ProfilePage() {
                         value={lastNameKanji}
                         onChange={(e) => setLastNameKanji(e.target.value)}
                         required
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                         placeholder="例: 山田"
                       />
                     </div>
@@ -619,7 +619,7 @@ export default function ProfilePage() {
                         value={firstNameKanji}
                         onChange={(e) => setFirstNameKanji(e.target.value)}
                         required
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                         placeholder="例: 太郎"
                       />
                     </div>
@@ -628,28 +628,28 @@ export default function ProfilePage() {
                     <div>
                       <label htmlFor="lastNameHiragana" className="block text-sm font-medium text-gray-700">
                         苗字（ひらがな）
-                        <span className="ml-2 text-xs text-blue-600">+10点</span>
+                        <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
                       </label>
                       <input
                         id="lastNameHiragana"
                         type="text"
                         value={lastNameHiragana}
                         onChange={(e) => setLastNameHiragana(e.target.value)}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                         placeholder="例: やまだ"
                       />
                     </div>
                     <div>
                       <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
                         名前（ひらがな）
-                        <span className="ml-2 text-xs text-blue-600">+10点</span>
+                        <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
                       </label>
                       <input
                         id="firstNameHiragana"
                         type="text"
                         value={firstNameHiragana}
                         onChange={(e) => setFirstNameHiragana(e.target.value)}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                         placeholder="例: たろう"
                       />
                     </div>
@@ -663,7 +663,7 @@ export default function ProfilePage() {
               <div>
                 <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
                   生年月日
-                  <span className="ml-2 text-xs text-blue-600">🎯 マッチングで最重要</span>
+                  <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎯 マッチングで最重要</span>
                 </label>
                 <input
                   id="birthDate"
@@ -671,7 +671,7 @@ export default function ProfilePage() {
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   完全一致で基本スコア80点。年月のみ一致でも60点。マッチングに最も重要な項目です。
@@ -681,7 +681,7 @@ export default function ProfilePage() {
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-md font-medium text-gray-900 mb-3">
                   出身地
-                  <span className="ml-2 text-xs text-blue-600">+10点</span>
+                  <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -696,7 +696,7 @@ export default function ProfilePage() {
                         // Reset municipality when prefecture changes
                         setBirthplaceMunicipality('');
                       }}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
                     >
                       <option value="">選択してください</option>
                       {PREFECTURES.map(prefecture => (
@@ -713,7 +713,7 @@ export default function ProfilePage() {
                       type="text"
                       value={birthplaceMunicipality}
                       onChange={(e) => setBirthplaceMunicipality(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                      className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                       placeholder="例: 渋谷区、北区"
                     />
                   </div>
@@ -726,13 +726,13 @@ export default function ProfilePage() {
               <div>
                 <label htmlFor="parentGender" className="block text-sm font-medium text-gray-700">
                   性別（親）
-                  <span className="ml-2 text-xs text-blue-600">⚠️ 逆方向マッチングで必須</span>
+                  <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>⚠️ 逆方向マッチングで必須</span>
                 </label>
                 <select
                   id="parentGender"
                   value={parentGender}
                   onChange={(e) => setParentGender(e.target.value as typeof parentGender)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
                 >
                   <option value="">未選択</option>
                   <option value="male">男性</option>
@@ -754,7 +754,7 @@ export default function ProfilePage() {
                   type="text"
                   value={forumDisplayName}
                   onChange={(e) => setForumDisplayName(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                   placeholder="例: ゆうこママ、たろうパパ"
                 />
                 <p className="mt-1 text-sm text-gray-500">
@@ -771,7 +771,7 @@ export default function ProfilePage() {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={4}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
                   placeholder="簡単な自己紹介を記入してください"
                 />
               </div>
@@ -780,7 +780,7 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   {userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}
                 </h3>
-                <div className="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-400">
+                <div className={`${userRole === 'child' ? 'bg-child-50 border-l-4 border-child-400' : 'bg-parent-50 border-l-4 border-parent-400'} rounded-lg p-4 mb-4`}>
                   <p className="text-sm text-gray-700 mb-2">
                     {userRole === 'child' 
                       ? <><strong>親を探す情報（任意）：</strong>この情報を登録すると、双方向マッチングで精度が向上します。登録しない場合は、親があなたを探す情報のみでマッチングされます。</> 
@@ -816,14 +816,14 @@ export default function ProfilePage() {
                         <div>
                           <label htmlFor={`searchingChildBirthDate-${index}`} className="block text-sm font-medium text-gray-700">
                             生年月日
-                            <span className="ml-2 text-xs text-blue-600">🎯 最重要（最大80点）</span>
+                            <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎯 最重要（最大80点）</span>
                           </label>
                           <input
                             id={`searchingChildBirthDate-${index}`}
                             type="date"
                             value={child.birthDate}
                             onChange={(e) => updateSearchingChild(index, 'birthDate', e.target.value)}
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
                           />
                         </div>
 
@@ -836,7 +836,7 @@ export default function ProfilePage() {
                             id={`searchingChildGender-${index}`}
                             value={child.gender}
                             onChange={(e) => updateSearchingChild(index, 'gender', e.target.value as SearchingChild['gender'])}
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
                           >
                             <option value="">未選択</option>
                             <option value="male">男性</option>
@@ -853,7 +853,7 @@ export default function ProfilePage() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             新形式：詳細な氏名
-                            <span className="ml-2 text-xs text-blue-600">+10点</span>
+                            <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
                           </label>
                           <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
@@ -866,7 +866,7 @@ export default function ProfilePage() {
                                   type="text"
                                   value={child.lastNameKanji}
                                   onChange={(e) => updateSearchingChild(index, 'lastNameKanji', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
                                   placeholder="例: 山田"
                                 />
                               </div>
@@ -879,7 +879,7 @@ export default function ProfilePage() {
                                   type="text"
                                   value={child.firstNameKanji}
                                   onChange={(e) => updateSearchingChild(index, 'firstNameKanji', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
                                   placeholder="例: 太郎"
                                 />
                               </div>
@@ -894,7 +894,7 @@ export default function ProfilePage() {
                                   type="text"
                                   value={child.lastNameHiragana}
                                   onChange={(e) => updateSearchingChild(index, 'lastNameHiragana', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
                                   placeholder="例: やまだ"
                                 />
                               </div>
@@ -907,7 +907,7 @@ export default function ProfilePage() {
                                   type="text"
                                   value={child.firstNameHiragana}
                                   onChange={(e) => updateSearchingChild(index, 'firstNameHiragana', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
                                   placeholder="例: たろう"
                                 />
                               </div>
@@ -918,7 +918,7 @@ export default function ProfilePage() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             出身地
-                            <span className="ml-2 text-xs text-blue-600">+10点</span>
+                            <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
                           </label>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
@@ -929,7 +929,7 @@ export default function ProfilePage() {
                                 id={`searchingChildBirthplacePrefecture-${index}`}
                                 value={child.birthplacePrefecture}
                                 onChange={(e) => updateSearchingChild(index, 'birthplacePrefecture', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
                               >
                                 <option value="">選択</option>
                                 {PREFECTURES.map(prefecture => (
@@ -946,7 +946,7 @@ export default function ProfilePage() {
                                 type="text"
                                 value={child.birthplaceMunicipality}
                                 onChange={(e) => updateSearchingChild(index, 'birthplaceMunicipality', e.target.value)}
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
                                 placeholder="例: 渋谷区"
                               />
                             </div>
@@ -975,7 +975,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={addSearchingChild}
-                      className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                      className={`w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 ${userRole === 'child' ? 'hover:border-child-500 hover:text-child-600' : 'hover:border-parent-500 hover:text-parent-600'} transition-colors`}
                     >
                       + {userRole === 'child' ? '親' : '子ども'}を追加
                     </button>
@@ -987,7 +987,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+                  className={`flex-1 rounded-lg ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} px-4 py-3 text-white disabled:opacity-50`}
                 >
                   {saving ? '保存中...' : 'プロフィールを保存'}
                 </button>

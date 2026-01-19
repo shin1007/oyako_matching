@@ -55,10 +55,10 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className={`min-h-screen ${userData?.role === 'child' ? 'bg-orange-50' : 'bg-green-50'}`}>
+    <div className={`min-h-screen ${userData?.role === 'child' ? 'bg-child-50' : 'bg-parent-50'}`}>
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
-          <h1 className={`text-3xl font-bold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>ダッシュボード</h1>
+          <h1 className={`text-3xl font-bold ${userData?.role === 'child' ? 'text-child-900' : 'text-parent-900'}`}>ダッシュボード</h1>
         </div>
 
         {/* Pending Notifications */}
@@ -68,19 +68,19 @@ export default async function DashboardPage() {
         <div className="lg:grid lg:grid-cols-[350px_550px] lg:gap-6 mb-6">
           {/* Profile Card */}
           <div className="mb-6 lg:mb-0">
-            <div className={`rounded-lg ${userData?.role === 'child' ? 'bg-orange-100 border-2 border-orange-200' : 'bg-green-100 border-2 border-green-200'} p-6 shadow`}>
+            <div className={`rounded-lg ${userData?.role === 'child' ? 'bg-child-100 border-2 border-child-200' : 'bg-parent-100 border-2 border-parent-200'} p-6 shadow`}>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className={`text-xl font-semibold ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>プロフィール</h2>
-                  <p className={`text-sm mt-1 font-medium ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>
+                  <h2 className={`text-xl font-semibold ${userData?.role === 'child' ? 'text-child-900' : 'text-parent-900'}`}>プロフィール</h2>
+                  <p className={`text-sm mt-1 font-medium ${userData?.role === 'child' ? 'text-child-700' : 'text-parent-700'}`}>
                     {userData?.role === 'parent' ? '親アカウント' : '子アカウント'}
                   </p>
                 </div>
                 <Link
                   href="/dashboard/profile"
-                  className={`text-sm font-medium ${userData?.role === 'child' ? 'text-orange-700 hover:text-orange-900' : 'text-green-700 hover:text-green-900'}`}
+                  className={`px-4 py-2 rounded-lg text-white text-sm font-medium ${userData?.role === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} transition-colors`}
                 >
-                  編集 →
+                  プロフィール編集
                 </Link>
               </div>
 
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
                         className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
                       />
                     ) : (
-                      <div className={`w-24 h-24 rounded-full ${userData?.role === 'child' ? 'bg-gradient-to-br from-orange-400 to-orange-600' : 'bg-gradient-to-br from-green-400 to-green-600'} flex items-center justify-center text-white text-3xl font-bold`}>
+                      <div className={`w-24 h-24 rounded-full ${userData?.role === 'child' ? 'bg-gradient-to-br from-child-400 to-child-600' : 'bg-gradient-to-br from-parent-400 to-parent-600'} flex items-center justify-center text-white text-3xl font-bold`}>
                         {(profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) ? 
                           (profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) : 
                           <span className="text-5xl">👤</span>
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
 
                   {/* Name */}
                   <div>
-                    <p className={`text-sm ${userData?.role === 'child' ? 'text-orange-700' : 'text-green-700'}`}>氏名</p>
+                    <p className={`text-sm ${userData?.role === 'child' ? 'text-child-700' : 'text-parent-700'}`}>氏名</p>
                     <p className={`text-lg font-medium ${userData?.role === 'child' ? 'text-orange-900' : 'text-green-900'}`}>
                       {profile.last_name_kanji && profile.first_name_kanji
                         ? `${profile.last_name_kanji} ${profile.first_name_kanji}`

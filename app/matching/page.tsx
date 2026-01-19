@@ -260,7 +260,7 @@ export default function MatchingPage() {
             </p>
             <Link
               href="/dashboard/profile"
-              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
             >
               プロフィールを編集
             </Link>
@@ -276,7 +276,7 @@ export default function MatchingPage() {
                 <div key={child.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
                   <div className="flex flex-col gap-0 lg:flex-row">
                     <div className="w-full lg:max-w-xs border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50 px-6 py-5">
-                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${userRole === 'child' ? 'text-orange-600' : 'text-green-600'}`}>
+                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
                         {userRole === 'parent' ? '探している子ども' : '探している親'}
                       </p>
                       <h3 className="text-xl font-bold text-gray-900">
@@ -329,7 +329,7 @@ export default function MatchingPage() {
                                     </div>
                                   )}
                                   <div className="flex-1">
-                                    <span className={`mb-1 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'child' ? 'bg-orange-50 text-orange-700' : 'bg-green-50 text-green-700'}`}>
+                                    <span className={`mb-1 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'child' ? 'bg-child-50 text-child-700' : 'bg-parent-50 text-parent-700'}`}>
                                       登録済み{getRoleLabel(match.role || '')}ユーザー
                                     </span>
                                     <h4 className="text-lg font-semibold text-gray-900">{match.profile.last_name_kanji}{match.profile.first_name_kanji}</h4>
@@ -389,10 +389,10 @@ export default function MatchingPage() {
                                   </div>
                                 </div>
 
-                                <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">
+                                <div className={`w-full lg:w-48 bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : 'from-parent-50 to-parent-50 border border-parent-100'}`}>
                                   <div className="text-center mb-3">
                                     <div className="flex items-center justify-center gap-2 mb-1">
-                                      <div className="text-3xl font-bold text-green-600">
+                                      <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
                                         {(childScore * 100).toFixed(0)}%
                                       </div>
                                       <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
@@ -408,18 +408,18 @@ export default function MatchingPage() {
                                       className={`h-full rounded-full ${
                                         userRole === 'child'
                                           ? childScore >= 0.9
-                                            ? 'bg-orange-600'
+                                            ? 'bg-child-600'
                                             : childScore >= 0.8
-                                            ? 'bg-orange-500'
+                                            ? 'bg-child-500'
                                             : childScore >= 0.7
-                                            ? 'bg-orange-400'
+                                            ? 'bg-child-400'
                                             : 'bg-gray-600'
                                           : childScore >= 0.9
-                                          ? 'bg-green-600'
+                                          ? 'bg-parent-600'
                                           : childScore >= 0.8
-                                          ? 'bg-emerald-500'
+                                          ? 'bg-parent-500'
                                           : childScore >= 0.7
-                                          ? 'bg-lime-500'
+                                          ? 'bg-parent-400'
                                           : 'bg-gray-600'
                                       }`}
                                       style={{ width: `${childScore * 100}%` }}
@@ -429,7 +429,7 @@ export default function MatchingPage() {
                                   {match.existingMatchStatus === 'accepted' ? (
                                     <Link
                                       href={`/messages/${match.existingMatchId}`}
-                                      className="w-full block text-center rounded-lg bg-blue-600 px-3 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
+                                      className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                                     >
                                       メッセージへ
                                     </Link>
@@ -444,7 +444,7 @@ export default function MatchingPage() {
                                     <button
                                       onClick={() => handleCreateMatch(match.userId, childScore)}
                                       disabled={creating === match.userId}
-                                      className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                                      className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                                     >
                                       {creating === match.userId ? '処理中...' : 'マッチング申請'}
                                     </button>
@@ -475,7 +475,7 @@ export default function MatchingPage() {
             </p>
             <Link
               href="/dashboard/profile"
-              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
             >
               プロフィールを編集
             </Link>

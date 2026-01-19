@@ -24,7 +24,7 @@ export default async function SecurityPage() {
   const userRole = userData?.role || 'parent';
 
   return (
-    <div className={`min-h-screen py-8 ${userRole === 'child' ? 'bg-orange-50' : 'bg-green-50'}`}>
+    <div className={`min-h-screen py-8 ${userRole === 'child' ? 'bg-child-50' : 'bg-parent-50'}`}>
       <div className="mx-auto max-w-4xl px-4">
         {/* Header */}
         <div className="mb-8">
@@ -101,7 +101,7 @@ export default async function SecurityPage() {
           <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center">
             <p className="text-sm text-gray-600">
               メールアドレスの変更や、その他のアカウント設定は{' '}
-              <a href="/dashboard/profile" className={`hover:underline ${userRole === 'child' ? 'text-orange-600' : 'text-green-600'}`}>
+              <a href="/dashboard/profile" className={`hover:underline ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
                 プロフィール設定
               </a>{' '}
               から行えます

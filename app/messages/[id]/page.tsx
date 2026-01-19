@@ -198,7 +198,7 @@ export default function MessageDetailPage() {
           </div>
           <Link
             href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -216,7 +216,7 @@ export default function MessageDetailPage() {
           </div>
           <Link
             href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -309,8 +309,8 @@ export default function MessageDetailPage() {
                         className={`max-w-[70%] rounded-lg px-4 py-2 ${
                           isOwnMessage
                             ? userRole === 'child' 
-                              ? 'bg-orange-600 text-white'
-                              : 'bg-green-600 text-white'
+                              ? 'bg-child-600 text-white'
+                              : 'bg-parent-600 text-white'
                             : 'bg-gray-200 text-gray-900'
                         }`}
                       >
@@ -322,8 +322,8 @@ export default function MessageDetailPage() {
                             className={`text-xs ${
                               isOwnMessage 
                                 ? userRole === 'child'
-                                  ? 'text-orange-100'
-                                  : 'text-green-100'
+                                  ? 'text-child-100'
+                                  : 'text-parent-100'
                                 : 'text-gray-500'
                             }`}
                           >
@@ -339,11 +339,11 @@ export default function MessageDetailPage() {
                               className={`text-xs ${
                                 message.read_at 
                                   ? userRole === 'child'
-                                    ? 'text-orange-200'
-                                    : 'text-green-200'
+                                    ? 'text-child-200'
+                                    : 'text-parent-200'
                                   : userRole === 'child'
-                                    ? 'text-orange-300'
-                                    : 'text-green-300'
+                                    ? 'text-child-300'
+                                    : 'text-parent-300'
                               }`}
                             >
                               {message.read_at ? '既読' : '未読'}
@@ -365,7 +365,7 @@ export default function MessageDetailPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="メッセージを入力..."
-                  className={`flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none resize-none ${userRole === 'child' ? 'focus:border-orange-500' : 'focus:border-green-500'}`}
+                  className={`flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none resize-none ${userRole === 'child' ? 'focus:border-child-500' : 'focus:border-parent-500'}`}
                   rows={2}
                   disabled={sending}
                   onKeyDown={(e) => {
@@ -378,7 +378,7 @@ export default function MessageDetailPage() {
                 <button
                   type="submit"
                   disabled={!newMessage.trim() || sending}
-                  className={`rounded-lg px-6 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                  className={`rounded-lg px-6 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                 >
                   {sending ? '送信中...' : '送信'}
                 </button>

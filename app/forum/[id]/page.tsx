@@ -404,7 +404,7 @@ export default function PostDetailPage() {
         <div className="mb-4">
           <Link
             href="/forum"
-            className={`inline-flex items-center rounded-lg border px-3 py-2 text-sm ${isParent ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' : 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'}`}
+            className={`inline-flex items-center rounded-lg border px-3 py-2 text-sm ${isParent ? 'border-parent-200 bg-parent-50 text-parent-700 hover:bg-parent-100' : 'border-child-200 bg-child-50 text-child-700 hover:bg-child-100'}`}
           >
             ← ピアサポート掲示板に戻る
           </Link>
@@ -428,7 +428,7 @@ export default function PostDetailPage() {
                   type="text"
                   value={editPostTitle}
                   onChange={(e) => setEditPostTitle(e.target.value)}
-                  className={`w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 ${isParent ? 'focus:border-green-500 focus:ring-green-500' : 'focus:border-orange-500 focus:ring-orange-500'}`}
+                  className={`w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 ${isParent ? 'focus:border-parent-500 focus:ring-parent-500' : 'focus:border-child-500 focus:ring-child-500'}`}
                 />
               </div>
               <div className="mb-4">
@@ -439,14 +439,14 @@ export default function PostDetailPage() {
                   value={editPostContent}
                   onChange={(e) => setEditPostContent(e.target.value)}
                   rows={10}
-                  className={`w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 ${isParent ? 'focus:border-green-500 focus:ring-green-500' : 'focus:border-orange-500 focus:ring-orange-500'}`}
+                  className={`w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 ${isParent ? 'focus:border-parent-500 focus:ring-parent-500' : 'focus:border-child-500 focus:ring-child-500'}`}
                 />
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleSavePost}
                   disabled={submitting || !editPostTitle.trim() || !editPostContent.trim()}
-                  className={`rounded-lg px-4 py-2 text-white disabled:opacity-50 ${isParent ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+                  className={`rounded-lg px-4 py-2 text-white disabled:opacity-50 ${isParent ? 'bg-parent-600 hover:bg-parent-700' : 'bg-child-600 hover:bg-child-700'}`}
                 >
                   {submitting ? '保存中...' : '保存'}
                 </button>
@@ -505,7 +505,7 @@ export default function PostDetailPage() {
                   <>
                     <button
                       onClick={handleEditPost}
-                      className={`rounded-lg px-4 py-2 text-sm ${isParent ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'}`}
+                      className={`rounded-lg px-4 py-2 text-sm ${isParent ? 'bg-parent-100 text-parent-700 hover:bg-parent-200' : 'bg-child-100 text-child-700 hover:bg-child-200'}`}
                     >
                       ✏️ 編集
                     </button>
@@ -618,12 +618,12 @@ export default function PostDetailPage() {
                 placeholder="コメントを入力..."
                 rows={4}
                 disabled={!!retryAfter}
-                className={`mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${isParent ? 'focus:border-green-500 focus:ring-green-500' : 'focus:border-orange-500 focus:ring-orange-500'}`}
+                className={`mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${isParent ? 'focus:border-parent-500 focus:ring-parent-500' : 'focus:border-child-500 focus:ring-child-500'}`}
               />
               <button
                 type="submit"
                 disabled={submitting || !newComment.trim() || !!retryAfter}
-                className={`rounded-lg px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${isParent ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+                className={`rounded-lg px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${isParent ? 'bg-parent-600 hover:bg-parent-700' : 'bg-child-600 hover:bg-child-700'}`}
               >
                 {submitting ? 'コメント中...' : retryAfter ? countdown : 'コメントする'}
               </button>
@@ -650,13 +650,13 @@ export default function PostDetailPage() {
                         value={editCommentContent}
                         onChange={(e) => setEditCommentContent(e.target.value)}
                         rows={4}
-                        className={`mb-2 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 ${isParent ? 'focus:border-green-500 focus:ring-green-500' : 'focus:border-orange-500 focus:ring-orange-500'}`}
+                        className={`mb-2 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-1 text-gray-900 ${isParent ? 'focus:border-parent-500 focus:ring-parent-500' : 'focus:border-child-500 focus:ring-child-500'}`}
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSaveComment(comment.id)}
                           disabled={submitting || !editCommentContent.trim()}
-                          className={`rounded-lg px-3 py-1 text-sm text-white disabled:opacity-50 ${isParent ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+                          className={`rounded-lg px-3 py-1 text-sm text-white disabled:opacity-50 ${isParent ? 'bg-parent-600 hover:bg-parent-700' : 'bg-child-600 hover:bg-child-700'}`}
                         >
                           {submitting ? '保存中...' : '保存'}
                         </button>

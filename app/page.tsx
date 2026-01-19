@@ -25,7 +25,7 @@ function HomeContent() {
         {/* Account Deleted Success Message */}
         {showDeletedMessage && (
           <div className="mx-auto max-w-4xl mb-8">
-            <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800 border border-green-200">
+            <div className="rounded-lg bg-parent-50 p-4 text-sm text-parent-800 border border-parent-200">
               ✓ アカウントが正常に削除されました。ご利用ありがとうございました。
             </div>
           </div>
@@ -44,7 +44,7 @@ function HomeContent() {
 
           <div className="grid gap-8 md:grid-cols-2">
             {/* 親向けカード */}
-            <div className="rounded-2xl border-2 border-green-200 bg-green-50 p-8 shadow-lg">
+            <div className="rounded-2xl border-2 border-parent-200 bg-parent-50 p-8 shadow-lg">
               <div className="mb-4 text-4xl">👨‍👩‍👧‍👦</div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 離別した親の方へ
@@ -72,14 +72,14 @@ function HomeContent() {
               </div>
               <Link
                 href="/auth/register?role=parent"
-                className="block rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700"
+                className="block rounded-lg bg-parent-600 px-6 py-3 text-white hover:bg-parent-700"
               >
                 親として登録
               </Link>
             </div>
 
             {/* 子ども向けカード */}
-            <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-8 shadow-lg">
+            <div className="rounded-2xl border-2 border-child-200 bg-child-50 p-8 shadow-lg">
               <div className="mb-4 text-4xl">👦👧</div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 親を探す子どもの方へ
@@ -102,7 +102,7 @@ function HomeContent() {
               </div>
               <Link
                 href="/auth/register?role=child"
-                className="block rounded-lg bg-orange-600 px-6 py-3 text-white hover:bg-orange-700"
+                className="block rounded-lg bg-child-600 px-6 py-3 text-white hover:bg-child-700"
               >
                 子どもとして登録
               </Link>
