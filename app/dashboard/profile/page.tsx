@@ -6,6 +6,16 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
 import ImageUpload from '@/app/components/ImageUpload';
+import SearchingChildPhotoUpload from '@/app/components/SearchingChildPhotoUpload';
+
+interface Photo {
+  id?: string;
+  photoUrl: string;
+  capturedAt: string;
+  ageAtCapture: number | null;
+  description: string;
+  displayOrder: number;
+}
 
 interface SearchingChild {
   id?: string;
@@ -18,6 +28,7 @@ interface SearchingChild {
   birthplacePrefecture: string;
   birthplaceMunicipality: string;
   displayOrder: number;
+  photos?: Photo[];
 }
 
 export default function ProfilePage() {
@@ -46,10 +57,12 @@ export default function ProfilePage() {
       gender: '', 
       birthplacePrefecture: '',
       birthplaceMunicipality: '',
-      displayOrder: 0 
+      displayOrder: 0,
+      photos: []
     }
   ]);
   const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null);
+  const [userId, setUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -79,6 +92,8 @@ export default function ProfilePage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      setUserId(user.id);
 
       // Load user role
       const { data: userData } = await supabase
@@ -123,18 +138,40 @@ export default function ProfilePage() {
         .order('display_order', { ascending: true });
 
       if (childrenData && childrenData.length > 0) {
-        setSearchingChildren(childrenData.map(child => ({
-          id: child.id,
-          birthDate: child.birth_date || '',
-          lastNameKanji: (child as any).last_name_kanji || '',
-          lastNameHiragana: (child as any).last_name_hiragana || '',
-          firstNameKanji: (child as any).first_name_kanji || '',
-          firstNameHiragana: (child as any).first_name_hiragana || '',
-          gender: child.gender || '',
-          birthplacePrefecture: (child as any).birthplace_prefecture || '',
-          birthplaceMunicipality: (child as any).birthplace_municipality || '',
-          displayOrder: child.display_order
-        })));
+        // Load photos for each child
+        const childrenWithPhotos = await Promise.all(
+          childrenData.map(async (child) => {
+            const { data: photosData } = await supabase
+              .from('searching_children_photos')
+              .select('*')
+              .eq('searching_child_id', child.id)
+              .order('display_order', { ascending: true });
+
+            const photos: Photo[] = photosData?.map(photo => ({
+              id: photo.id,
+              photoUrl: photo.photo_url,
+              capturedAt: photo.captured_at || '',
+              ageAtCapture: photo.age_at_capture,
+              description: photo.description || '',
+              displayOrder: photo.display_order
+            })) || [];
+
+            return {
+              id: child.id,
+              birthDate: child.birth_date || '',
+              lastNameKanji: (child as any).last_name_kanji || '',
+              lastNameHiragana: (child as any).last_name_hiragana || '',
+              firstNameKanji: (child as any).first_name_kanji || '',
+              firstNameHiragana: (child as any).first_name_hiragana || '',
+              gender: child.gender || '',
+              birthplacePrefecture: (child as any).birthplace_prefecture || '',
+              birthplaceMunicipality: (child as any).birthplace_municipality || '',
+              displayOrder: child.display_order,
+              photos
+            };
+          })
+        );
+        setSearchingChildren(childrenWithPhotos);
       }
     } catch (err: any) {
       // Profile might not exist yet or table is missing
@@ -271,11 +308,50 @@ export default function ProfilePage() {
         }));
 
       if (childrenToInsert.length > 0) {
-        const { error: childrenError } = await supabase
+        const { data: insertedChildren, error: childrenError } = await supabase
           .from('searching_children')
-          .insert(childrenToInsert);
+          .insert(childrenToInsert)
+          .select();
 
         if (childrenError) throw childrenError;
+
+        // Save photos for each child
+        if (insertedChildren) {
+          for (let i = 0; i < insertedChildren.length; i++) {
+            const insertedChild = insertedChildren[i];
+            const originalChild = searchingChildren.filter(child => 
+              child.lastNameKanji || child.firstNameKanji ||
+              child.birthDate || 
+              child.lastNameHiragana || child.firstNameHiragana || 
+              child.gender || child.birthplacePrefecture || child.birthplaceMunicipality
+            )[i];
+
+            if (originalChild.photos && originalChild.photos.length > 0) {
+              // Delete existing photos for this child
+              await supabase
+                .from('searching_children_photos')
+                .delete()
+                .eq('searching_child_id', insertedChild.id);
+
+              // Insert new photos
+              const photosToInsert = originalChild.photos.map((photo, photoIndex) => ({
+                searching_child_id: insertedChild.id,
+                user_id: user.id,
+                photo_url: photo.photoUrl,
+                captured_at: photo.capturedAt || null,
+                age_at_capture: photo.ageAtCapture,
+                description: photo.description || null,
+                display_order: photoIndex
+              }));
+
+              const { error: photosError } = await supabase
+                .from('searching_children_photos')
+                .insert(photosToInsert);
+
+              if (photosError) throw photosError;
+            }
+          }
+        }
       }
 
       setSuccess('プロフィールを保存しました');
@@ -316,7 +392,8 @@ export default function ProfilePage() {
         gender: '',
         birthplacePrefecture: '',
         birthplaceMunicipality: '',
-        displayOrder: searchingChildren.length 
+        displayOrder: searchingChildren.length,
+        photos: []
       }
     ]);
   };
@@ -334,6 +411,12 @@ export default function ProfilePage() {
   const updateSearchingChild = (index: number, field: keyof SearchingChild, value: string) => {
     const newChildren = [...searchingChildren];
     newChildren[index] = { ...newChildren[index], [field]: value };
+    setSearchingChildren(newChildren);
+  };
+
+  const updateSearchingChildPhotos = (index: number, photos: Photo[]) => {
+    const newChildren = [...searchingChildren];
+    newChildren[index] = { ...newChildren[index], photos };
     setSearchingChildren(newChildren);
   };
 
@@ -860,6 +943,21 @@ export default function ProfilePage() {
                               />
                             </div>
                           </div>
+                        </div>
+
+                        {/* Photo Upload Section */}
+                        <div>
+                          <SearchingChildPhotoUpload
+                            searchingChildId={child.id}
+                            userId={userId}
+                            photos={child.photos || []}
+                            onPhotosUpdate={(photos) => updateSearchingChildPhotos(index, photos)}
+                            onError={(message) => {
+                              setError(message);
+                              setTimeout(() => setError(''), 5000);
+                            }}
+                            userRole={userRole || undefined}
+                          />
                         </div>
                       </div>
                     </div>
