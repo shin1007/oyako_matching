@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
+import ImageUpload from '@/app/components/ImageUpload';
 
 interface SearchingChild {
   id?: string;
@@ -31,6 +32,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
   const [parentGender, setParentGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
   const [forumDisplayName, setForumDisplayName] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // 子ども/親情報
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
@@ -54,6 +57,8 @@ export default function ProfilePage() {
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const tempImagePathRef = useRef<string | null>(null);
+  const hasSavedRef = useRef(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -104,6 +109,10 @@ export default function ProfilePage() {
         setBio(data.bio || '');
         setParentGender((data as any).gender || '');
         setForumDisplayName((data as any).forum_display_name || '');
+        setProfileImageUrl(data.profile_image_url || null);
+        // プロフィール読み込み時点で保存済みの画像を基準にする
+        tempImagePathRef.current = null;
+        hasSavedRef.current = true;
       }
 
       // Load searching children
@@ -139,6 +148,24 @@ export default function ProfilePage() {
     }
   };
 
+  const extractProfilePath = (url: string | null) => {
+    if (!url) return null;
+    const parts = url.split('/profile-images/');
+    return parts.length > 1 ? parts[1] : null;
+  };
+
+  const deleteTempImage = async () => {
+    const path = tempImagePathRef.current;
+    if (!path) return;
+    try {
+      await supabase.storage.from('profile-images').remove([path]);
+    } catch (err) {
+      console.error('一時アップロード画像の削除に失敗しました:', err);
+    } finally {
+      tempImagePathRef.current = null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -156,6 +183,46 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('ログインが必要です');
 
+      // 画像をアップロードする場合
+      let uploadedImageUrl = profileImageUrl;
+      if (selectedImageFile) {
+        const fileExt = selectedImageFile.name.split('.').pop() || 'jpg';
+        const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
+        
+        // 既存の画像を削除
+        if (profileImageUrl) {
+          try {
+            // Supabase Storage URLから相対パスを抽出
+            // URL形式: https://{project}.supabase.co/storage/v1/object/public/profile-images/{user_id}/profile-xxx.jpg
+            const urlParts = profileImageUrl.split('/profile-images/');
+            if (urlParts.length > 1) {
+              const oldPath = urlParts[1];
+              await supabase.storage.from('profile-images').remove([oldPath]);
+            }
+          } catch (deleteError) {
+            console.error('既存画像の削除に失敗しました:', deleteError);
+            // 削除に失敗しても続行
+          }
+        }
+
+        // 新しい画像をアップロード
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, selectedImageFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        // 公開URLを取得
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-images')
+          .getPublicUrl(fileName);
+        
+        uploadedImageUrl = publicUrl;
+      }
+
       // Save profile with new fields (full_name は削除)
       const { error: profileError } = await supabase
         .from('profiles')
@@ -171,6 +238,7 @@ export default function ProfilePage() {
           bio: bio,
           gender: parentGender || null,
           forum_display_name: forumDisplayName || null,
+          profile_image_url: uploadedImageUrl,
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
@@ -212,6 +280,9 @@ export default function ProfilePage() {
 
       setSuccess('プロフィールを保存しました');
       setTimeout(() => setSuccess(''), 3000);
+      // 保存完了時は一時パスを破棄し保存済み扱いにする
+      tempImagePathRef.current = null;
+      hasSavedRef.current = true;
       
       // Reload to get IDs
       await loadProfile();
@@ -265,6 +336,15 @@ export default function ProfilePage() {
     newChildren[index] = { ...newChildren[index], [field]: value };
     setSearchingChildren(newChildren);
   };
+
+  // ブラウザ戻る（アンマウント）やキャンセル時に、一時アップロードした画像を削除
+  useEffect(() => {
+    return () => {
+      if (!hasSavedRef.current) {
+        deleteTempImage();
+      }
+    };
+  }, []);
 
   const handleDeleteAccount = async () => {
     if (deleting) return; // Prevent double submission
@@ -393,6 +473,32 @@ export default function ProfilePage() {
                   {success}
                 </div>
               )}
+
+              {/* プロフィール画像 */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-md font-medium text-gray-900 mb-3">プロフィール画像</h3>
+                <ImageUpload
+                  currentImageUrl={profileImageUrl}
+                  onImageSelect={(file) => {
+                    setSelectedImageFile(file);
+                  }}
+                  onUploadComplete={(publicUrl) => {
+                    setProfileImageUrl(publicUrl);
+                    // アップロード完了後、selectedImageFileをクリアして二重アップロード防止
+                    setSelectedImageFile(null);
+                    // 保存前の一時パスを保持（戻る/キャンセルで削除するため）
+                    tempImagePathRef.current = extractProfilePath(publicUrl);
+                    hasSavedRef.current = false;
+                    setSuccess('画像がアップロードされました！');
+                    setTimeout(() => setSuccess(''), 3000);
+                  }}
+                  onError={(message) => {
+                    setError(message);
+                    setTimeout(() => setError(''), 5000);
+                  }}
+                  userRole={userRole || undefined}
+                />
+              </div>
 
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
@@ -771,13 +877,33 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? '保存中...' : 'プロフィールを保存'}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? '保存中...' : 'プロフィールを保存'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 選択した画像をクリア（保存しない場合は破棄）
+                    setSelectedImageFile(null);
+                    // 一時アップロードを削除
+                    deleteTempImage();
+                    // プロフィール画像を元の状態に戻す
+                    loadProfile();
+                    setError('');
+                    setSuccess('');
+                    hasSavedRef.current = true;
+                  }}
+                  disabled={saving}
+                  className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  キャンセル
+                </button>
+              </div>
             </form>
 
             {/* Account Deletion Section */}

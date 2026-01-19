@@ -310,113 +310,124 @@ export default function MatchingPage() {
                             // Get the score for this specific child
                             const childScore = match.scorePerChild?.[child.id] ?? match.similarityScore;
                             return (
-                            <div
-                              key={match.userId}
-                              className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition lg:flex-row lg:items-center lg:justify-between"
-                            >
-                              <div className="flex-1">
-                                <span className="mb-1 inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                                  登録済み{getRoleLabel(match.role || '')}ユーザー
-                                </span>
-                                <h4 className="text-lg font-semibold text-gray-900">{match.profile.last_name_kanji}{match.profile.first_name_kanji}</h4>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {getGenderLabel(match.profile.gender, match.role)}
-                                  {' '}• {calculateAge(match.profile.birth_date)}歳
-                                </p>
-                                {match.profile.bio && (
-                                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">{match.profile.bio}</p>
-                                )}
-                                <p className="text-xs text-gray-500 mt-1">
-                                  生年月日: {new Date(match.profile.birth_date).toLocaleDateString('ja-JP', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                  })}
-                                </p>
-                                {(match.profile.birthplace_prefecture || match.profile.birthplace_municipality) && (
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    出身地: {match.profile.birthplace_prefecture || ''}
-                                    {match.profile.birthplace_municipality ? ` ${match.profile.birthplace_municipality}` : ''}
-                                  </p>
-                                )}
-                                
-                                {/* 相手親が探している子ども情報 */}
-                                {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
-                                  <div className="mt-4 pt-4 border-t border-gray-200">
-                                    <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
-                                    <div className="space-y-1">
-                                      {match.searchingChildrenInfo.map((child) => (
-                                        <div key={child.id} className="text-sm bg-blue-50 rounded p-2">
-                                          <p className="font-semibold text-gray-900">
-                                            {child.last_name_kanji || ''}{child.first_name_kanji || ''}
-                                          </p>
-                                          {(child.birthplace_prefecture || child.birthplace_municipality) && (
-                                            <p className="text-xs text-gray-600">
-                                              出身地: {child.birthplace_prefecture || ''}
-                                              {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
-                                            </p>
-                                          )}
+                              <div
+                                key={match.userId}
+                                className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition lg:flex-row lg:items-center lg:justify-between"
+                              >
+                                <div className="flex-1 flex gap-4">
+                                  {match.profile.profile_image_url && (
+                                    <div className="flex-shrink-0">
+                                      <img
+                                        src={match.profile.profile_image_url}
+                                        alt={`${match.profile.last_name_kanji}${match.profile.first_name_kanji}`}
+                                        className="h-20 w-20 rounded-lg object-cover border border-gray-200"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex-1">
+                                    <span className="mb-1 inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                                      登録済み{getRoleLabel(match.role || '')}ユーザー
+                                    </span>
+                                    <h4 className="text-lg font-semibold text-gray-900">{match.profile.last_name_kanji}{match.profile.first_name_kanji}</h4>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                      {getGenderLabel(match.profile.gender, match.role)}
+                                      {' '}• {calculateAge(match.profile.birth_date)}歳
+                                    </p>
+                                    {match.profile.bio && (
+                                      <p className="mt-2 text-sm text-gray-600 line-clamp-2">{match.profile.bio}</p>
+                                    )}
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      生年月日: {new Date(match.profile.birth_date).toLocaleDateString('ja-JP', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                      })}
+                                    </p>
+                                    {(match.profile.birthplace_prefecture || match.profile.birthplace_municipality) && (
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        出身地: {match.profile.birthplace_prefecture || ''}
+                                        {match.profile.birthplace_municipality ? ` ${match.profile.birthplace_municipality}` : ''}
+                                      </p>
+                                    )}
+                                    
+                                    {/* 相手親が探している子ども情報 */}
+                                    {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
+                                      <div className="mt-4 pt-4 border-t border-gray-200">
+                                        <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している子ども:</p>
+                                        <div className="space-y-1">
+                                          {match.searchingChildrenInfo.map((child) => (
+                                            <div key={child.id} className="text-sm bg-blue-50 rounded p-2">
+                                              <p className="font-semibold text-gray-900">
+                                                {child.last_name_kanji || ''}{child.first_name_kanji || ''}
+                                              </p>
+                                              {(child.birthplace_prefecture || child.birthplace_municipality) && (
+                                                <p className="text-xs text-gray-600">
+                                                  出身地: {child.birthplace_prefecture || ''}
+                                                  {child.birthplace_municipality ? ` ${child.birthplace_municipality}` : ''}
+                                                </p>
+                                              )}
+                                            </div>
+                                          ))}
                                         </div>
-                                      ))}
-                                    </div>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-
-                              <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">
-                                <div className="text-center mb-3">
-                                  <div className="flex items-center justify-center gap-2 mb-1">
-                                    <div className="text-3xl font-bold text-green-600">
-                                      {(childScore * 100).toFixed(0)}%
-                                    </div>
-                                    <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
-                                  </div>
-                                  <p className="text-xs text-gray-600 font-semibold">類似度</p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {getSimilarityLabel(childScore)}
-                                  </p>
                                 </div>
 
-                                <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${
-                                      childScore >= 0.9
-                                        ? 'bg-green-600'
-                                        : childScore >= 0.8
-                                        ? 'bg-emerald-500'
-                                        : childScore >= 0.7
-                                        ? 'bg-lime-500'
-                                        : 'bg-gray-600'
-                                    }`}
-                                    style={{ width: `${childScore * 100}%` }}
-                                  />
-                                </div>
+                                <div className="w-full lg:w-48 bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex flex-col items-center justify-center rounded-lg border border-green-100">
+                                  <div className="text-center mb-3">
+                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                      <div className="text-3xl font-bold text-green-600">
+                                        {(childScore * 100).toFixed(0)}%
+                                      </div>
+                                      <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
+                                    </div>
+                                    <p className="text-xs text-gray-600 font-semibold">類似度</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {getSimilarityLabel(childScore)}
+                                    </p>
+                                  </div>
 
-                                {match.existingMatchStatus === 'accepted' ? (
-                                  <Link
-                                    href={`/messages/${match.existingMatchId}`}
-                                    className="w-full block text-center rounded-lg bg-blue-600 px-3 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
-                                  >
-                                    メッセージへ
-                                  </Link>
-                                ) : match.existingMatchStatus === 'pending' ? (
-                                  <button
-                                    disabled
-                                    className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
-                                  >
-                                    承認待ち
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => handleCreateMatch(match.userId, childScore)}
-                                    disabled={creating === match.userId}
-                                    className="w-full rounded-lg bg-green-600 px-3 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
-                                  >
-                                    {creating === match.userId ? '処理中...' : 'マッチング申請'}
-                                  </button>
-                                )}
+                                  <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${
+                                        childScore >= 0.9
+                                          ? 'bg-green-600'
+                                          : childScore >= 0.8
+                                          ? 'bg-emerald-500'
+                                          : childScore >= 0.7
+                                          ? 'bg-lime-500'
+                                          : 'bg-gray-600'
+                                      }`}
+                                      style={{ width: `${childScore * 100}%` }}
+                                    />
+                                  </div>
+
+                                  {match.existingMatchStatus === 'accepted' ? (
+                                    <Link
+                                      href={`/messages/${match.existingMatchId}`}
+                                      className="w-full block text-center rounded-lg bg-blue-600 px-3 py-2 text-white text-sm font-semibold hover:bg-blue-700 transition"
+                                    >
+                                      メッセージへ
+                                    </Link>
+                                  ) : match.existingMatchStatus === 'pending' ? (
+                                    <button
+                                      disabled
+                                      className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
+                                    >
+                                      承認待ち
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleCreateMatch(match.userId, childScore)}
+                                      disabled={creating === match.userId}
+                                      className="w-full rounded-lg bg-green-600 px-3 py-2 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition"
+                                    >
+                                      {creating === match.userId ? '処理中...' : 'マッチング申請'}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
                             );
                           })}
                         </div>
@@ -447,14 +458,23 @@ export default function MatchingPage() {
                     >
                       {/* Left side - Profile info */}
                       <div className="flex-1 p-6">
-                        <div className="mb-4">
-                          <h3 className="text-2xl font-bold text-gray-900">
-                            {match.profile.last_name_kanji}{match.profile.first_name_kanji}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {getGenderLabel(match.profile.gender, role)}
-                            {' '} • {calculateAge(match.profile.birth_date)}歳
-                          </p>
+                        <div className="flex gap-4 mb-4">
+                          {match.profile.profile_image_url && (
+                            <img
+                              src={match.profile.profile_image_url}
+                              alt={`${match.profile.last_name_kanji}${match.profile.first_name_kanji}`}
+                              className="h-24 w-24 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold text-gray-900">
+                              {match.profile.last_name_kanji}{match.profile.first_name_kanji}
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {getGenderLabel(match.profile.gender, role)}
+                              {' '} • {calculateAge(match.profile.birth_date)}歳
+                            </p>
+                          </div>
                         </div>
 
                         <div className="space-y-2 text-sm text-gray-600 mb-4">

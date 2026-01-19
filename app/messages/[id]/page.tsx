@@ -22,6 +22,7 @@ interface Match {
   status: string;
   other_user_name: string;
   other_user_role: string;
+  other_user_image?: string | null;
 }
 
 export default function MessageDetailPage() {
@@ -218,9 +219,17 @@ export default function MessageDetailPage() {
             ← メッセージ一覧に戻る
           </Link>
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl">
-              {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
-            </div>
+            {match.other_user_image ? (
+              <img
+                src={match.other_user_image}
+                alt={match.other_user_name}
+                className="h-12 w-12 rounded-full object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl">
+                {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
+              </div>
+            )}
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {match.other_user_name}
