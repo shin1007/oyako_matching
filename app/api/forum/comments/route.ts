@@ -12,19 +12,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is a parent
+    // ユーザーのロールを取得
     const { data: userData } = await supabase
       .from('users')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (userData?.role !== 'parent') {
+    if (userData?.role !== 'parent' && userData?.role !== 'child') {
       return NextResponse.json(
-        { error: 'Only parents can create comments' },
+        { error: 'Only parents or children can create comments' },
         { status: 403 }
       );
     }
+
+    const userType = userData.role as 'parent' | 'child';
 
     const body = await request.json();
     const { post_id, content } = body;
@@ -33,6 +35,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Post ID and content are required' },
         { status: 400 }
+      );
+    }
+
+    // 投稿のuser_typeを確認して、同じタイプのユーザーのみコメント可能
+    const { data: post, error: postError } = await supabase
+      .from('forum_posts')
+      .select('user_type')
+      .eq('id', post_id)
+      .single();
+
+    if (postError || !post) {
+      return NextResponse.json(
+        { error: 'Post not found' },
+        { status: 404 }
+      );
+    }
+
+    if (post.user_type !== userType) {
+      return NextResponse.json(
+        { error: `Only ${post.user_type}s can comment on this post` },
+        { status: 403 }
       );
     }
 

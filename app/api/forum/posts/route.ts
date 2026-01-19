@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const searchParams = request.nextUrl.searchParams;
     const categoryId = searchParams.get('category_id');
+    const userType = searchParams.get('userType'); // 'parent' or 'child'
     const page = parseInt(searchParams.get('page') || '1');
     const perPage = 20;
     const offset = (page - 1) * perPage;
@@ -23,6 +24,11 @@ export async function GET(request: NextRequest) {
 
     if (categoryId) {
       postsQuery = postsQuery.eq('category_id', categoryId);
+    }
+
+    // userTypeでフィルタリング（親と子のフォーラムを分離）
+    if (userType === 'parent' || userType === 'child') {
+      postsQuery = postsQuery.eq('user_type', userType);
     }
 
     const { data: postsData, error: postsError, count } = await postsQuery;
@@ -127,19 +133,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is a parent
+    // ユーザーのロールを取得
     const { data: userData } = await supabase
       .from('users')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (userData?.role !== 'parent') {
+    // 親または子のみが投稿を作成できる
+    if (userData?.role !== 'parent' && userData?.role !== 'child') {
       return NextResponse.json(
-        { error: 'Only parents can create forum posts' },
+        { error: 'Only parents or children can create forum posts' },
         { status: 403 }
       );
     }
+
+    const userType = userData.role as 'parent' | 'child';
 
     const body = await request.json();
     const { title, content, category_id } = body;
@@ -185,6 +194,7 @@ export async function POST(request: NextRequest) {
         category_id: category_id || null,
         title,
         content,
+        user_type: userType,
         moderation_status: 'approved'
       })
       .select()
