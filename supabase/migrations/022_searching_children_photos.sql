@@ -74,11 +74,15 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES (
   'searching-children-photos',
   'searching-children-photos',
-  true, -- 公開バケット（URLで直接アクセス可能だがRLSで制御）
+  true, -- 公開バケット（URLで直接アクセス可能、RLSで制御）
   5242880, -- 5MB (5 * 1024 * 1024 bytes)
   ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
+
 
 -- ===== RLSポリシー設定 =====
 
@@ -86,18 +90,21 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE public.searching_children_photos ENABLE ROW LEVEL SECURITY;
 
 -- ポリシー: 自分の写真のみ閲覧可能
+DROP POLICY IF EXISTS "Users can view their own searching children photos" ON public.searching_children_photos;
 CREATE POLICY "Users can view their own searching children photos"
 ON public.searching_children_photos FOR SELECT
 TO authenticated
 USING (user_id = auth.uid());
 
 -- ポリシー: 自分の写真のみ挿入可能
+DROP POLICY IF EXISTS "Users can insert their own searching children photos" ON public.searching_children_photos;
 CREATE POLICY "Users can insert their own searching children photos"
 ON public.searching_children_photos FOR INSERT
 TO authenticated
 WITH CHECK (user_id = auth.uid());
 
 -- ポリシー: 自分の写真のみ更新可能
+DROP POLICY IF EXISTS "Users can update their own searching children photos" ON public.searching_children_photos;
 CREATE POLICY "Users can update their own searching children photos"
 ON public.searching_children_photos FOR UPDATE
 TO authenticated
@@ -105,6 +112,7 @@ USING (user_id = auth.uid())
 WITH CHECK (user_id = auth.uid());
 
 -- ポリシー: 自分の写真のみ削除可能
+DROP POLICY IF EXISTS "Users can delete their own searching children photos" ON public.searching_children_photos;
 CREATE POLICY "Users can delete their own searching children photos"
 ON public.searching_children_photos FOR DELETE
 TO authenticated
@@ -113,6 +121,7 @@ USING (user_id = auth.uid());
 -- ===== Storage RLSポリシー =====
 
 -- ポリシー: 自分の写真のみアップロード可能
+DROP POLICY IF EXISTS "Users can upload their own searching children photos" ON storage.objects;
 CREATE POLICY "Users can upload their own searching children photos"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -122,6 +131,7 @@ WITH CHECK (
 );
 
 -- ポリシー: 自分の写真のみ更新可能
+DROP POLICY IF EXISTS "Users can update their own searching children photos" ON storage.objects;
 CREATE POLICY "Users can update their own searching children photos"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -135,6 +145,7 @@ WITH CHECK (
 );
 
 -- ポリシー: 自分の写真のみ削除可能
+DROP POLICY IF EXISTS "Users can delete their own searching children photos" ON storage.objects;
 CREATE POLICY "Users can delete their own searching children photos"
 ON storage.objects FOR DELETE
 TO authenticated
@@ -143,16 +154,8 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- ポリシー: 自分の写真のみ閲覧可能（認証済みユーザー）
-CREATE POLICY "Users can view their own searching children photos"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'searching-children-photos' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
-
--- ポリシー: すべてのユーザーが写真を閲覧可能（公開バケット）
+-- ポリシー: すべてのユーザーが写真を閲覧可能（公開バケット・マッチング機能で必要）
+DROP POLICY IF EXISTS "Anyone can view searching children photos" ON storage.objects;
 CREATE POLICY "Anyone can view searching children photos"
 ON storage.objects FOR SELECT
 TO public
