@@ -325,11 +325,13 @@ export default function ProfilePage() {
         );
 
         if (insertedChildren && insertedChildren.length === nonEmptyChildren.length) {
-          for (let i = 0; i < insertedChildren.length; i++) {
-            const insertedChild = insertedChildren[i];
-            const originalChild = nonEmptyChildren[i];
+          // Match children by display_order for more robust matching
+          for (const insertedChild of insertedChildren) {
+            const originalChild = nonEmptyChildren.find(
+              child => child.displayOrder === insertedChild.display_order
+            );
 
-            if (originalChild.photos && originalChild.photos.length > 0) {
+            if (originalChild?.photos && originalChild.photos.length > 0) {
               // Delete existing photos for this child
               await supabase
                 .from('searching_children_photos')

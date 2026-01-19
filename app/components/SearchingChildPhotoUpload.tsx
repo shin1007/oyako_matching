@@ -101,7 +101,7 @@ export default function SearchingChildPhotoUpload({
           capturedAt: '',
           ageAtCapture: null,
           description: '',
-          displayOrder: photos.length + i,
+          displayOrder: photos.length + newPhotos.length,
         });
       }
 
