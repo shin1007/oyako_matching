@@ -17,6 +17,7 @@ interface Match {
 interface MatchWithProfile extends Match {
   other_user_name: string;
   other_user_role: string;
+  other_user_image?: string | null;
   is_requester: boolean; // 現在のユーザーがリクエスター（申請者）か
   unread_count?: number; // 未読メッセージ数
   last_message?: {
@@ -200,9 +201,17 @@ export default function MessagesPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl flex-shrink-0">
-                      {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
-                    </div>
+                    {match.other_user_image ? (
+                      <img
+                        src={match.other_user_image}
+                        alt={match.other_user_name}
+                        className="h-12 w-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl flex-shrink-0">
+                        {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">
