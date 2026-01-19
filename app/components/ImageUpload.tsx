@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop, convertToPixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import imageCompression from 'browser-image-compression';
 
@@ -28,6 +28,19 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
   const [uploading, setUploading] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const centerAspectSquare = (mediaWidth: number, mediaHeight: number) => {
+    const baseCrop = makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      1,
+      mediaWidth,
+      mediaHeight
+    );
+    return centerCrop(baseCrop, mediaWidth, mediaHeight);
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,6 +70,13 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
       setShowCropper(true);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    const nextCrop = centerAspectSquare(naturalWidth, naturalHeight);
+    setCrop(nextCrop);
+    setCompletedCrop(convertToPixelCrop(nextCrop, naturalWidth, naturalHeight));
   };
 
   const getCroppedImg = useCallback(
@@ -277,6 +297,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
                   src={selectedImage}
                   alt="切り取り対象"
                   className="max-w-full h-auto"
+                  onLoad={handleImageLoad}
                 />
               </ReactCrop>
             </div>
