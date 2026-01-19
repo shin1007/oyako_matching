@@ -40,6 +40,7 @@ WHERE id IN (
     WHERE p2.searching_child_id = p.searching_child_id
       AND p2.display_order = 0
       AND p2.created_at < p.created_at
+      AND p.display_order = 0
   )
 );
 
