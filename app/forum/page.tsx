@@ -132,9 +132,6 @@ export default function ForumPage() {
           )}
         </div>
 
-        {!isParent && (
-          {/* 投稿制限文言削除 */}
-        )}
 
         {/* Categories */}
         <div className="mb-6">
@@ -227,7 +224,7 @@ export default function ForumPage() {
                     </p>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <span>👤 {post.author_profile.forum_display_name}</span>
-                      <span>💬 {post.comment_count.length || 0}件のコメント</span>
+                      <span>💬 {Array.isArray(post.comment_count) ? (post.comment_count[0]?.count ?? 0) : (typeof post.comment_count === 'number' ? post.comment_count : 0)}件のコメント</span>
                       <span>👁️ {post.view_count}回閲覧</span>
                       <span>🕒 {formatDate(post.created_at)}</span>
                     </div>

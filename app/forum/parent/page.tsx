@@ -56,13 +56,11 @@ export default function ParentForumPage() {
       router.push('/auth/login');
       return;
     }
-
     const { data: userData } = await supabase
       .from('users')
       .select('role')
       .eq('id', user.id)
       .single();
-
     if (userData?.role !== 'parent') {
       // 親アカウントでない場合はダッシュボードにリダイレクト
       router.push('/dashboard');
@@ -91,10 +89,8 @@ export default function ParentForumPage() {
       const url = selectedCategory
         ? `/api/forum/posts?userType=parent&category_id=${selectedCategory}`
         : '/api/forum/posts?userType=parent';
-      
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to load posts');
-      
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (err: any) {
@@ -137,9 +133,6 @@ export default function ParentForumPage() {
           )}
         </div>
 
-        {!isParent && (
-          {/* 投稿制限文言削除 */}
-        )}
 
         {/* Categories */}
         <div className="mb-6">
@@ -193,49 +186,57 @@ export default function ParentForumPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/forum/${post.id}?userType=parent`}
-                className="block rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
-              >
-                <div className="flex items-start gap-4 justify-between">
-                  {post.author_profile?.profile_image_url && (
-                    <img
-                      src={post.author_profile.profile_image_url}
-                      alt={post.author_profile.forum_display_name}
-                      className="h-12 w-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-2">
-                      {post.is_pinned && (
-                        <span className="rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
-                          📌 ピン留め
-                        </span>
-                      )}
-                      {post.category && (
-                        <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">
-                          {post.category.icon} {post.category.name}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                      {post.title}
-                    </h3>
-                    <p className="mb-4 text-sm text-gray-600 line-clamp-2">
-                      {post.content}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>👤 {post.author_profile.forum_display_name}</span>
-                      <span>💬 {post.comment_count.length || 0}件のコメント</span>
-                      <span>👁️ {post.view_count}回閲覧</span>
-                      <span>🕒 {formatDate(post.created_at)}</span>
+            {posts.map((post, idx) => {
+              console.log('post:', idx, JSON.stringify(post));
+              const displayName = post.author_profile?.forum_display_name ?? '匿名';
+              const profileImage = post.author_profile?.profile_image_url;
+              const commentCount = Array.isArray(post.comment_count)
+                ? (post.comment_count[0]?.count ?? 0)
+                : (typeof post.comment_count === 'number' ? post.comment_count : 0);
+              return (
+                <Link
+                  key={post.id}
+                  href={`/forum/${post.id}?userType=parent`}
+                  className="block rounded-lg bg-white p-6 shadow hover:shadow-lg transition"
+                >
+                  <div className="flex items-start gap-4 justify-between">
+                    {profileImage && (
+                      <img
+                        src={profileImage}
+                        alt={displayName}
+                        className="h-12 w-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div className="mb-2 flex items-center gap-2">
+                        {post.is_pinned && (
+                          <span className="rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
+                            📌 ピン留め
+                          </span>
+                        )}
+                        {post.category && (
+                          <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                            {post.category.icon} {post.category.name}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                        {post.title}
+                      </h3>
+                      <p className="mb-4 text-sm text-gray-600 line-clamp-2">
+                        {post.content}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>👤 {displayName}</span>
+                        <span>💬 {commentCount}件のコメント</span>
+                        <span>👁️ {post.view_count}回閲覧</span>
+                        <span>🕒 {formatDate(post.created_at)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>

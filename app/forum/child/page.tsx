@@ -91,10 +91,8 @@ export default function ChildForumPage() {
       const url = selectedCategory
         ? `/api/forum/posts?userType=child&category_id=${selectedCategory}`
         : '/api/forum/posts?userType=child';
-      
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to load posts');
-      
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (err: any) {
@@ -137,13 +135,6 @@ export default function ChildForumPage() {
           )}
         </div>
 
-        {!isChild && (
-          <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <p className="text-sm text-yellow-800">
-              掲示板の投稿は子アカウントのみが可能です。閲覧は誰でもできます。
-            </p>
-          </div>
-        )}
 
         {/* Categories */}
         <div className="mb-6">
@@ -198,11 +189,12 @@ export default function ChildForumPage() {
         ) : (
           <div className="space-y-4">
             {posts.map((post) => {
+
               const displayName = post.author_profile?.forum_display_name ?? '匿名';
               const profileImage = post.author_profile?.profile_image_url;
               const commentCount = Array.isArray(post.comment_count)
-                ? post.comment_count.length
-                : 0;
+                ? (post.comment_count[0]?.count ?? 0)
+                : (typeof post.comment_count === 'number' ? post.comment_count : 0);
 
               return (
                 <Link

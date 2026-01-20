@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const categoryId = searchParams.get('category_id');
     const userType = searchParams.get('userType'); // 'parent' or 'child'
+    console.log('API userType param:', userType);
     const page = parseInt(searchParams.get('page') || '1');
     const perPage = 20;
     const offset = (page - 1) * perPage;
@@ -32,8 +33,17 @@ export async function GET(request: NextRequest) {
       postsQuery = postsQuery.eq('user_type', userType);
     }
 
+    console.log('postsQuery params:', {
+      moderation_status: 'approved',
+      user_type: userType,
+      category_id: categoryId
+    });
     const { data: postsData, error: postsError, count } = await postsQuery;
-    if (postsError) throw postsError;
+    console.log('postsData:', postsData);
+    if (postsError) {
+      console.error('postsError:', postsError);
+      throw postsError;
+    }
 
     // 投稿がない場合は空の結果を返す
     if (!postsData || postsData.length === 0) {
@@ -54,8 +64,10 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('user_id, forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
       .in('user_id', authorIds);
-
-    if (profilesError) throw profilesError;
+    if (profilesError) {
+      console.error('profilesError:', profilesError);
+      throw profilesError;
+    }
 
     // カテゴリIDを取得してカテゴリをフェッチ
     const categoryIds = [...new Set(postsData.map(post => post.category_id).filter(Boolean))];
@@ -63,8 +75,10 @@ export async function GET(request: NextRequest) {
       .from('forum_categories')
       .select('id, name, icon')
       .in('id', categoryIds);
-
-    if (categoriesError) throw categoriesError;
+    if (categoriesError) {
+      console.error('categoriesError:', categoriesError);
+      throw categoriesError;
+    }
 
     // 各投稿のコメント数をフェッチ
     const postIds = postsData.map(post => post.id);
@@ -72,8 +86,10 @@ export async function GET(request: NextRequest) {
       .from('forum_comments')
       .select('post_id')
       .in('post_id', postIds);
-
-    if (commentsError) throw commentsError;
+    if (commentsError) {
+      console.error('commentsError:', commentsError);
+      throw commentsError;
+    }
 
     // コメント数を集計
     const commentCountMap = commentCounts?.reduce((acc, comment) => {
