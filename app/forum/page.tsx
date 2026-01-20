@@ -82,13 +82,14 @@ export default function ForumPage() {
     setError('');
 
     try {
-      const url = selectedCategory
-        ? `/api/forum/posts?category_id=${selectedCategory}`
-        : '/api/forum/posts';
-      
+      let url = '';
+      if (selectedCategory) {
+        url = `/api/forum/posts?category_id=${selectedCategory}&userType=${isParent ? 'parent' : 'child'}`;
+      } else {
+        url = `/api/forum/posts?userType=${isParent ? 'parent' : 'child'}`;
+      }
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to load posts');
-      
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (err: any) {
@@ -131,13 +132,6 @@ export default function ForumPage() {
           )}
         </div>
 
-        {!isParent && (
-          <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <p className="text-sm text-yellow-800">
-              掲示板の投稿は親アカウントのみが可能です。閲覧は誰でもできます。
-            </p>
-          </div>
-        )}
 
         {/* Categories */}
         <div className="mb-6">
@@ -230,7 +224,7 @@ export default function ForumPage() {
                     </p>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <span>👤 {post.author_profile.forum_display_name}</span>
-                      <span>💬 {post.comment_count.length || 0}件のコメント</span>
+                      <span>💬 {Array.isArray(post.comment_count) ? (post.comment_count[0]?.count ?? 0) : (typeof post.comment_count === 'number' ? post.comment_count : 0)}件のコメント</span>
                       <span>👁️ {post.view_count}回閲覧</span>
                       <span>🕒 {formatDate(post.created_at)}</span>
                     </div>
