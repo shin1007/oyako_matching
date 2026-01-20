@@ -135,22 +135,22 @@ export async function PATCH(
       .eq('id', id)
       .single();
 
-
-      // 監査ログ記録
-      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
-      const userAgent = request.headers.get('user-agent') || null;
-      await logAuditEventServer({
-        user_id: user.id,
-        event_type: 'forum_post_delete',
-        target_table: 'forum_posts',
-        target_id: id,
-        description: 'Post deleted',
-        ip_address: ip,
-        user_agent: userAgent,
-      });
     if (!post || post.author_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // 監査ログ記録
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    await logAuditEventServer({
+      user_id: user.id,
+      event_type: 'forum_post_update',
+      target_table: 'forum_posts',
+      target_id: id,
+      description: 'Post updated',
+      ip_address: ip,
+      user_agent: userAgent,
+    });
 
     // Moderate content
     const moderation = await moderateContent(`${title} ${content}`);
