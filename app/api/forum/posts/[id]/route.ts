@@ -226,25 +226,18 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Verify ownership
-    const { data: post } = await supabase
+    // 投稿内容取得
+    const { data: postData } = await supabase
       .from('forum_posts')
-      .select('author_id')
+      .select('author_id, title, content')
       .eq('id', id)
       .single();
 
-    if (!post || post.author_id !== user.id) {
+    if (!postData || postData.author_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { error } = await supabase
-      .from('forum_posts')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
-    // 監査ログ記録
+    // 削除前に内容を記録
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
     const userAgent = request.headers.get('user-agent') || null;
     await logAuditEventServer({
@@ -252,11 +245,18 @@ export async function DELETE(
       event_type: 'forum_post_delete',
       target_table: 'forum_posts',
       target_id: id,
-      description: 'Post deleted',
+      description: `Post deleted: ${postData.title} ${postData.content}`,
       ip_address: ip,
       user_agent: userAgent,
       event_timestamp: new Date().toISOString(),
     });
+
+    const { error } = await supabase
+      .from('forum_posts')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
