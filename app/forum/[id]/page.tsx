@@ -648,7 +648,7 @@ export default function PostDetailPage() {
           )}
 
           {/* Comment Form */}
-          {isParent ? (
+          {(post.user_type === (isParent ? 'parent' : 'child')) ? (
             <form onSubmit={handleSubmitComment} className="mb-8">
               <textarea
                 value={newComment}
@@ -669,7 +669,7 @@ export default function PostDetailPage() {
           ) : (
             <div className="mb-8 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
               <p className="text-sm text-yellow-800">
-                コメントの投稿は親アカウントのみが可能です
+                コメントの投稿は、親または子アカウントで、同じタイプの投稿にのみ可能です
               </p>
             </div>
           )}
