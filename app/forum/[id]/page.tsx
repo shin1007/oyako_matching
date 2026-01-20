@@ -293,7 +293,22 @@ export default function PostDetailPage() {
         throw new Error(data.error || '投稿の削除に失敗しました');
       }
 
-      router.push('/forum');
+      // ユーザーのロールに応じてリダイレクト先を分岐
+      const { data: { user } } = await supabase.auth.getUser();
+      let forumPath = '/forum';
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (userData?.role === 'parent') {
+          forumPath = '/forum/parent';
+        } else if (userData?.role === 'child') {
+          forumPath = '/forum/child';
+        }
+      }
+      router.push(forumPath);
     } catch (err: any) {
       setError(err.message);
     } finally {
