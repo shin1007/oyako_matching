@@ -74,6 +74,7 @@ export async function POST(
       description: `Message sent: ${content.trim()}`,
       ip_address: ip,
       user_agent: userAgent,
+      event_timestamp: new Date().toISOString(),
     });
     return NextResponse.json({ message }, { status: 201 });
   } catch (error: any) {

@@ -255,6 +255,7 @@ export async function DELETE(
       description: 'Post deleted',
       ip_address: ip,
       user_agent: userAgent,
+      event_timestamp: new Date().toISOString(),
     });
 
     return NextResponse.json({ success: true });

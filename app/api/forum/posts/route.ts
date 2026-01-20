@@ -217,6 +217,7 @@ export async function POST(request: NextRequest) {
       description: `Post created: ${title} ${content}`,
       ip_address: ip,
       user_agent: userAgent,
+      event_timestamp: new Date().toISOString(),
     });
     return NextResponse.json({ post }, { status: 201 });
   } catch (error: any) {

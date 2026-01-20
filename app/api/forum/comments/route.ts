@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
       description: `Comment created: ${content}`,
       ip_address: ip,
       user_agent: userAgent,
+      event_timestamp: new Date().toISOString(),
     });
     return NextResponse.json({ comment: enrichedComment }, { status: 201 });
   } catch (error: any) {
