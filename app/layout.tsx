@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { HeaderNav } from "@/app/components/layout/header-nav";
+import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -56,7 +57,9 @@ export default async function RootLayout({
           </div>
         </header>
         <main className="min-h-screen bg-gray-50 pt-4 md:pt-6 lg:pt-8">
-          {children}
+          <GlobalErrorBoundary>
+            {children}
+          </GlobalErrorBoundary>
         </main>
       </body>
     </html>

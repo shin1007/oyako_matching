@@ -162,6 +162,19 @@ export default function RegisterForm() {
       }
 
       if (data.user) {
+        // 監査ログ記録（API経由）
+        await fetch('/api/log-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: data.user.id,
+            event_type: 'register',
+            target_table: 'users',
+            target_id: data.user.id,
+            description: '新規ユーザー登録'
+          })
+        });
+
         // Attempt to sign in after successful sign-up
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,

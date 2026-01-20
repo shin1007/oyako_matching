@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 
 /**
  * POST /api/auth/delete-account
@@ -106,6 +107,15 @@ export async function POST() {
       return NextResponse.json({
         success: true,
         message: 'アカウントが正常に削除されました',
+      });
+
+      // 監査ログ記録
+      await logAuditEventServer({
+        user_id: userId,
+        event_type: 'delete_account',
+        target_table: 'users',
+        target_id: userId,
+        description: 'アカウント削除',
       });
     } catch (deleteError) {
       console.error('Failed to delete user data:', deleteError);

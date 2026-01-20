@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
+import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -97,6 +98,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    // 監査ログ記録
+    await logAuditEventServer({
+      user_id: user.id,
+      event_type: 'match_create',
+      target_table: 'matches',
+      target_id: newMatch?.id,
+      description: 'マッチ作成',
+      ip_address: request.ip ?? null,
+      user_agent: request.headers.get('user-agent') ?? null,
+    });
 
     return NextResponse.json({ match: newMatch }, { status: 201 });
   } catch (error: any) {

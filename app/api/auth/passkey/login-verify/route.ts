@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPasskeyAuthentication } from '@/lib/webauthn/server';
+import { logAuditEvent } from '@/lib/utils/auditLogger';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/types';
 
 /**
@@ -14,6 +15,13 @@ export async function POST(request: NextRequest) {
     const { credential } = body;
 
     if (!credential) {
+      // 監査ログ: 認証情報不足
+      await logAuditEvent({
+        event_type: 'login_passkey_failed',
+        description: '認証情報が不足しています',
+        ip_address: request.ip ?? null,
+        user_agent: request.headers.get('user-agent') ?? null,
+      });
       return NextResponse.json(
         { error: '認証情報が不足しています' },
         { status: 400 }
@@ -24,6 +32,13 @@ export async function POST(request: NextRequest) {
     const challenge = request.cookies.get('passkey_challenge')?.value;
 
     if (!challenge) {
+      // 監査ログ: チャレンジ無効
+      await logAuditEvent({
+        event_type: 'login_passkey_failed',
+        description: 'チャレンジが無効です',
+        ip_address: request.ip ?? null,
+        user_agent: request.headers.get('user-agent') ?? null,
+      });
       return NextResponse.json(
         { error: 'チャレンジが無効です' },
         { status: 400 }
@@ -43,6 +58,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (passkeyError || !passkey) {
+      // 監査ログ: パスキーが見つからない
+      await logAuditEvent({
+        event_type: 'login_passkey_failed',
+        description: 'パスキーが見つかりません',
+        ip_address: request.ip ?? null,
+        user_agent: request.headers.get('user-agent') ?? null,
+      });
       return NextResponse.json(
         { error: 'パスキーが見つかりません' },
         { status: 404 }
@@ -57,6 +79,16 @@ export async function POST(request: NextRequest) {
     );
 
     if (!verification.verified) {
+      // 監査ログ: パスキー検証失敗
+      await logAuditEvent({
+        user_id: passkey.user_id,
+        event_type: 'login_passkey_failed',
+        target_table: 'users',
+        target_id: passkey.user_id,
+        description: 'パスキーの検証に失敗しました',
+        ip_address: request.ip ?? null,
+        user_agent: request.headers.get('user-agent') ?? null,
+      });
       return NextResponse.json(
         { error: 'パスキーの検証に失敗しました' },
         { status: 400 }
@@ -80,6 +112,16 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !userData) {
+      // 監査ログ: ユーザーが見つからない
+      await logAuditEvent({
+        user_id: passkey.user_id,
+        event_type: 'login_passkey_failed',
+        target_table: 'users',
+        target_id: passkey.user_id,
+        description: 'ユーザーが見つかりません',
+        ip_address: request.ip ?? null,
+        user_agent: request.headers.get('user-agent') ?? null,
+      });
       return NextResponse.json(
         { error: 'ユーザーが見つかりません' },
         { status: 404 }
@@ -87,6 +129,16 @@ export async function POST(request: NextRequest) {
     }
 
     // TODO: Implement proper session creation
+    // 監査ログ記録（成功）
+    await logAuditEvent({
+      user_id: passkey.user_id,
+      event_type: 'login_passkey',
+      target_table: 'users',
+      target_id: passkey.user_id,
+      description: 'パスキーによるログイン成功',
+      ip_address: request.ip ?? null,
+      user_agent: request.headers.get('user-agent') ?? null,
+    });
     // Currently, this endpoint only verifies the passkey but doesn't create a Supabase session
     // For a production implementation, consider one of these approaches:
     // 1. Use Supabase Auth hooks to create a session after passkey verification
