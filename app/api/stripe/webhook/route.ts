@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
+import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -51,6 +52,15 @@ export async function POST(request: NextRequest) {
           current_period_start: new Date(subData.current_period_start * 1000).toISOString(),
           current_period_end: new Date(subData.current_period_end * 1000).toISOString(),
         });
+
+        // 監査ログ記録
+        await logAuditEventServer({
+          user_id: userId,
+          event_type: event.type,
+          target_table: 'subscriptions',
+          target_id: subscription.id,
+          description: `サブスクリプション${event.type === 'customer.subscription.created' ? '作成' : '更新'}`,
+        });
         break;
       }
 
@@ -61,6 +71,14 @@ export async function POST(request: NextRequest) {
           .from('subscriptions')
           .update({ status: 'canceled' })
           .eq('stripe_subscription_id', subscription.id);
+
+        // 監査ログ記録
+        await logAuditEventServer({
+          event_type: event.type,
+          target_table: 'subscriptions',
+          target_id: subscription.id,
+          description: 'サブスクリプション削除',
+        });
         break;
       }
 
@@ -74,6 +92,14 @@ export async function POST(request: NextRequest) {
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_subscription_id', subscriptionId);
+
+          // 監査ログ記録
+          await logAuditEventServer({
+            event_type: event.type,
+            target_table: 'subscriptions',
+            target_id: subscriptionId,
+            description: 'サブスクリプション支払い失敗',
+          });
         }
         break;
       }

@@ -73,6 +73,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 監査ログ記録
+    // サーバーサイドなので直接logAuditEventServerを使う
+    const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    await logAuditEventServer({
+      user_id: sessionData.user?.id ?? null,
+      event_type: 'reset_password',
+      target_table: 'users',
+      target_id: sessionData.user?.id ?? null,
+      description: 'パスワードリセット成功',
+      ip_address: request.ip ?? null,
+      user_agent: request.headers.get('user-agent') ?? null,
+    });
+
     return NextResponse.json(
       { 
         success: true, 

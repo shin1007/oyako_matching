@@ -47,6 +47,17 @@ export async function POST(request: NextRequest) {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password-confirm`,
     });
 
+    // 監査ログ記録
+    const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    await logAuditEventServer({
+      event_type: 'reset_password_request',
+      target_table: 'users',
+      target_id: email,
+      description: 'パスワードリセットリクエスト',
+      ip_address: request.ip ?? null,
+      user_agent: request.headers.get('user-agent') ?? null,
+    });
+
     if (error) {
       console.error('Password reset error:', error);
       // セキュリティ上、ユーザーが存在するかどうかを明かさない

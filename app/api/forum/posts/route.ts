@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
 import { checkRateLimit, recordRateLimitAction, POST_RATE_LIMITS } from '@/lib/rate-limit';
+import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 
 export async function GET(request: NextRequest) {
   try {
@@ -205,6 +206,18 @@ export async function POST(request: NextRequest) {
     // Record rate limit action
     await recordRateLimitAction(supabase, user.id, 'post');
 
+    // 監査ログ記録
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    await logAuditEventServer({
+      user_id: user.id,
+      event_type: 'forum_post_create',
+      target_table: 'forum_posts',
+      target_id: post.id,
+      description: 'Post created',
+      ip_address: ip,
+      user_agent: userAgent,
+    });
     return NextResponse.json({ post }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating post:', error);

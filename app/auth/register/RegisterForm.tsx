@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -12,8 +13,9 @@ export default function RegisterForm() {
   const [role, setRole] = useState<'parent' | 'child'>('parent');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-    const [agreeTerms, setAgreeTerms] = useState(false);
-    const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -160,6 +162,19 @@ export default function RegisterForm() {
       }
 
       if (data.user) {
+        // 監査ログ記録（API経由）
+        await fetch('/api/log-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: data.user.id,
+            event_type: 'register',
+            target_table: 'users',
+            target_id: data.user.id,
+            description: '新規ユーザー登録'
+          })
+        });
+
         // Attempt to sign in after successful sign-up
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -185,6 +200,13 @@ export default function RegisterForm() {
   return (
     <div className="rounded-lg bg-white p-8 shadow-lg">
       <form onSubmit={handleRegister} className="space-y-6">
+        <div>
+          <Turnstile
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
+            onSuccess={setCaptchaToken}
+            options={{ theme: 'light' }}
+          />
+        </div>
         {error && (
           <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
             {error}

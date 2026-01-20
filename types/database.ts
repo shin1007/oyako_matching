@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+            audit_logs: {
+              Row: {
+                id: string;
+                user_id: string | null;
+                event_type: string;
+                target_table: string | null;
+                target_id: string | null;
+                description: string | null;
+                ip_address: string | null;
+                user_agent: string | null;
+                created_at: string;
+              };
+              Insert: {
+                id?: string;
+                user_id?: string | null;
+                event_type: string;
+                target_table?: string | null;
+                target_id?: string | null;
+                description?: string | null;
+                ip_address?: string | null;
+                user_agent?: string | null;
+                created_at?: string;
+              };
+              Update: {
+                id?: string;
+                user_id?: string | null;
+                event_type?: string;
+                target_table?: string | null;
+                target_id?: string | null;
+                description?: string | null;
+                ip_address?: string | null;
+                user_agent?: string | null;
+                created_at?: string;
+              };
+              Relationships: [
+                {
+                  foreignKeyName: "audit_logs_user_id_fkey";
+                  columns: ["user_id"];
+                  isOneToOne: false;
+                  referencedRelation: "users";
+                  referencedColumns: ["id"];
+                }
+              ];
+            };
       email_verification_attempts: {
         Row: {
           attempted_at: string

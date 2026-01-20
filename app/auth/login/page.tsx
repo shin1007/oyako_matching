@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -95,27 +97,43 @@ export default function LoginPage() {
           router.push('/auth/verify-email-pending');
           return;
         }
-        
+
+        // 監査ログ記録（API経由）
+        await fetch('/api/log-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: data.user.id,
+            event_type: 'login',
+            target_table: 'users',
+            target_id: data.user.id,
+            description: '通常ログイン成功'
+          })
+        });
+
         router.push('/dashboard');
         router.refresh();
       }
     } catch (err: any) {
       console.error('Login error:', err);
       let errorMessage = 'ログインに失敗しました';
-      
+      let failReason = '';
       // Check for network/fetch errors
       if (err.name === 'TypeError' && err.message?.includes('fetch')) {
         errorMessage = 'サーバーに接続できません。ネットワーク接続を確認してください。';
+        failReason = 'fetch error';
       }
       // Handle authentication errors
       else if (err.message?.includes('Invalid login credentials') || 
                err.message?.includes('Invalid email or password') ||
                err.name === 'AuthApiError') {
         errorMessage = 'メールアドレスまたはパスワードが正しくありません。';
+        failReason = 'invalid credentials';
       }
       // Handle email not confirmed error
       else if (err.message?.includes('Email not confirmed')) {
         errorMessage = 'メールアドレスの確認が完了していません。';
+        failReason = 'email not confirmed';
         // Redirect to verification page
         setTimeout(() => router.push('/auth/verify-email-pending'), 2000);
       }
@@ -125,11 +143,27 @@ export default function LoginPage() {
         if (match) {
           const seconds = match[1];
           errorMessage = `セキュリティのため、${seconds}秒後に再試行してください。`;
+          failReason = `rate limit: ${seconds} seconds`;
         } else {
           errorMessage = 'セキュリティのため、しばらくしてから再試行してください。';
+          failReason = 'rate limit';
         }
+      } else {
+        failReason = err?.message || 'unknown error';
       }
-      
+
+      // 監査ログ記録（API経由）
+      await fetch('/api/log-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'login_failed',
+          target_table: 'users',
+          description: `ログイン失敗: ${failReason}`,
+          // user_id, target_idは不明（ログイン失敗時）
+        })
+      });
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -241,6 +275,13 @@ export default function LoginPage() {
                 </Link>
               </p>
             )}
+            <div className="flex justify-center mt-4">
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
+                onSuccess={setCaptchaToken}
+                options={{ theme: 'light' }}
+              />
+            </div>
           </div>
         </div>
       </div>
