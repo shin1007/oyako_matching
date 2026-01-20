@@ -24,12 +24,12 @@ CREATE POLICY "Anyone can view forum categories" ON public.forum_categories
 CREATE POLICY "Anyone can view approved forum posts" ON public.forum_posts
   FOR SELECT USING (moderation_status = 'approved' OR author_id = auth.uid());
 
-CREATE POLICY "Parents can create forum posts" ON public.forum_posts
+CREATE POLICY "Parents or Children can create forum posts" ON public.forum_posts
   FOR INSERT WITH CHECK (
     auth.uid() = author_id AND
     EXISTS (
       SELECT 1 FROM public.users
-      WHERE users.id = auth.uid() AND users.role = 'parent'
+      WHERE users.id = auth.uid() AND (users.role = 'parent' OR users.role = 'child')
     )
   );
 
@@ -44,7 +44,7 @@ CREATE POLICY "Anyone can view approved comments" ON public.forum_comments
   FOR SELECT USING (
     moderation_status = 'approved' OR author_id = auth.uid()
   );
-
+DROP POLICY IF EXISTS "Parents or Children can create comments" ON public.forum_comments; 
 CREATE POLICY "Parents or Children can create comments" ON public.forum_comments
   FOR INSERT WITH CHECK (
     auth.uid() = author_id AND

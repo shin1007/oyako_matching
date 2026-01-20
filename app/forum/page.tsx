@@ -133,11 +133,7 @@ export default function ForumPage() {
         </div>
 
         {!isParent && (
-          <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <p className="text-sm text-yellow-800">
-              掲示板の投稿は親アカウントのみが可能です。閲覧は誰でもできます。
-            </p>
-          </div>
+          {/* 投稿制限文言削除 */}
         )}
 
         {/* Categories */}
