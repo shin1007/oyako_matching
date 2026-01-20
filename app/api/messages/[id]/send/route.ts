@@ -62,6 +62,19 @@ export async function POST(
       throw messageError;
     }
 
+    // 監査ログ記録
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    await logAuditEventServer({
+      user_id: user.id,
+      event_type: 'message_send',
+      target_table: 'messages',
+      target_id: message.id,
+      description: `Message sent: ${content.trim()}`,
+      ip_address: ip,
+      user_agent: userAgent,
+    });
     return NextResponse.json({ message }, { status: 201 });
   } catch (error: any) {
     console.error('Failed to send message:', error);

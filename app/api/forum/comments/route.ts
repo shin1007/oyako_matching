@@ -123,6 +123,19 @@ export async function POST(request: NextRequest) {
       }
     };
 
+    // 監査ログ記録
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    await logAuditEventServer({
+      user_id: user.id,
+      event_type: 'forum_comment_create',
+      target_table: 'forum_comments',
+      target_id: comment.id,
+      description: `Comment created: ${content}`,
+      ip_address: ip,
+      user_agent: userAgent,
+    });
     return NextResponse.json({ comment: enrichedComment }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating comment:', error);

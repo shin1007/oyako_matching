@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
       event_type: 'forum_post_create',
       target_table: 'forum_posts',
       target_id: post.id,
-      description: 'Post created',
+      description: `Post created: ${title} ${content}`,
       ip_address: ip,
       user_agent: userAgent,
     });
