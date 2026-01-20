@@ -1,3 +1,14 @@
+/* エラーメッセージの文言が含まれる要素に対して色を濃くする */
+div:has(> h2:contains('予期しないエラーが発生しました')), 
+div:has(> p:contains('ご不便をおかけし申し訳ありません。時間をおいて再度お試しください。')) {
+  color: #b91c1c !important;
+  font-weight: 600;
+}
+/* エラーメッセージ用 共通クラス */
+.error-message {
+  color: #b91c1c; /* 濃い赤: text-red-700 */
+  font-weight: 600;
+}
 @import "tailwindcss";
 
 :root {
