@@ -86,10 +86,14 @@ export async function GET(request: NextRequest) {
       // フォールバック: forum_display_nameがない場合はフルネームを使用
       const displayName = profile.forum_display_name || 
         `${profile.last_name_kanji || ''}${profile.first_name_kanji || '名無し'}`;
-      
+      // role情報を取得
+      const userObj = authorIds.includes(profile.user_id)
+        ? postsData.find(p => p.author_id === profile.user_id)
+        : null;
       acc[profile.user_id] = {
         forum_display_name: displayName,
-        profile_image_url: profile.profile_image_url
+        profile_image_url: profile.profile_image_url,
+        role: userObj?.user_type ?? null
       };
       return acc;
     }, {} as Record<string, any>) || {};
@@ -102,7 +106,7 @@ export async function GET(request: NextRequest) {
     // データを結合
     const posts = postsData.map(post => ({
       ...post,
-      author_profile: profileMap[post.author_id] || null,
+      author_profile: profileMap[post.author_id] || { forum_display_name: '名無し', profile_image_url: null, role: post.user_type },
       category: categoryMap[post.category_id] || null,
       comment_count: [{ count: commentCountMap[post.id] || 0 }]
     }));

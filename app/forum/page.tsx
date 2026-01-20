@@ -82,13 +82,14 @@ export default function ForumPage() {
     setError('');
 
     try {
-      const url = selectedCategory
-        ? `/api/forum/posts?category_id=${selectedCategory}`
-        : '/api/forum/posts';
-      
+      let url = '';
+      if (selectedCategory) {
+        url = `/api/forum/posts?category_id=${selectedCategory}&userType=${isParent ? 'parent' : 'child'}`;
+      } else {
+        url = `/api/forum/posts?userType=${isParent ? 'parent' : 'child'}`;
+      }
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to load posts');
-      
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (err: any) {
