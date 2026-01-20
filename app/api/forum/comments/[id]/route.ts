@@ -98,16 +98,31 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Verify ownership
-    const { data: comment } = await supabase
+    // コメント内容取得
+    const { data: commentData } = await supabase
       .from('forum_comments')
-      .select('author_id')
+      .select('author_id, content')
       .eq('id', id)
       .single();
 
-    if (!comment || comment.author_id !== user.id) {
+    if (!commentData || commentData.author_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // 削除前に内容を記録
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    await logAuditEventServer({
+      user_id: user.id,
+      event_type: 'forum_comment_delete',
+      target_table: 'forum_comments',
+      target_id: id,
+      description: `Comment deleted: ${commentData.content}`,
+      ip_address: ip,
+      user_agent: userAgent,
+      event_timestamp: new Date().toISOString(),
+    });
 
     const { error } = await supabase
       .from('forum_comments')

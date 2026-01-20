@@ -12,6 +12,7 @@ export async function logAuditEventServer(params: {
   description?: string | null;
   ip_address?: string | null;
   user_agent?: string | null;
+  event_timestamp?: string | Date | null;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('audit_logs').insert([
@@ -23,6 +24,7 @@ export async function logAuditEventServer(params: {
       description: params.description ?? null,
       ip_address: params.ip_address ?? null,
       user_agent: params.user_agent ?? null,
+      event_timestamp: params.event_timestamp ?? new Date().toISOString(),
     },
   ]);
   if (error) {
