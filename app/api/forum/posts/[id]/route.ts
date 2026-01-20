@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai/index';
+import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-  import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+  // ...existing code...
     const supabase = await createClient();
     const { id } = await params;
 
@@ -92,19 +93,6 @@ export async function GET(
     const enrichedComments = (comments || []).map(comment => ({
       ...comment,
       author_profile: profileMap[comment.author_id] || { forum_display_name: '名無し' }
-
-      // 監査ログ記録
-      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
-      const userAgent = request.headers.get('user-agent') || null;
-      await logAuditEventServer({
-        user_id: user.id,
-        event_type: 'forum_post_update',
-        target_table: 'forum_posts',
-        target_id: id,
-        description: 'Post updated',
-        ip_address: ip,
-        user_agent: userAgent,
-      });
     }));
 
     return NextResponse.json({ post: enrichedPost, comments: enrichedComments });
