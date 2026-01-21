@@ -1,4 +1,4 @@
-"use server";
+
 /**
  * 双方向スコア合成（親→子60%、子→親40%）
  * parentToChild: 親→子方向スコア（0〜1）
@@ -56,8 +56,22 @@ function calculateSingleTargetScore(target: any, profile: any): number {
     score += 0.05;
   }
   // 氏名（漢字・ひらがな）
-  const targetName = (target.last_name_kanji || '') + (target.first_name_kanji || '') + (target.name_kanji || '') + (target.name_hiragana || '') + (target.last_name_hiragana || '') + (target.first_name_hiragana || '');
-  const profileName = (profile.last_name_kanji || '') + (profile.first_name_kanji || '') + (profile.name_kanji || '') + (profile.name_hiragana || '') + (profile.last_name_hiragana || '') + (profile.first_name_hiragana || '');
+  const targetName = [
+    target.last_name_kanji || '',
+    target.first_name_kanji || '',
+    target.name_kanji || '',
+    target.name_hiragana || '',
+    target.last_name_hiragana || '',
+    target.first_name_hiragana || '',
+  ].join('');
+  const profileName = [
+    profile.last_name_kanji || '',
+    profile.first_name_kanji || '',
+    profile.name_kanji || '',
+    profile.name_hiragana || '',
+    profile.last_name_hiragana || '',
+    profile.first_name_hiragana || '',
+  ].join('');
   if (targetName && profileName && (profileName.includes(targetName) || targetName.includes(profileName))) {
     score += 0.1;
   }
@@ -385,9 +399,16 @@ async function calculateParentToChildReverseScore(
       } else if (yearDiff <= 10) {
         score += 0.20;
       } else if (yearDiff <= 15) {
-        score += 0.10;
-      }
-    } else {
+        // 部分一致チェック: 共通文字が1つでもあれば部分一致とみなす
+        const parentCharSet = new Set(parentHiragana);
+        let hasCommonChar = false;
+        for (const char of searchingHiragana) {
+          if (parentCharSet.has(char)) {
+            hasCommonChar = true;
+            break;
+          }
+        }
+        if (hasCommonChar) {
       score += 0.10; // データなしの場合は軽微なボーナス
     }
 
@@ -482,27 +503,7 @@ async function calculateChildToParentMatchScore(
   }
 
   // 出身地の一致チェック
-  if (matchingChild.birthplace_prefecture && childProfile.birthplace_prefecture &&
-      matchingChild.birthplace_prefecture === childProfile.birthplace_prefecture) {
-    score += 0.10;
-    console.log(
-      `[Matching] Child birthplace match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
-    );
-  }
 
-  // 性別の一致チェック（あれば追加ボーナス）
-  if (matchingChild.gender && childProfile.gender &&
-      matchingChild.gender === childProfile.gender) {
-    // 性別一致は既に高いスコアなので小さなボーナス
-    console.log(
-      `[Matching] Child gender match confirmed. Parent ${parentUserId}`
-    );
-  }
-
-  return Math.min(1.0, score);
-}
-
-/**
  * 氏名（ひらがな）スコア計算（新仕様: +10点）
  * 完全一致・部分一致ともに+10点
  */
@@ -652,7 +653,6 @@ export async function GET(request: NextRequest) {
     // Get full details for each match（共通ロジックでスコア計算）
     const matchDetails = await Promise.all(
       matches.map(async (match: any) => {
-        console.log(`[Matching] Processing match candidate: ${match.matched_user_id}`);
 
         // 相手のプロフィール
         const { data: theirProfile } = await admin
@@ -708,7 +708,6 @@ export async function GET(request: NextRequest) {
           .select('id, status')
           .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
           .maybeSingle();
-        console.log(`[Matching] Existing match found:`, existingMatch);
         // ここまでOK
         return {
           ...candidate,

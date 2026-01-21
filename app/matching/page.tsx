@@ -92,7 +92,6 @@ export default function MatchingPage() {
     setError('');
 
     try {
-      console.log('[MatchingPage] Fetching matches from /api/matching/search');
       const response = await fetch('/api/matching/search');
       
       if (!response.ok) {
