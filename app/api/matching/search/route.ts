@@ -1,3 +1,62 @@
+/**
+ * 共通マッチングスコア計算: 自分と相手のtarget_peopleリストを相互に比較し、最も高いスコアを返す
+ */
+function calculateMutualMatchScore(
+  myTargets: any[],
+  theirTargets: any[],
+  myProfile: any,
+  theirProfile: any
+): number {
+  let maxScore = 0;
+  // 自分が探している相手リストと、相手のプロフィールを比較
+  for (const myTarget of myTargets) {
+    const score = calculateSingleTargetScore(myTarget, theirProfile);
+    if (score > maxScore) maxScore = score;
+  }
+  // 相手が探している相手リストと、自分のプロフィールを比較
+  for (const theirTarget of theirTargets) {
+    const score = calculateSingleTargetScore(theirTarget, myProfile);
+    if (score > maxScore) maxScore = score;
+  }
+  return maxScore;
+}
+
+/**
+ * 1つのtarget_people条件とプロフィールを比較し、スコアを算出
+ */
+function calculateSingleTargetScore(target: any, profile: any): number {
+  let score = 0.2; // 基本スコア
+  // 性別
+  if (target.gender && profile.gender) {
+    if (target.gender !== profile.gender) return 0;
+  } else {
+    score += 0.05;
+  }
+  // 生年月日
+  if (target.birth_date && profile.birth_date) {
+    const tYear = new Date(target.birth_date).getFullYear();
+    const pYear = new Date(profile.birth_date).getFullYear();
+    const yearDiff = Math.abs(tYear - pYear);
+    if (yearDiff === 0) score += 0.2;
+    else if (yearDiff <= 5) score += 0.15;
+    else if (yearDiff <= 10) score += 0.10;
+    else if (yearDiff <= 15) score += 0.05;
+  } else {
+    score += 0.05;
+  }
+  // 氏名（漢字・ひらがな）
+  const targetName = (target.last_name_kanji || '') + (target.first_name_kanji || '') + (target.name_kanji || '') + (target.name_hiragana || '') + (target.last_name_hiragana || '') + (target.first_name_hiragana || '');
+  const profileName = (profile.last_name_kanji || '') + (profile.first_name_kanji || '') + (profile.name_kanji || '') + (profile.name_hiragana || '') + (profile.last_name_hiragana || '') + (profile.first_name_hiragana || '');
+  if (targetName && profileName && (profileName.includes(targetName) || targetName.includes(profileName))) {
+    score += 0.1;
+  }
+  // 出身地
+  if (target.birthplace_prefecture && profile.birthplace_prefecture && target.birthplace_prefecture === profile.birthplace_prefecture) {
+    score += 0.1;
+  }
+  // スコア上限
+  return Math.min(1.0, score);
+}
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -43,35 +102,25 @@ async function performAgeRangeFallbackMatching(
 
   console.log(`[Matching] Current age: ${currentAge}`);
 
-  // Get opposite role users
+  // usersとprofilesをJOINし、profilesが存在するユーザーのみ取得
   const oppositeRole = userRole === 'parent' ? 'child' : 'parent';
-  const { data: oppositeRoleUsers } = await admin
+  const { data: joinedUsers, error: joinError } = await admin
     .from('users')
-    .select('id')
+    .select('id, profiles:profiles(user_id, birth_date, gender)')
     .eq('role', oppositeRole);
 
-  console.log(`[Matching] Opposite role (${oppositeRole}) users:`, oppositeRoleUsers);
-
-  if (!oppositeRoleUsers || oppositeRoleUsers.length === 0) {
+  if (joinError) {
+    console.log('[Matching] Join error:', joinError);
     return [];
   }
 
-  const oppositeUserIds = oppositeRoleUsers.map((u: any) => u.id);
-  
-  // Get profiles for these users
-  const { data: potentialMatches } = await admin
-    .from('profiles')
-    .select('user_id, birth_date')
-    .in('user_id', oppositeUserIds);
+  // profilesがnullでないユーザーのみ対象
+  const validMatches = (joinedUsers || []).filter((u: any) => u.profiles && u.profiles.user_id);
 
-  console.log('[Matching] Potential matches (all):', potentialMatches);
+  console.log('[Matching] Opposite role users with profiles:', validMatches);
 
-  if (!potentialMatches) {
-    return [];
-  }
-
-  const filteredMatches = potentialMatches.filter((profile: any) => {
-    const profileBirthDate = new Date(profile.birth_date);
+  const filteredMatches = validMatches.filter((u: any) => {
+    const profileBirthDate = new Date(u.profiles.birth_date);
     const profileAge = new Date().getFullYear() - profileBirthDate.getFullYear();
 
     // Fallback logic: allow plausible parent-child pairing
@@ -84,14 +133,14 @@ async function performAgeRangeFallbackMatching(
       inRange = profileAge >= parentAgeMin && profileAge <= parentAgeMax && profileAge > currentAge;
     }
 
-    console.log(`[Matching] Profile ${profile.user_id}: age=${profileAge}, inRange=${inRange}`);
+    console.log(`[Matching] Profile ${u.profiles.user_id}: age=${profileAge}, inRange=${inRange}`);
     return inRange;
   });
 
   console.log('[Matching] Filtered matches:', filteredMatches);
 
-  return filteredMatches.map((profile: any) => ({
-    matched_user_id: profile.user_id,
+  return filteredMatches.map((u: any) => ({
+    matched_user_id: u.profiles.user_id,
     similarity_score: DEFAULT_PROFILE_MATCH_SCORE,
   }));
 }
@@ -145,97 +194,52 @@ function calculateBirthdayScore(
 }
 
 /**
- * マッチしたユーザーの探している子ども情報を取得
+ * マッチしたユーザーのtarget_people情報を取得（親・子共通）
  */
-async function getSearchingChildrenInfo(
+async function getTargetPeopleInfo(
   admin: any,
-  matchedUserId: string,
-  targetRole: string
+  userId: string
 ): Promise<any[]> {
-  if (targetRole === 'parent') {
-    // 相手が親の場合、その親が探している子ども情報と写真を取得
-    const { data: childrenData } = await admin
-      .from('searching_children')
-      .select(`
-        id, 
-        last_name_kanji, 
-        first_name_kanji, 
-        birthplace_prefecture, 
-        birthplace_municipality
-      `)
-      .eq('user_id', matchedUserId)
-      .order('display_order', { ascending: true });
-    
-    if (!childrenData) return [];
+  // target_peopleテーブルから、そのユーザーが探している人物情報を取得
+  const { data: targetPeople } = await admin
+    .from('target_people')
+    .select(`
+      id,
+      last_name_kanji,
+      first_name_kanji,
+      birthplace_prefecture,
+      birthplace_municipality,
+      birth_date,
+      gender,
+      name_kanji,
+      name_hiragana,
+      last_name_hiragana,
+      first_name_hiragana,
+      display_order
+    `)
+    .eq('user_id', userId)
+    .order('display_order', { ascending: true });
 
-    // 各子どもの写真を取得
-    const childrenWithPhotos = await Promise.all(
-      childrenData.map(async (child: any) => {
-        const { data: photosData } = await admin
-          .from('searching_children_photos')
-          .select('photo_url')
-          .eq('searching_child_id', child.id)
-          .order('display_order', { ascending: true })
-          .limit(1); // 最初の写真のみ取得
+  if (!targetPeople) return [];
 
-        return {
-          ...child,
-          photo_url: photosData && photosData.length > 0 ? photosData[0].photo_url : null
-        };
-      })
-    );
+  // 各人物の写真を取得（target_people_photosテーブルに対応）
+  const peopleWithPhotos = await Promise.all(
+    targetPeople.map(async (person: any) => {
+      const { data: photosData } = await admin
+        .from('target_people_photos')
+        .select('photo_url')
+        .eq('target_person_id', person.id)
+        .order('display_order', { ascending: true })
+        .limit(1);
 
-    return childrenWithPhotos;
-  }
+      return {
+        ...person,
+        photo_url: photosData && photosData.length > 0 ? photosData[0].photo_url : null
+      };
+    })
+  );
 
-  if (targetRole === 'child') {
-    // 相手が子の場合、その子の親ユーザー情報を取得
-    const { data: childData } = await admin
-      .from('searching_children')
-      .select('user_id')
-      .eq('id', matchedUserId)
-      .single();
-    
-    if (!childData?.user_id) {
-      return [];
-    }
-
-    // その親が探している他の子ども情報と写真を取得
-    const { data: parentChildrenData } = await admin
-      .from('searching_children')
-      .select(`
-        id, 
-        last_name_kanji, 
-        first_name_kanji, 
-        birthplace_prefecture, 
-        birthplace_municipality
-      `)
-      .eq('user_id', childData.user_id)
-      .order('display_order', { ascending: true });
-    
-    if (!parentChildrenData) return [];
-
-    // 各子どもの写真を取得
-    const childrenWithPhotos = await Promise.all(
-      parentChildrenData.map(async (child: any) => {
-        const { data: photosData } = await admin
-          .from('searching_children_photos')
-          .select('photo_url')
-          .eq('searching_child_id', child.id)
-          .order('display_order', { ascending: true })
-          .limit(1); // 最初の写真のみ取得
-
-        return {
-          ...child,
-          photo_url: photosData && photosData.length > 0 ? photosData[0].photo_url : null
-        };
-      })
-    );
-
-    return childrenWithPhotos;
-  }
-
-  return [];
+  return peopleWithPhotos;
 }
 
 /**
@@ -373,7 +377,7 @@ async function calculateParentToChildReverseScore(
         score += 0.15;
       } else if (searchingHiragana && parentHiragana) {
         // 部分一致チェック
-        const commonChars = searchingHiragana.split('').filter(char => parentHiragana.includes(char));
+        const commonChars = searchingHiragana.split('').filter((char: string) => parentHiragana.includes(char));
         if (commonChars.length > 0) {
           score += 0.05;
         }
@@ -542,6 +546,7 @@ async function calculateReverseMatchingScore(
   return Math.min(0.80, reverseScore); // Cap reverse score at 80%
 }
 
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -564,7 +569,6 @@ export async function GET(request: NextRequest) {
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
     // テストモードチェック（開発環境のみ有効）
     const bypassVerification = isTestModeBypassVerificationEnabled();
     const bypassSubscription = isTestModeBypassSubscriptionEnabled();
@@ -598,170 +602,61 @@ export async function GET(request: NextRequest) {
 
     console.log('[Matching] Final matches count:', matches.length);
 
-    // For parents, fetch searching children to render cards even if no matches
-    // For children, fetch searching parents to render cards even if no matches
-    let searchingChildren: any[] = [];
-    if (userData.role === 'parent') {
-      const { data: children } = await admin
-        .from('searching_children')
-        .select('id, last_name_kanji, first_name_kanji, name_kanji, name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality, display_order')
-        .eq('user_id', user.id)
-        .order('display_order', { ascending: true });
-      searchingChildren = children || [];
-    } else if (userData.role === 'child') {
-      // Child users also use searching_children table to store parent info they're looking for
-      const { data: parents } = await admin
-        .from('searching_children')
-        .select('id, last_name_kanji, first_name_kanji, name_kanji, name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality, display_order')
-        .eq('user_id', user.id)
-        .order('display_order', { ascending: true });
-      searchingChildren = parents || [];
-    }
+    // 自分が探しているtarget_peopleリスト
+    const myTargetPeople = await getTargetPeopleInfo(admin, user.id);
 
-    // Get full details for each match
+    // Get full details for each match（共通ロジックでスコア計算）
     const matchDetails = await Promise.all(
       matches.map(async (match: any) => {
-        const { data: profile } = await admin
+        console.log(`[Matching] Processing match candidate: ${match.matched_user_id}`);
+
+        // 相手のプロフィール
+        const { data: theirProfile } = await admin
           .from('profiles')
           .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
           .eq('user_id', match.matched_user_id)
           .single();
 
-        const { data: targetUserData } = await admin
-          .from('users')
-          .select('role')
-          .eq('id', match.matched_user_id)
-          .single();
+        // 相手のtarget_peopleリスト
+        const theirTargetPeople = await getTargetPeopleInfo(admin, match.matched_user_id);
 
-        // Get current user's profile for reverse matching
-        const { data: currentUserProfile } = await admin
+        // 自分のプロフィール
+        // userはusersテーブルのレコード
+        const { data: myProfile } = await admin
           .from('profiles')
-          .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, gender, birthplace_prefecture, birthplace_municipality')
+          .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
           .eq('user_id', user.id)
           .single();
 
-        // Calculate detailed score based on user role
-        const scorePerChild: Record<string, number> = {};
-        let detailedScore = match.similarity_score;
+        // 共通ロジックでスコア計算
+        const similarityScore = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
 
-        // For child users, calculate bidirectional matching score
-        if (userData.role === 'child' && currentUserProfile && targetUserData?.role === 'parent') {
-          // 親→子方向のスコア（親が探している子どもと自分のプロフィールの一致度）
-          const parentToChildScore = await calculateChildToParentMatchScore(
-            admin,
-            match.matched_user_id,
-            currentUserProfile
-          );
-          
-          // 子→親方向のスコア（子が探している親と相手のプロフィールの一致度）
-          const childToParentScore = await calculateParentToChildReverseScore(
-            admin,
-            user.id,
-            profile
-          );
-
-          if (childToParentScore === null) {
-            // 子が親を探す情報を登録していない場合は親→子のスコアのみ使用
-            detailedScore = parentToChildScore;
-            console.log(
-              `[Matching] Child user score (parent→child only) for parent ${match.matched_user_id}: ${detailedScore.toFixed(2)}`
-            );
-          } else {
-            // 双方向スコアの加重平均（親→子: 60%, 子→親: 40%）
-            detailedScore = (parentToChildScore * 0.60) + (childToParentScore * 0.40);
-            console.log(
-              `[Matching] Child user bidirectional score for parent ${match.matched_user_id}: ` +
-              `parent→child=${parentToChildScore.toFixed(2)}, child→parent=${childToParentScore.toFixed(2)}, ` +
-              `final=${detailedScore.toFixed(2)}`
-            );
-          }
-        }
-
-        // For parents, calculate scores per child
-        if (userData.role === 'parent' && searchingChildren.length > 0 && profile?.birth_date) {
-          const matchBirthDate = new Date(profile.birth_date);
-          const matchYear = matchBirthDate.getFullYear();
-          const matchMonth = matchBirthDate.getMonth();
-          const matchDay = matchBirthDate.getDate();
-
-          // Calculate score for each searching child
-          for (const child of searchingChildren) {
-            let score = calculateChildMatchScore(
-              child,
-              match,
-              profile,
-              matchYear,
-              matchMonth,
-              matchDay
-            );
-
-            // Calculate reverse matching score (child → parent) if applicable
-            if (targetUserData?.role === 'child' && currentUserProfile) {
-              const reverseScore = await calculateReverseMatchingScore(
-                admin,
-                match.matched_user_id,
-                currentUserProfile
-              );
-
-              if (reverseScore === 0) {
-                // Gender mismatch - exclude this candidate
-                score = 0;
-                console.log(
-                  `[Matching] Gender mismatch - Child ${child.id}. Score set to 0.`
-                );
-              } else if (reverseScore !== null) {
-                // Calculate weighted average (parent→child: 60%, child→parent: 40%)
-                const originalScore = score;
-                score = (originalScore * 0.60) + (reverseScore * 0.40);
-
-                console.log(
-                  `[Matching] Bidirectional score - Child ${child.id}: ` +
-                  `parent→child=${originalScore.toFixed(2)}, child→parent=${reverseScore.toFixed(2)}, ` +
-                  `final=${score.toFixed(2)}`
-                );
-              }
-            }
-
-            scorePerChild[child.id] = score;
-          }
-        }
-
-        // Get searching children info for this matched user
-        const searchingChildrenInfo = await getSearchingChildrenInfo(
-          admin,
-          match.matched_user_id,
-          targetUserData?.role || ''
-        );
-
+        // roleを付与（自分がparentなら相手はchild、自分がchildなら相手はparent）
         return {
           userId: match.matched_user_id,
-          similarityScore: userData.role === 'child' ? detailedScore : match.similarity_score,
-          scorePerChild, // 子どもごとのスコア（親の場合のみ使用）
-          role: targetUserData?.role,
-          profile,
-          searchingChildrenInfo, // 相手親が探している子ども情報
+          similarityScore,
+          profile: theirProfile,
+          theirTargetPeople,
+          role: userData.role === 'parent' ? 'child' : 'parent',
         };
       })
     );
 
-    // Filter out candidates with 0 score (e.g., gender mismatch in child→parent matching)
-    const filteredMatchDetails = matchDetails.filter(match => {
-      if (userData.role === 'parent' && match.scorePerChild) {
-        // Check if any child has non-zero score
-        return Object.values(match.scorePerChild).some((score: any) => score > 0);
-      }
-      return true;
-    });
-
+    // スコア0の候補は除外
+    const filteredMatchDetails = matchDetails.filter(match => match.similarityScore > 0);
+    console.log('[Matching] Filtered matches count (score > 0):', filteredMatchDetails.length);
     // 各候補について既存のマッチング状態を確認
     const candidatesWithMatchStatus = await Promise.all(
       filteredMatchDetails.map(async (candidate) => {
+        const userColumn = userData.role === 'parent' ? 'parent_id' : 'child_id';
+        const candidateColumn = userData.role === 'parent' ? 'child_id' : 'parent_id';
         const { data: existingMatch } = await admin
           .from('matches')
           .select('id, status')
-          .or(`and(parent_id.eq.${user.id},child_id.eq.${candidate.userId}),and(parent_id.eq.${candidate.userId},child_id.eq.${user.id})`)
+          .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
           .maybeSingle();
-
+        console.log(`[Matching] Existing match found:`, existingMatch);
+        // ここまでOK
         return {
           ...candidate,
           existingMatchId: existingMatch?.id || null,
@@ -770,7 +665,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, searchingChildren });
+    return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, myTargetPeople });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(

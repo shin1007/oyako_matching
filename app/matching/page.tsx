@@ -26,7 +26,7 @@ interface Match {
     birthplace_prefecture?: string;
     birthplace_municipality?: string;
   };
-  searchingChildrenInfo?: Array<{
+  theirTargetPeople?: Array<{
     id: string;
     last_name_kanji?: string;
     first_name_kanji?: string;
@@ -92,17 +92,17 @@ export default function MatchingPage() {
     setError('');
 
     try {
+      console.log('[MatchingPage] Fetching matches from /api/matching/search');
       const response = await fetch('/api/matching/search');
       
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'マッチングの検索に失敗しました');
       }
-
       const data = await response.json();
       setMatches(data.candidates || []);
       setUserRole(data.userRole);
-      setSearchingChildren(data.searchingChildren || []);
+      setSearchingChildren(data.myTargetPeople || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -355,13 +355,13 @@ export default function MatchingPage() {
                                     )}
                                     
                                     {/* 相手が探している子ども/親情報 */}
-                                    {match.searchingChildrenInfo && match.searchingChildrenInfo.length > 0 && (
+                                    {match.theirTargetPeople && match.theirTargetPeople.length > 0 && (
                                       <div className="mt-4 pt-4 border-t border-gray-200">
                                         <p className="text-xs font-semibold text-gray-700 mb-2">
                                           この方が探している{match.role === 'parent' ? '子ども' : '親'}:
                                         </p>
                                         <div className="space-y-2">
-                                          {match.searchingChildrenInfo.map((searchingPerson) => (
+                                          {match.theirTargetPeople.map((searchingPerson) => (
                                             <div key={searchingPerson.id} className="flex gap-3 bg-blue-50 rounded p-2">
                                               {searchingPerson.photo_url && (
                                                 <img
