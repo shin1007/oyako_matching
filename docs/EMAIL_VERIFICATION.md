@@ -1,183 +1,180 @@
-# Email Verification Feature
+# メール認証機能（Email Verification）
 
-## Overview
+## 概要
 
-This feature implements email verification for new user registrations with automatic email sending, verification link handling, and email resend functionality with rate limiting.
+新規ユーザー登録時のメール認証機能について説明します。自動メール送信、認証リンク処理、再送信（レート制限付き）などを実装しています。
 
-## Features
+## 主な機能
 
-### 1. Automatic Email Verification on Registration
-- When users register, Supabase automatically sends a verification email
-- Users are redirected to a pending verification page
-- Email contains a verification link that redirects to the application
+### 1. 登録時の自動メール認証
+- ユーザー登録時、Supabaseが自動で認証メールを送信
+- ユーザーは「認証待ち」ページにリダイレクトされる
+- メール内の認証リンクからアプリに戻る
 
-### 2. Email Verification Callback
-- Handles verification link clicks from email
-- Updates `email_verified_at` in the users table
-- Syncs with Supabase Auth's `email_confirmed_at` flag
-- Redirects users to dashboard after successful verification
+### 2. 認証リンクコールバック
+- メール内リンククリック時にコールバックAPIが呼ばれる
+- usersテーブルの`email_verified_at`を更新
+- Supabase Authの`email_confirmed_at`とも同期
+- 認証成功後はダッシュボードへリダイレクト
 
-### 3. Email Resend Functionality
-- Users can resend verification emails if needed
-- Rate limiting: 3 attempts per hour
-- Real-time countdown timer showing when next resend is available
-- Database tracking of all resend attempts for audit purposes
+### 3. 認証メール再送信
+- 必要に応じて認証メールを再送信可能
+- レート制限：1時間あたり3回まで
+- 次回再送信可能までのカウントダウン表示
+- すべての再送信履歴をDBで監査
 
-### 4. Login Flow Integration
-- Checks email verification status on login
-- Redirects unverified users to verification pending page
-- Link on login page for users who need to verify email
+### 4. ログインフロー連携
+- ログイン時にメール認証済みかチェック
+- 未認証の場合は認証待ちページへリダイレクト
+- ログイン画面から認証メール再送リンクあり
 
-## API Endpoints
+## APIエンドポイント
 
 ### POST `/api/auth/send-verification-email`
 
-Resends the verification email with rate limiting.
+認証メールをレート制限付きで再送信します。
 
-**Authentication:** Required (user must be logged in)
+**認証:** 必須（ログイン済みユーザーのみ）
+**レート制限:** 1ユーザーあたり1時間3回まで
 
-**Rate Limit:** 3 attempts per hour per user
-
-**Request:**
+**リクエスト例:**
 ```json
 POST /api/auth/send-verification-email
 Content-Type: application/json
 ```
 
-**Success Response (200):**
+**成功レスポンス（200）:**
 ```json
 {
-  "success": true,
-  "message": "認証メールを送信しました",
-  "attemptsRemaining": 2
+   "success": true,
+   "message": "認証メールを送信しました",
+   "attemptsRemaining": 2
 }
 ```
 
-**Error Response (429 - Rate Limited):**
+**エラーレスポンス（429 - レート制限超過）:**
 ```json
 {
-  "error": "送信回数の上限に達しました。45分後に再試行してください",
-  "nextAllowedAt": "2024-01-16T07:45:00.000Z",
-  "attemptsRemaining": 0
+   "error": "送信回数の上限に達しました。45分後に再試行してください",
+   "nextAllowedAt": "2024-01-16T07:45:00.000Z",
+   "attemptsRemaining": 0
 }
 ```
 
-**Error Response (400 - Already Verified):**
+**エラーレスポンス（400 - 既に認証済み）:**
 ```json
 {
-  "error": "メールアドレスは既に確認済みです"
+   "error": "メールアドレスは既に確認済みです"
 }
 ```
 
-**Error Response (401 - Unauthorized):**
+**エラーレスポンス（401 - 未認証）:**
 ```json
 {
-  "error": "認証が必要です"
+   "error": "認証が必要です"
 }
 ```
 
 ### GET `/api/auth/verify-email`
 
-Callback endpoint for email verification links. This is called automatically when users click the verification link in their email.
+メール認証リンクから自動で呼ばれるコールバックAPIです。
 
-**Parameters:**
-- `token_hash` - Verification token from Supabase
-- `type` - Verification type (e.g., 'signup')
-- `next` - Optional redirect URL after verification
+**パラメータ:**
+- `token_hash` - Supabaseから渡される認証トークン
+- `type` - 認証種別（例: 'signup'）
+- `next` - 認証後のリダイレクト先（任意）
 
-**Success:** Redirects to `/auth/verify-email-pending?verified=true`
+**成功:** `/auth/verify-email-pending?verified=true` へリダイレクト
+**エラー:** `/auth/verify-email-pending?error=<error_type>` へリダイレクト
 
-**Error:** Redirects to `/auth/verify-email-pending?error=<error_type>`
-
-## Pages
+## ページ構成
 
 ### `/auth/verify-email-pending`
 
-Displays email verification status and allows users to resend verification emails.
+メール認証状況の表示と再送信機能を提供します。
 
-**Features:**
-- Shows user's email address
-- Instructions for verifying email
-- Resend button with rate limit enforcement
-- Real-time countdown timer showing time until next resend is allowed
-- Displays remaining attempts (X/3)
-- Success/error messages
-- Automatic redirect to dashboard after successful verification
+**主な機能:**
+- ユーザーのメールアドレス表示
+- 認証手順の案内
+- レート制限付き再送ボタン
+- 次回再送可能までのカウントダウン
+- 残り送信回数（X/3）表示
+- 成功・エラーメッセージ表示
+- 認証成功時は自動でダッシュボードへ遷移
 
-**URL Parameters:**
-- `verified=true` - Shows success message and redirects to dashboard
-- `error=verification_failed` - Invalid or expired verification link
-- `error=missing_params` - Missing required parameters
-- `error=unexpected` - Unexpected error occurred
+**URLパラメータ:**
+- `verified=true` : 認証成功メッセージ表示＆ダッシュボード遷移
+- `error=verification_failed` : 無効または期限切れリンク
+- `error=missing_params` : 必須パラメータ不足
+- `error=unexpected` : その他エラー
 
-## Database Schema
+## データベース設計
 
-### Table: `email_verification_attempts`
+### テーブル: `email_verification_attempts`
 
-Tracks email verification resend attempts for rate limiting.
+認証メール再送信の履歴・レート制限管理用テーブル。
 
 ```sql
 CREATE TABLE email_verification_attempts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  attempted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  ip_address TEXT,
-  user_agent TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+   attempted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+   ip_address TEXT,
+   user_agent TEXT,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-**Indexes:**
-- `idx_email_verification_attempts_user_id` - For user queries
-- `idx_email_verification_attempts_attempted_at` - For time-based queries
+**インデックス:**
+- `idx_email_verification_attempts_user_id` : ユーザー検索用
+- `idx_email_verification_attempts_attempted_at` : 時間検索用
 
-**RLS Policies:**
-- Users can view their own verification attempts
-- Users can insert their own attempts
+**RLSポリシー:**
+- ユーザー自身のみ閲覧・追加可能
 
-### Column: `users.email_verified_at`
+### カラム: `users.email_verified_at`
 
-Added timestamp column to track when email was verified.
+メール認証日時を記録するカラムを追加。
 
 ```sql
 ALTER TABLE users 
 ADD COLUMN email_verified_at TIMESTAMP WITH TIME ZONE;
 ```
 
-## Configuration
+## 設定・構成
 
-### Environment Variables
+### 環境変数
 
-Ensure these are set in your environment:
+以下を必ず設定してください：
 
 ```env
-# Required for email redirect URLs
-NEXT_PUBLIC_ORIGIN=http://localhost:3000  # or your production URL
+# メール認証リダイレクト用
+NEXT_PUBLIC_ORIGIN=http://localhost:3000  # 本番は本番URL
 
-# Supabase credentials (required for email functionality)
+# Supabase認証用
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-### Supabase Email Configuration
+### Supabaseメール認証設定
 
-1. **Enable Email Authentication:**
-   - Go to Supabase Dashboard > Authentication > Settings
-   - Enable "Email" provider
-   - Configure email templates if desired
+1. **メール認証プロバイダ有効化**
+    - Supabaseダッシュボード > Authentication > Settings
+    - 「Email」プロバイダを有効化
+    - 必要に応じてメールテンプレートを編集
 
-2. **Email Templates:**
-   - Navigate to Authentication > Email Templates
-   - Customize "Confirm signup" template as needed
-   - The default template works out of the box
+2. **メールテンプレート編集**
+    - Authentication > Email Templates
+    - 「Confirm signup」テンプレートを編集（任意）
+    - デフォルトでも動作可
 
-3. **Email Provider:**
-   - By default, Supabase uses their built-in email service
-   - For production, configure a custom SMTP provider or email service (SendGrid, AWS SES, etc.)
+3. **メール送信プロバイダ**
+    - デフォルトはSupabase内蔵メール
+    - 本番運用時はSMTPやSendGrid, AWS SES等の外部サービス推奨
 
-## User Flow
+## ユーザーフロー
 
-### Registration Flow
+### 登録フロー
 1. User fills out registration form
 2. User submits form
 3. System creates account in Supabase Auth
