@@ -1,8 +1,84 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassVerificationEnabled, isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
+
+// 出身地一致度スコア計算（1人分）
+function calculateBirthplaceScore(person: any, theirProfile: any): number {
+  if (!person || !theirProfile) return 0;
+  // 都道府県が一致
+  if (person.birthplace_prefecture && theirProfile.birthplace_prefecture && person.birthplace_prefecture === theirProfile.birthplace_prefecture) {
+    // 市区町村も一致
+    if (person.birthplace_municipality && theirProfile.birthplace_municipality && person.birthplace_municipality === theirProfile.birthplace_municipality) {
+      return 10;
+    }
+    return 7;
+  }
+  return 0;
+}
+// 氏名（ひらがな）一致度スコア計算（1人分）
+function calculateNameScore(target: any, theirProfile: any): number {
+  if (!target || !theirProfile) return 0;
+  // 両方一致なら最大
+  if (
+    target.last_name_hiragana && theirProfile.last_name_hiragana && target.last_name_hiragana === theirProfile.last_name_hiragana &&
+    target.first_name_hiragana && theirProfile.first_name_hiragana && target.first_name_hiragana === theirProfile.first_name_hiragana
+  ) {
+    return 10;
+  }
+  // 下の名前一致
+  if (target.first_name_hiragana && theirProfile.first_name_hiragana && target.first_name_hiragana === theirProfile.first_name_hiragana) {
+    return 7;
+  }
+  // 名字一致
+  if (target.last_name_hiragana && theirProfile.last_name_hiragana && target.last_name_hiragana === theirProfile.last_name_hiragana) {
+    return 3;
+  }
+  return 0;
+}
+// 誕生日一致度スコア計算（1人分）
+function calculateBirthdayScore(target: any, theirProfile: any): number {
+  if (!target || !theirProfile) return 0;
+  const targetBirthDate = target.birth_date;
+  if (!targetBirthDate) return 0;
+  const theirBirthDate = theirProfile.birth_date;
+  if (!theirBirthDate) return 0;
+  const [myY, myM, myD] = targetBirthDate.split('-');
+  const [thY, thM, thD] = theirBirthDate.split('-');
+  let score = 0;
+  if (myY === thY && myM === thM && myD === thD) {
+    return 80;
+  }
+  if (myM === thM && myD === thD) {
+    score = 70;
+  } else if (myY === thY && myM === thM) {
+    score = 60;
+  }
+
+  let ageDifferences = [1, 2, 3, 4, 5];
+  if (target.role === 'parent'){
+    ageDifferences = [2, 4, 6, 8, 10];
+  }
+  const ageDiff = ageDifference(targetBirthDate, theirProfile);
+  if (ageDiff <= ageDifferences[0]) {
+    score += 5;
+  } else if (ageDiff <= ageDifferences[1]) {
+    score += 4;
+  } else if (ageDiff <= ageDifferences[2]) {
+    score += 3;
+  } else if (ageDiff <= ageDifferences[3]) {
+    score += 2;
+  } else if (ageDiff <= ageDifferences[4]) {
+    score += 1;
+  }
+  return score;
+}
+function ageDifference(birthDate1: string, birthDate2: string): number {
+  const date1 = new Date(birthDate1);
+  const date2 = new Date(birthDate2);
+  return Math.abs(date1.getFullYear() - date2.getFullYear());
+}
+
 
 
 /**
@@ -55,7 +131,7 @@ async function getTargetPeopleInfo(
 }
 
 
-// マッチ候補詳細を取得しスコア計算（全ユーザーを候補とし、スコア66%固定）
+// マッチ候補詳細を取得しスコア計算
 async function getMatchDetails(admin: any, user: any, userData: any, myTargetPeople: any[]) {
   // 自分以外の全 oppositeRole ユーザーを取得
   const oppositeRole = userData.role === 'parent' ? 'child' : 'parent';
@@ -63,6 +139,11 @@ async function getMatchDetails(admin: any, user: any, userData: any, myTargetPeo
     .from('users')
     .select('id')
     .eq('role', oppositeRole);
+  const {data: myProfile} = await admin
+    .from('profiles')
+    .select('birth_date, last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birthplace_prefecture, birthplace_municipality')
+    .eq('user_id', user.id)
+    .single();
   if (joinError || !joinedUsers) return [];
   const matchDetails = await Promise.all(
     joinedUsers
@@ -77,17 +158,44 @@ async function getMatchDetails(admin: any, user: any, userData: any, myTargetPeo
         if (!theirProfile) return null;
         // 相手のtarget_peopleリスト
         const theirTargetPeople = await getTargetPeopleInfo(admin, u.id);
+
+        // 各myTargetPeopleごとにスコア計算
+        let targetScores: any[] = [];
+        if (Array.isArray(myTargetPeople) && myTargetPeople.length > 0) {
+          for (const target of myTargetPeople) {
+            // 自分が探している相手と、見つかったお相手のプロフィールを比較してスコア計算
+            const birthdayScore = calculateBirthdayScore(target, theirProfile) * 0.6;
+            const nameScore = calculateNameScore(target, theirProfile) * 0.6;
+            const birthplaceScore = calculateBirthplaceScore(target, theirProfile) * 0.6;
+            // 双方向マッチング
+            // 見つかったお相手が探している人物と自分のプロフィールを比較してスコア計算
+            let oppositeScore = 0;
+            for (const theirTarget of theirTargetPeople) {
+              if (!theirTarget.id === u.id) continue;
+              oppositeScore += calculateBirthdayScore(theirTarget, myProfile) * 0.4;
+              oppositeScore += calculateNameScore(theirTarget, myProfile) * 0.4;
+              oppositeScore += calculateBirthplaceScore(theirTarget, myProfile) * 0.4;
+            }
+            const totalScore = birthdayScore + nameScore + birthplaceScore + oppositeScore;
+                
+            targetScores.push({
+              target,
+              birthdayScore,
+              nameScore,
+              birthplaceScore,
+              oppositeScore,
+              totalScore
+            });
+          }
+        }
         return {
           userId: u.id,
-          similarityScore: 0.66,
-          profile: theirProfile,
-          theirTargetPeople,
-          role: userData.role === 'parent' ? 'child' : 'parent',
+          targetScores,
         };
       })
   );
   // null除外
-  return matchDetails.filter(match => match && match.similarityScore > 0);
+  return matchDetails.filter(match => match !== null);
 }
 
 // 既存マッチ状態を付与
@@ -101,10 +209,22 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
         .select('id, status')
         .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
         .maybeSingle();
+
+      // profilesとusersを結合してroleも取得
+      const { data: userProfile } = await admin
+        .from('profiles')
+        .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality, user_id, users(role)')
+        .eq('user_id', candidate.userId)
+        .single();
+
+      // roleはuserProfile.users?.roleで取得
       return {
         ...candidate,
         existingMatchId: existingMatch?.id || null,
         existingMatchStatus: existingMatch?.status || null,
+        profile: userProfile || null,
+        theirTargetPeople: await getTargetPeopleInfo(admin, candidate.userId),
+        role: userProfile?.users?.role || null,
       };
     })
   );
@@ -125,7 +245,6 @@ export async function GET(request: NextRequest) {
     if (authError) return authError;
     const myTargetPeople = await getTargetPeopleInfo(admin, user.id);
     const matchDetails = await getMatchDetails(admin, user, userData, myTargetPeople);
-    console.log('[Matching] Filtered matches count (score > 0):', matchDetails.length);
     const candidatesWithMatchStatus = await attachExistingMatchStatus(admin, user, userData, matchDetails);
     return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, myTargetPeople });
   } catch (error: any) {
