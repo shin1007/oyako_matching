@@ -1,3 +1,13 @@
+"use server";
+/**
+ * 双方向スコア合成（親→子60%、子→親40%）
+ * parentToChild: 親→子方向スコア（0〜1）
+ * childToParent: 子→親方向スコア（0〜1）
+ * 戻り値: 0〜1
+ */
+function combineBidirectionalScore(parentToChild: number, childToParent: number): number {
+  return parentToChild * 0.6 + childToParent * 0.4;
+}
 /**
  * 共通マッチングスコア計算: 自分と相手のtarget_peopleリストを相互に比較し、最も高いスコアを返す
  */
@@ -19,6 +29,7 @@ function calculateMutualMatchScore(
     if (score > maxScore) maxScore = score;
   }
   return maxScore;
+
 }
 
 /**
@@ -50,12 +61,24 @@ function calculateSingleTargetScore(target: any, profile: any): number {
   if (targetName && profileName && (profileName.includes(targetName) || targetName.includes(profileName))) {
     score += 0.1;
   }
-  // 出身地
-  if (target.birthplace_prefecture && profile.birthplace_prefecture && target.birthplace_prefecture === profile.birthplace_prefecture) {
-    score += 0.1;
-  }
+    // 出身地スコア計算
+    score += calculateBirthplaceScoreV2(target, profile);
   // スコア上限
   return Math.min(1.0, score);
+}
+
+/**
+ * 出身地スコア計算（新仕様: +10点）
+ * 都道府県一致で+7点、市区町村まで一致で+10点
+ */
+function calculateBirthplaceScoreV2(target: any, profile: any): number {
+  if (!target.birthplace_prefecture || !profile.birthplace_prefecture) return 0;
+  if (target.birthplace_prefecture !== profile.birthplace_prefecture) return 0;
+  // 都道府県一致
+  if (target.birthplace_municipality && profile.birthplace_municipality && target.birthplace_municipality === profile.birthplace_municipality) {
+    return 10;
+  }
+  return 7;
 }
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -480,6 +503,27 @@ async function calculateChildToParentMatchScore(
 }
 
 /**
+ * 氏名（ひらがな）スコア計算（新仕様: +10点）
+ * 完全一致・部分一致ともに+10点
+ */
+function calculateHiraganaNameScoreV2(target: any, profile: any): number {
+  const targetName = (target.name_hiragana || '') + (target.last_name_hiragana || '') + (target.first_name_hiragana || '');
+  const profileName = (profile.name_hiragana || '') + (profile.last_name_hiragana || '') + (profile.first_name_hiragana || '');
+  if (!targetName || !profileName) return 0;
+  if (profileName.includes(targetName) || targetName.includes(profileName)) {
+    return 10;
+  }
+  // 部分一致（2文字以上の共通部分があれば加点）
+  for (let i = 0; i < targetName.length - 1; i++) {
+    const part = targetName.slice(i, i + 2);
+    if (profileName.includes(part)) {
+      return 10;
+    }
+  }
+  return 0;
+}
+
+/**
  * 逆方向マッチングスコアの計算（子→親）
  */
 async function calculateReverseMatchingScore(
@@ -621,17 +665,26 @@ export async function GET(request: NextRequest) {
         const theirTargetPeople = await getTargetPeopleInfo(admin, match.matched_user_id);
 
         // 自分のプロフィール
-        // userはusersテーブルのレコード
         const { data: myProfile } = await admin
           .from('profiles')
           .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
           .eq('user_id', user.id)
           .single();
 
-        // 共通ロジックでスコア計算
-        const similarityScore = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
+        // 親→子・子→親スコア計算
+        let parentToChild = 0;
+        let childToParent = 0;
+        if (userData.role === 'parent') {
+          // 自分が親
+          parentToChild = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
+          childToParent = calculateMutualMatchScore(theirTargetPeople, myTargetPeople, theirProfile, myProfile);
+        } else {
+          // 自分が子
+          parentToChild = calculateMutualMatchScore(theirTargetPeople, myTargetPeople, theirProfile, myProfile);
+          childToParent = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
+        }
+        const similarityScore = combineBidirectionalScore(parentToChild, childToParent);
 
-        // roleを付与（自分がparentなら相手はchild、自分がchildなら相手はparent）
         return {
           userId: match.matched_user_id,
           similarityScore,
