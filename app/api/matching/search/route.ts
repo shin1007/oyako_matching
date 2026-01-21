@@ -400,23 +400,28 @@ async function calculateParentToChildReverseScore(
         score += 0.20;
       } else if (yearDiff <= 15) {
         // 部分一致チェック: 共通文字が1つでもあれば部分一致とみなす
-        const parentCharSet = new Set(parentHiragana);
-        let hasCommonChar = false;
-        for (const char of searchingHiragana) {
-          if (parentCharSet.has(char)) {
-            hasCommonChar = true;
-            break;
+        if (searchingParent.last_name_hiragana && parentProfile.last_name_hiragana) {
+          const searchingHiragana = (searchingParent.last_name_hiragana + (searchingParent.first_name_hiragana || '')).trim();
+          const parentHiragana = (parentProfile.last_name_hiragana + (parentProfile.first_name_hiragana || '')).trim();
+          const parentCharSet = new Set(parentHiragana);
+          let hasCommonChar = false;
+          for (const char of searchingHiragana) {
+            if (parentCharSet.has(char)) {
+              hasCommonChar = true;
+              break;
+            }
+          }
+          if (hasCommonChar) {
+            score += 0.10;
           }
         }
-        if (hasCommonChar) {
-      score += 0.10; // データなしの場合は軽微なボーナス
+      }
     }
 
     // ひらがな氏名の一致（寛容）
     if (searchingParent.last_name_hiragana && parentProfile.last_name_hiragana) {
       const searchingHiragana = (searchingParent.last_name_hiragana + (searchingParent.first_name_hiragana || '')).trim();
       const parentHiragana = (parentProfile.last_name_hiragana + (parentProfile.first_name_hiragana || '')).trim();
-      
       if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
         score += 0.15;
       } else if (searchingHiragana && parentHiragana) {
@@ -439,7 +444,6 @@ async function calculateParentToChildReverseScore(
 
     maxScore = Math.max(maxScore, score);
   }
-
   return maxScore > 0 ? Math.min(0.80, maxScore) : null; // 最大80%
 }
 
@@ -460,50 +464,44 @@ async function calculateChildToParentMatchScore(
   if (!searchingChildren || searchingChildren.length === 0) {
     return DEFAULT_PROFILE_MATCH_SCORE;
   }
-
   // 子どもの生年月日でマッチする searching_children を探す
   const matchingChild = searchingChildren.find(
     (child: any) => child.birth_date === childProfile.birth_date
   );
-
   if (!matchingChild) {
     // 生年月日が一致しない場合は年齢ベースのスコアを返す
     return DEFAULT_PROFILE_MATCH_SCORE;
   }
-
   // 生年月日が完全一致している場合の詳細スコア計算
   let score = 0.80; // 生年月日完全一致の基本スコア
-
   // 氏名の一致チェック
   const childFullNameKanji = (childProfile.last_name_kanji || '') + (childProfile.first_name_kanji || '');
   const childFullNameHiragana = (childProfile.last_name_hiragana || '') + (childProfile.first_name_hiragana || '');
-  
   const searchingNameKanji = (matchingChild.last_name_kanji || '') + (matchingChild.first_name_kanji || '');
   const searchingNameKanjiAlt = matchingChild.name_kanji || '';
   const searchingNameHiragana = (matchingChild.last_name_hiragana || '') + (matchingChild.first_name_hiragana || '');
   const searchingNameHiraganaAlt = matchingChild.name_hiragana || '';
-
   // 漢字氏名の一致
   const kanjiMatch = 
     (searchingNameKanji && childFullNameKanji.includes(searchingNameKanji)) ||
     (searchingNameKanjiAlt && childFullNameKanji.includes(searchingNameKanjiAlt)) ||
     (childFullNameKanji && searchingNameKanji && searchingNameKanji.includes(childFullNameKanji));
-
   // ひらがな氏名の一致
   const hiraganaMatch = 
     (searchingNameHiragana && childFullNameHiragana.includes(searchingNameHiragana)) ||
     (searchingNameHiraganaAlt && childFullNameHiragana.includes(searchingNameHiraganaAlt)) ||
     (childFullNameHiragana && searchingNameHiragana && searchingNameHiragana.includes(childFullNameHiragana));
-
   if (kanjiMatch || hiraganaMatch) {
     score += 0.10;
     console.log(
       `[Matching] Child name match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
     );
   }
-
   // 出身地の一致チェック
+  // ...（必要に応じて追加）
+  return score;
 
+/**
  * 氏名（ひらがな）スコア計算（新仕様: +10点）
  * 完全一致・部分一致ともに+10点
  */
@@ -541,25 +539,20 @@ async function calculateReverseMatchingScore(
   if (!matchedChildSearchingParent) {
     return null;
   }
-
   // Gender check - REQUIRED for child→parent matching
   if (!matchedChildSearchingParent.gender || !currentUserProfile.gender) {
     return null;
   }
-
   if (matchedChildSearchingParent.gender !== currentUserProfile.gender) {
     return 0; // Gender mismatch - exclude this candidate
   }
-
   // Gender match - calculate reverse score
   let reverseScore = 0.20; // Base score for gender match
-
   // Birth year proximity (lenient)
   if (matchedChildSearchingParent.birth_date && currentUserProfile.birth_date) {
     const searchingYear = new Date(matchedChildSearchingParent.birth_date).getFullYear();
     const parentYear = new Date(currentUserProfile.birth_date).getFullYear();
     const yearDiff = Math.abs(searchingYear - parentYear);
-
     if (yearDiff <= 5) {
       reverseScore += 0.30;
     } else if (yearDiff <= 10) {
@@ -568,17 +561,14 @@ async function calculateReverseMatchingScore(
   } else {
     reverseScore += 0.10; // No data penalty is mild
   }
-
   // Hiragana name match (lenient)
   if (matchedChildSearchingParent.last_name_hiragana && currentUserProfile.last_name_hiragana) {
     const searchingHiragana = (matchedChildSearchingParent.last_name_hiragana + (matchedChildSearchingParent.first_name_hiragana || '')).trim();
     const parentHiragana = (currentUserProfile.last_name_hiragana + (currentUserProfile.first_name_hiragana || '')).trim();
-    
     if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
       reverseScore += 0.15;
     }
   }
-
   // Birthplace match (lenient)
   if (matchedChildSearchingParent.birthplace_prefecture && currentUserProfile.birthplace_prefecture) {
     if (matchedChildSearchingParent.birthplace_prefecture === currentUserProfile.birthplace_prefecture) {
@@ -587,53 +577,107 @@ async function calculateReverseMatchingScore(
   } else if (!matchedChildSearchingParent.birthplace_prefecture) {
     reverseScore += 0.05; // Mild bonus for no data
   }
-
   return Math.min(0.80, reverseScore); // Cap reverse score at 80%
 }
+}
 
+
+
+// マッチ候補詳細を取得しスコア計算
+async function getMatchDetails(admin: any, user: any, userData: any, myTargetPeople: any[]) {
+  // マッチ候補取得
+  let matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
+  // 各候補の詳細取得とスコア計算
+  const matchDetails = await Promise.all(
+    matches.map(async (match: any) => {
+      // 相手のプロフィール
+      const { data: theirProfile } = await admin
+        .from('profiles')
+        .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
+        .eq('user_id', match.matched_user_id)
+        .single();
+      // 相手のtarget_peopleリスト
+      const theirTargetPeople = await getTargetPeopleInfo(admin, match.matched_user_id);
+      // 自分のプロフィール
+      const { data: myProfile } = await admin
+        .from('profiles')
+        .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
+        .eq('user_id', user.id)
+        .single();
+      // 親→子・子→親スコア計算
+      let parentToChild = 0;
+      let childToParent = 0;
+      if (userData.role === 'parent') {
+        parentToChild = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
+        childToParent = calculateMutualMatchScore(theirTargetPeople, myTargetPeople, theirProfile, myProfile);
+      } else {
+        parentToChild = calculateMutualMatchScore(theirTargetPeople, myTargetPeople, theirProfile, myProfile);
+        childToParent = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
+      }
+      const similarityScore = combineBidirectionalScore(parentToChild, childToParent);
+      return {
+        userId: match.matched_user_id,
+        similarityScore,
+        profile: theirProfile,
+        theirTargetPeople,
+        role: userData.role === 'parent' ? 'child' : 'parent',
+      };
+    })
+  );
+  // スコア0の候補は除外
+  return matchDetails.filter(match => match.similarityScore > 0);
+}
+
+// 既存マッチ状態を付与
+async function attachExistingMatchStatus(admin: any, user: any, userData: any, matchDetails: any[]) {
+  return Promise.all(
+    matchDetails.map(async (candidate) => {
+      const userColumn = userData.role === 'parent' ? 'parent_id' : 'child_id';
+      const candidateColumn = userData.role === 'parent' ? 'child_id' : 'parent_id';
+      const { data: existingMatch } = await admin
+        .from('matches')
+        .select('id, status')
+        .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
+        .maybeSingle();
+      return {
+        ...candidate,
+        existingMatchId: existingMatch?.id || null,
+        existingMatchStatus: existingMatch?.status || null,
+      };
+    })
+  );
+}
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const admin = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    // 早期リターン: 認証チェック
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Get user role
     const { data: userData } = await admin
       .from('users')
       .select('role, verification_status')
       .eq('id', user.id)
       .single();
-
-    // 早期リターン: ユーザーデータチェック
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    // テストモードチェック（開発環境のみ有効）
     const bypassVerification = isTestModeBypassVerificationEnabled();
     const bypassSubscription = isTestModeBypassSubscriptionEnabled();
-
-    // 早期リターン: 本人確認チェック（テストモードではスキップ）
     if (!bypassVerification && userData.verification_status !== 'verified') {
       return NextResponse.json(
         { error: '本人確認が必要です' },
         { status: 403 }
       );
     }
-
-    // 早期リターン: サブスクリプションチェック（テストモードではスキップ）
     if (!bypassSubscription && userData.role === 'parent') {
       const { data: subscription } = await admin
         .from('subscriptions')
         .select('status')
         .eq('user_id', user.id)
         .single();
-
       if (!subscription || subscription.status !== 'active') {
         return NextResponse.json(
           { error: 'アクティブなサブスクリプションが必要です' },
@@ -641,82 +685,10 @@ export async function GET(request: NextRequest) {
         );
       }
     }
-
-    // Find potential matches using age range and profile information as primary matching algorithm
-    let matches = await performAgeRangeFallbackMatching(admin, user.id, userData.role);
-
-    console.log('[Matching] Final matches count:', matches.length);
-
-    // 自分が探しているtarget_peopleリスト
     const myTargetPeople = await getTargetPeopleInfo(admin, user.id);
-
-    // Get full details for each match（共通ロジックでスコア計算）
-    const matchDetails = await Promise.all(
-      matches.map(async (match: any) => {
-
-        // 相手のプロフィール
-        const { data: theirProfile } = await admin
-          .from('profiles')
-          .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
-          .eq('user_id', match.matched_user_id)
-          .single();
-
-        // 相手のtarget_peopleリスト
-        const theirTargetPeople = await getTargetPeopleInfo(admin, match.matched_user_id);
-
-        // 自分のプロフィール
-        const { data: myProfile } = await admin
-          .from('profiles')
-          .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality')
-          .eq('user_id', user.id)
-          .single();
-
-        // 親→子・子→親スコア計算
-        let parentToChild = 0;
-        let childToParent = 0;
-        if (userData.role === 'parent') {
-          // 自分が親
-          parentToChild = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
-          childToParent = calculateMutualMatchScore(theirTargetPeople, myTargetPeople, theirProfile, myProfile);
-        } else {
-          // 自分が子
-          parentToChild = calculateMutualMatchScore(theirTargetPeople, myTargetPeople, theirProfile, myProfile);
-          childToParent = calculateMutualMatchScore(myTargetPeople, theirTargetPeople, myProfile, theirProfile);
-        }
-        const similarityScore = combineBidirectionalScore(parentToChild, childToParent);
-
-        return {
-          userId: match.matched_user_id,
-          similarityScore,
-          profile: theirProfile,
-          theirTargetPeople,
-          role: userData.role === 'parent' ? 'child' : 'parent',
-        };
-      })
-    );
-
-    // スコア0の候補は除外
-    const filteredMatchDetails = matchDetails.filter(match => match.similarityScore > 0);
-    console.log('[Matching] Filtered matches count (score > 0):', filteredMatchDetails.length);
-    // 各候補について既存のマッチング状態を確認
-    const candidatesWithMatchStatus = await Promise.all(
-      filteredMatchDetails.map(async (candidate) => {
-        const userColumn = userData.role === 'parent' ? 'parent_id' : 'child_id';
-        const candidateColumn = userData.role === 'parent' ? 'child_id' : 'parent_id';
-        const { data: existingMatch } = await admin
-          .from('matches')
-          .select('id, status')
-          .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
-          .maybeSingle();
-        // ここまでOK
-        return {
-          ...candidate,
-          existingMatchId: existingMatch?.id || null,
-          existingMatchStatus: existingMatch?.status || null,
-        };
-      })
-    );
-
+    const matchDetails = await getMatchDetails(admin, user, userData, myTargetPeople);
+    console.log('[Matching] Filtered matches count (score > 0):', matchDetails.length);
+    const candidatesWithMatchStatus = await attachExistingMatchStatus(admin, user, userData, matchDetails);
     return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, myTargetPeople });
   } catch (error: any) {
     console.error('Match search error:', error);
