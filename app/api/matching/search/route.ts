@@ -35,27 +35,32 @@ function calculateMutualMatchScore(
 /**
  * 1つのtarget_people条件とプロフィールを比較し、スコアを算出
  */
-function calculateSingleTargetScore(target: any, profile: any): number {
-  let score = 0.2; // 基本スコア
-  // 性別
+
+function genderScore(target: any, profile: any): number | null {
   if (target.gender && profile.gender) {
-    if (target.gender !== profile.gender) return 0;
+    if (target.gender !== profile.gender) return null;
+    return 0;
   } else {
-    score += 0.05;
+    return 0.05;
   }
-  // 生年月日
+}
+
+function birthDateScore(target: any, profile: any): number {
   if (target.birth_date && profile.birth_date) {
     const tYear = new Date(target.birth_date).getFullYear();
     const pYear = new Date(profile.birth_date).getFullYear();
     const yearDiff = Math.abs(tYear - pYear);
-    if (yearDiff === 0) score += 0.2;
-    else if (yearDiff <= 5) score += 0.15;
-    else if (yearDiff <= 10) score += 0.10;
-    else if (yearDiff <= 15) score += 0.05;
+    if (yearDiff === 0) return 0.2;
+    else if (yearDiff <= 5) return 0.15;
+    else if (yearDiff <= 10) return 0.10;
+    else if (yearDiff <= 15) return 0.05;
   } else {
-    score += 0.05;
+    return 0.05;
   }
-  // 氏名（漢字・ひらがな）
+  return 0;
+}
+
+function nameScore(target: any, profile: any): number {
   const targetName = [
     target.last_name_kanji || '',
     target.first_name_kanji || '',
@@ -73,10 +78,23 @@ function calculateSingleTargetScore(target: any, profile: any): number {
     profile.first_name_hiragana || '',
   ].join('');
   if (targetName && profileName && (profileName.includes(targetName) || targetName.includes(profileName))) {
-    score += 0.1;
+    return 0.1;
   }
-    // 出身地スコア計算
-    score += calculateBirthplaceScoreV2(target, profile);
+  return 0;
+}
+
+function calculateSingleTargetScore(target: any, profile: any): number {
+  let score = 0.2; // 基本スコア
+  // 性別
+  const gender = genderScore(target, profile);
+  if (gender === null) return 0;
+  score += gender;
+  // 生年月日
+  score += birthDateScore(target, profile);
+  // 氏名（漢字・ひらがな）
+  score += nameScore(target, profile);
+  // 出身地スコア計算
+  score += calculateBirthplaceScoreV2(target, profile);
   // スコア上限
   return Math.min(1.0, score);
 }
@@ -376,30 +394,40 @@ async function calculateParentToChildReverseScore(
 
   for (const searchingParent of searchingParents) {
     let score = 0.20; // 基本スコア
-
-    // 性別チェック（重要）
+    // 性別
+    const gender = parentToChildGenderScore(searchingParent, parentProfile);
+    if (gender === null) continue;
+    score += gender;
+    // 生年
+    score += parentToChildBirthYearScore(searchingParent, parentProfile);
+    // ひらがな氏名
+    score += parentToChildHiraganaScore(searchingParent, parentProfile);
+    // 出身地
+    score += parentToChildBirthplaceScore(searchingParent, parentProfile);
+    maxScore = Math.max(maxScore, score);
+  }
+  // 性別スコア
+  function parentToChildGenderScore(searchingParent: any, parentProfile: any): number | null {
     if (searchingParent.gender && parentProfile.gender) {
       if (searchingParent.gender !== parentProfile.gender) {
-        continue; // 性別不一致の場合はスキップ
+        return null; // 性別不一致はスキップ
       }
-      // 性別一致の場合は継続
+      return 0;
     } else {
-      // 性別情報がない場合は軽微なペナルティ
-      score += 0.10;
+      return 0.10;
     }
-
-    // 生年の近さ（寛容）
+  }
+  // 生年スコア
+  function parentToChildBirthYearScore(searchingParent: any, parentProfile: any): number {
     if (searchingParent.birth_date && parentProfile.birth_date) {
       const searchingYear = new Date(searchingParent.birth_date).getFullYear();
       const parentYear = new Date(parentProfile.birth_date).getFullYear();
       const yearDiff = Math.abs(searchingYear - parentYear);
-
       if (yearDiff <= 5) {
-        score += 0.30;
+        return 0.30;
       } else if (yearDiff <= 10) {
-        score += 0.20;
+        return 0.20;
       } else if (yearDiff <= 15) {
-        // 部分一致チェック: 共通文字が1つでもあれば部分一致とみなす
         if (searchingParent.last_name_hiragana && parentProfile.last_name_hiragana) {
           const searchingHiragana = (searchingParent.last_name_hiragana + (searchingParent.first_name_hiragana || '')).trim();
           const parentHiragana = (parentProfile.last_name_hiragana + (parentProfile.first_name_hiragana || '')).trim();
@@ -412,37 +440,39 @@ async function calculateParentToChildReverseScore(
             }
           }
           if (hasCommonChar) {
-            score += 0.10;
+            return 0.10;
           }
         }
       }
     }
-
-    // ひらがな氏名の一致（寛容）
+    return 0;
+  }
+  // ひらがな氏名スコア
+  function parentToChildHiraganaScore(searchingParent: any, parentProfile: any): number {
     if (searchingParent.last_name_hiragana && parentProfile.last_name_hiragana) {
       const searchingHiragana = (searchingParent.last_name_hiragana + (searchingParent.first_name_hiragana || '')).trim();
       const parentHiragana = (parentProfile.last_name_hiragana + (parentProfile.first_name_hiragana || '')).trim();
       if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
-        score += 0.15;
+        return 0.15;
       } else if (searchingHiragana && parentHiragana) {
-        // 部分一致チェック
         const commonChars = searchingHiragana.split('').filter((char: string) => parentHiragana.includes(char));
         if (commonChars.length > 0) {
-          score += 0.05;
+          return 0.05;
         }
       }
     }
-
-    // 出身地の一致（寛容）
+    return 0;
+  }
+  // 出身地スコア
+  function parentToChildBirthplaceScore(searchingParent: any, parentProfile: any): number {
     if (searchingParent.birthplace_prefecture && parentProfile.birthplace_prefecture) {
       if (searchingParent.birthplace_prefecture === parentProfile.birthplace_prefecture) {
-        score += 0.15;
+        return 0.15;
       }
     } else if (!searchingParent.birthplace_prefecture) {
-      score += 0.05; // データなしの場合は軽微なボーナス
+      return 0.05;
     }
-
-    maxScore = Math.max(maxScore, score);
+    return 0;
   }
   return maxScore > 0 ? Math.min(0.80, maxScore) : null; // 最大80%
 }
@@ -475,27 +505,31 @@ async function calculateChildToParentMatchScore(
   // 生年月日が完全一致している場合の詳細スコア計算
   let score = 0.80; // 生年月日完全一致の基本スコア
   // 氏名の一致チェック
-  const childFullNameKanji = (childProfile.last_name_kanji || '') + (childProfile.first_name_kanji || '');
-  const childFullNameHiragana = (childProfile.last_name_hiragana || '') + (childProfile.first_name_hiragana || '');
-  const searchingNameKanji = (matchingChild.last_name_kanji || '') + (matchingChild.first_name_kanji || '');
-  const searchingNameKanjiAlt = matchingChild.name_kanji || '';
-  const searchingNameHiragana = (matchingChild.last_name_hiragana || '') + (matchingChild.first_name_hiragana || '');
-  const searchingNameHiraganaAlt = matchingChild.name_hiragana || '';
-  // 漢字氏名の一致
-  const kanjiMatch = 
-    (searchingNameKanji && childFullNameKanji.includes(searchingNameKanji)) ||
-    (searchingNameKanjiAlt && childFullNameKanji.includes(searchingNameKanjiAlt)) ||
-    (childFullNameKanji && searchingNameKanji && searchingNameKanji.includes(childFullNameKanji));
-  // ひらがな氏名の一致
-  const hiraganaMatch = 
-    (searchingNameHiragana && childFullNameHiragana.includes(searchingNameHiragana)) ||
-    (searchingNameHiraganaAlt && childFullNameHiragana.includes(searchingNameHiraganaAlt)) ||
-    (childFullNameHiragana && searchingNameHiragana && searchingNameHiragana.includes(childFullNameHiragana));
-  if (kanjiMatch || hiraganaMatch) {
+  if (childToParentNameMatch(matchingChild, childProfile)) {
     score += 0.10;
     console.log(
       `[Matching] Child name match bonus. Parent ${parentUserId}: ${score.toFixed(2)}`
     );
+  }
+  // 子→親: 氏名一致判定
+  function childToParentNameMatch(matchingChild: any, childProfile: any): boolean {
+    const childFullNameKanji = (childProfile.last_name_kanji || '') + (childProfile.first_name_kanji || '');
+    const childFullNameHiragana = (childProfile.last_name_hiragana || '') + (childProfile.first_name_hiragana || '');
+    const searchingNameKanji = (matchingChild.last_name_kanji || '') + (matchingChild.first_name_kanji || '');
+    const searchingNameKanjiAlt = matchingChild.name_kanji || '';
+    const searchingNameHiragana = (matchingChild.last_name_hiragana || '') + (matchingChild.first_name_hiragana || '');
+    const searchingNameHiraganaAlt = matchingChild.name_hiragana || '';
+    // 漢字氏名の一致
+    const kanjiMatch = 
+      (searchingNameKanji && childFullNameKanji.includes(searchingNameKanji)) ||
+      (searchingNameKanjiAlt && childFullNameKanji.includes(searchingNameKanjiAlt)) ||
+      (childFullNameKanji && searchingNameKanji && searchingNameKanji.includes(childFullNameKanji));
+    // ひらがな氏名の一致
+    const hiraganaMatch = 
+      (searchingNameHiragana && childFullNameHiragana.includes(searchingNameHiragana)) ||
+      (searchingNameHiraganaAlt && childFullNameHiragana.includes(searchingNameHiraganaAlt)) ||
+      (childFullNameHiragana && searchingNameHiragana && searchingNameHiragana.includes(childFullNameHiragana));
+    return kanjiMatch || hiraganaMatch;
   }
   // 出身地の一致チェック
   // ...（必要に応じて追加）
@@ -652,39 +686,15 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const admin = createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user, userData } = await getAuthenticatedUserAndData(supabase, admin);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { data: userData } = await admin
-      .from('users')
-      .select('role, verification_status')
-      .eq('id', user.id)
-      .single();
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    const bypassVerification = isTestModeBypassVerificationEnabled();
-    const bypassSubscription = isTestModeBypassSubscriptionEnabled();
-    if (!bypassVerification && userData.verification_status !== 'verified') {
-      return NextResponse.json(
-        { error: '本人確認が必要です' },
-        { status: 403 }
-      );
-    }
-    if (!bypassSubscription && userData.role === 'parent') {
-      const { data: subscription } = await admin
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', user.id)
-        .single();
-      if (!subscription || subscription.status !== 'active') {
-        return NextResponse.json(
-          { error: 'アクティブなサブスクリプションが必要です' },
-          { status: 403 }
-        );
-      }
-    }
+    const authError = await checkUserAuthorization(admin, user, userData);
+    if (authError) return authError;
     const myTargetPeople = await getTargetPeopleInfo(admin, user.id);
     const matchDetails = await getMatchDetails(admin, user, userData, myTargetPeople);
     console.log('[Matching] Filtered matches count (score > 0):', matchDetails.length);
@@ -697,4 +707,42 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// ユーザー認証・ユーザーデータ取得
+async function getAuthenticatedUserAndData(supabase: any, admin: any) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { user: null, userData: null };
+  const { data: userData } = await admin
+    .from('users')
+    .select('role, verification_status')
+    .eq('id', user.id)
+    .single();
+  return { user, userData };
+}
+
+// 本人確認・サブスク等の権限チェック
+async function checkUserAuthorization(admin: any, user: any, userData: any) {
+  const bypassVerification = isTestModeBypassVerificationEnabled();
+  const bypassSubscription = isTestModeBypassSubscriptionEnabled();
+  if (!bypassVerification && userData.verification_status !== 'verified') {
+    return NextResponse.json(
+      { error: '本人確認が必要です' },
+      { status: 403 }
+    );
+  }
+  if (!bypassSubscription && userData.role === 'parent') {
+    const { data: subscription } = await admin
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .single();
+    if (!subscription || subscription.status !== 'active') {
+      return NextResponse.json(
+        { error: 'アクティブなサブスクリプションが必要です' },
+        { status: 403 }
+      );
+    }
+  }
+  return null;
 }
