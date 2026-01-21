@@ -300,75 +300,6 @@ async function getTargetPeopleInfo(
 /**
  * 子ども一人に対するマッチングスコアを計算
  */
-function calculateChildMatchScore(
-  child: any,
-  match: any,
-  profile: any,
-  matchYear: number,
-  matchMonth: number,
-  matchDay: number
-): number {
-  let score = match.similarity_score;
-  
-  if (!child.birth_date) {
-    return score;
-  }
-
-  const childBirthDate = new Date(child.birth_date);
-  const childYear = childBirthDate.getFullYear();
-  const childMonth = childBirthDate.getMonth();
-  const childDay = childBirthDate.getDate();
-
-  // Check name similarity using new fields
-  const childLastNameKanji = child.last_name_kanji || '';
-  const childFirstNameKanji = child.first_name_kanji || '';
-  const childNameKanji = (child.name_kanji || '').trim() || (childLastNameKanji + childFirstNameKanji).trim();
-  const childNameHiragana = child.name_hiragana || '';
-  
-  const matchLastNameKanji = profile.last_name_kanji || '';
-  const matchFirstNameKanji = profile.first_name_kanji || '';
-  const matchFullName = (matchLastNameKanji + matchFirstNameKanji).trim();
-  
-  // Check if child's name is contained in match's full name
-  const nameMatch = 
-    (childNameKanji && matchFullName.includes(childNameKanji)) ||
-    (childNameHiragana && profile.last_name_hiragana && 
-     (profile.last_name_hiragana + profile.first_name_hiragana).includes(childNameHiragana));
-
-  console.log(
-    `[Matching] Child ${child.id} vs user ${match.matched_user_id}: ` +
-    `name=${nameMatch}`
-  );
-
-  // Calculate base score from birthday
-  const childAge = new Date().getFullYear() - childYear;
-  const matchAge = new Date().getFullYear() - matchYear;
-  score = calculateBirthdayScore(
-    childYear, childMonth, childDay,
-    matchYear, matchMonth, matchDay,
-    childAge, matchAge
-  );
-
-  // Apply name match bonus (max +0.10)
-  if (nameMatch) {
-    score += 0.10;
-    console.log(
-      `[Matching] Name match bonus applied. Child ${child.id}: ${score.toFixed(2)}`
-    );
-  }
-
-  // Apply birthplace bonus (max +0.10)
-  if (child.birthplace_prefecture && profile.birthplace_prefecture &&
-      child.birthplace_prefecture === profile.birthplace_prefecture) {
-    score += 0.10;
-    console.log(
-      `[Matching] Same prefecture bonus applied. Child ${child.id}: ${score.toFixed(2)}`
-    );
-  }
-
-  // Cap at 1.0 (100%)
-  return Math.min(1.0, score);
-}
 
 /**
  * 子アカウント用：子が探している親の条件と親候補のマッチングスコアを計算（子→親方向）
@@ -539,80 +470,10 @@ async function calculateChildToParentMatchScore(
  * 氏名（ひらがな）スコア計算（新仕様: +10点）
  * 完全一致・部分一致ともに+10点
  */
-function calculateHiraganaNameScoreV2(target: any, profile: any): number {
-  const targetName = (target.name_hiragana || '') + (target.last_name_hiragana || '') + (target.first_name_hiragana || '');
-  const profileName = (profile.name_hiragana || '') + (profile.last_name_hiragana || '') + (profile.first_name_hiragana || '');
-  if (!targetName || !profileName) return 0;
-  if (profileName.includes(targetName) || targetName.includes(profileName)) {
-    return 10;
-  }
-  // 部分一致（2文字以上の共通部分があれば加点）
-  for (let i = 0; i < targetName.length - 1; i++) {
-    const part = targetName.slice(i, i + 2);
-    if (profileName.includes(part)) {
-      return 10;
-    }
-  }
-  return 0;
-}
 
 /**
  * 逆方向マッチングスコアの計算（子→親）
  */
-async function calculateReverseMatchingScore(
-  admin: any,
-  matchedUserId: string,
-  currentUserProfile: any
-): Promise<number | null> {
-  const { data: matchedChildSearchingParent } = await admin
-    .from('searching_children')
-    .select('gender, birth_date, last_name_hiragana, first_name_hiragana, birthplace_prefecture')
-    .eq('id', matchedUserId)
-    .single();
-
-  if (!matchedChildSearchingParent) {
-    return null;
-  }
-  // Gender check - REQUIRED for child→parent matching
-  if (!matchedChildSearchingParent.gender || !currentUserProfile.gender) {
-    return null;
-  }
-  if (matchedChildSearchingParent.gender !== currentUserProfile.gender) {
-    return 0; // Gender mismatch - exclude this candidate
-  }
-  // Gender match - calculate reverse score
-  let reverseScore = 0.20; // Base score for gender match
-  // Birth year proximity (lenient)
-  if (matchedChildSearchingParent.birth_date && currentUserProfile.birth_date) {
-    const searchingYear = new Date(matchedChildSearchingParent.birth_date).getFullYear();
-    const parentYear = new Date(currentUserProfile.birth_date).getFullYear();
-    const yearDiff = Math.abs(searchingYear - parentYear);
-    if (yearDiff <= 5) {
-      reverseScore += 0.30;
-    } else if (yearDiff <= 10) {
-      reverseScore += 0.20;
-    }
-  } else {
-    reverseScore += 0.10; // No data penalty is mild
-  }
-  // Hiragana name match (lenient)
-  if (matchedChildSearchingParent.last_name_hiragana && currentUserProfile.last_name_hiragana) {
-    const searchingHiragana = (matchedChildSearchingParent.last_name_hiragana + (matchedChildSearchingParent.first_name_hiragana || '')).trim();
-    const parentHiragana = (currentUserProfile.last_name_hiragana + (currentUserProfile.first_name_hiragana || '')).trim();
-    if (searchingHiragana && parentHiragana && parentHiragana.includes(searchingHiragana)) {
-      reverseScore += 0.15;
-    }
-  }
-  // Birthplace match (lenient)
-  if (matchedChildSearchingParent.birthplace_prefecture && currentUserProfile.birthplace_prefecture) {
-    if (matchedChildSearchingParent.birthplace_prefecture === currentUserProfile.birthplace_prefecture) {
-      reverseScore += 0.15;
-    }
-  } else if (!matchedChildSearchingParent.birthplace_prefecture) {
-    reverseScore += 0.05; // Mild bonus for no data
-  }
-  return Math.min(0.80, reverseScore); // Cap reverse score at 80%
-}
 }
 
 
