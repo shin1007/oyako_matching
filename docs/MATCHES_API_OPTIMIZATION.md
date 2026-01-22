@@ -62,10 +62,10 @@ const matchesWithProfiles = await Promise.all(
     const { data: profile } = await admin.from('profiles')...
     
     // 3. 探している子ども取得
-    const { data: searchingChildren } = await admin.from('searching_children')...
+    const { data: searchingChildren } = await admin.from('target_people')...
     
     // 4. 子どもの写真取得
-    const { data: photos } = await admin.from('searching_children_photos')...
+    const { data: photos } = await admin.from('target_people_photos')...
     
     // 5. 未読メッセージ数取得
     const { data: unreadMessages } = await admin.from('messages')...
@@ -106,12 +106,12 @@ const { data: lastMessages } = await admin
 
 // 4-5. 探している子どもと写真を一括取得 (2クエリ)
 const { data: searchingChildren } = await admin
-  .from('searching_children')
+  .from('target_people')
   .select('id, user_id')
   .in('user_id', otherUserIds)...
 
 const { data: photos } = await admin
-  .from('searching_children_photos')
+  .from('target_people_photos')
   .select('searching_child_id, photo_url')
   .in('searching_child_id', childIds)...
 ```

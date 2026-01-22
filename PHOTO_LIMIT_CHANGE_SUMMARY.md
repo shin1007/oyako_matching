@@ -86,7 +86,7 @@ supabase db push
 - データベースから削除された写真のファイルはStorageに残ります
 - 必要に応じて、以下のクエリで削除対象のURLを確認できます:
   ```sql
-  SELECT photo_url FROM public.searching_children_photos 
+  SELECT photo_url FROM public.target_people_photos 
   WHERE display_order > 0 
   ORDER BY searching_child_id, display_order;
   ```
@@ -100,7 +100,7 @@ supabase db push
 
 将来的に写真枚数を増やす必要がある場合:
 1. `MAX_PHOTOS_PER_CHILD` 定数を更新
-2. マイグレーションファイルで `check_searching_children_photos_limit()` 関数を更新
+2. マイグレーションファイルで `check_target_people_photos_limit()` 関数を更新
 3. UI上の制限値表示を更新
 
 ## トラブルシューティング
@@ -115,10 +115,10 @@ supabase db push
 マイグレーションを元に戻す必要がある場合:
 ```sql
 -- トリガー関数を5枚制限に戻す
-CREATE OR REPLACE FUNCTION check_searching_children_photos_limit()
+CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (SELECT COUNT(*) FROM public.searching_children_photos WHERE searching_child_id = NEW.searching_child_id) >= 5 THEN
+  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE searching_child_id = NEW.searching_child_id) >= 5 THEN
     RAISE EXCEPTION 'Cannot add more than 5 photos per searching child';
   END IF;
   RETURN NEW;

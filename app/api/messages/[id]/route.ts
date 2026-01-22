@@ -90,7 +90,7 @@ export async function GET(
 
     // 探している子どもの写真を取得
     const { data: searchingChildren } = await admin
-      .from('searching_children')
+      .from('target_people')
       .select('id, last_name_kanji, first_name_kanji')
       .eq('user_id', otherUserId)
       .order('display_order', { ascending: true });
@@ -100,7 +100,7 @@ export async function GET(
       searchingChildrenWithPhotos = await Promise.all(
         searchingChildren.map(async (child: any) => {
           const { data: photos } = await admin
-            .from('searching_children_photos')
+            .from('target_people_photos')
             .select('photo_url')
             .eq('searching_child_id', child.id)
             .order('display_order', { ascending: true })
@@ -147,7 +147,7 @@ export async function GET(
           other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
           other_user_role: userData?.role || 'unknown',
           other_user_image: profile?.profile_image_url || null,
-          searching_children: searchingChildrenWithPhotos,
+          target_people: searchingChildrenWithPhotos,
         },
         messages: messages || [],
         pagination: {

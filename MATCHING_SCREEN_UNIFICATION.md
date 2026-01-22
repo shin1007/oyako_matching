@@ -57,7 +57,7 @@ const childMatches = userRole === 'parent'
 if (userData.role === 'parent') {
   // 親が探している子どもを取得
   const { data: children } = await admin
-    .from('searching_children')
+    .from('target_people')
     .select('...')
     .eq('user_id', user.id)
     .order('display_order', { ascending: true });
@@ -65,7 +65,7 @@ if (userData.role === 'parent') {
 } else if (userData.role === 'child') {
   // 子が探している親を取得
   const { data: parents } = await admin
-    .from('searching_children')
+    .from('target_people')
     .select('...')
     .eq('user_id', user.id)
     .order('display_order', { ascending: true });
@@ -75,7 +75,7 @@ if (userData.role === 'parent') {
 
 ### 4. エッジケースの処理
 
-#### 4.1 searching_childrenが空の場合
+#### 4.1 target_peopleが空の場合
 ユーザーに探している子ども/親の登録を促すメッセージを表示:
 ```typescript
 <div className="rounded-lg bg-white p-12 text-center shadow">
@@ -111,7 +111,7 @@ if (userData.role === 'parent') {
 4. 統一されたレイアウトで表示
 
 ### データベース設計の活用
-`searching_children`テーブルは以下の両方の用途で使用:
+`target_people`テーブルは以下の両方の用途で使用:
 - 親ユーザー: 探している子どもの情報を保存
 - 子ユーザー: 探している親の情報を保存
 
@@ -122,7 +122,7 @@ if (userData.role === 'parent') {
 1. ✅ TypeScriptコンパイル成功
 2. ⏳ 親ユーザーでのマッチング画面表示
 3. ⏳ 子ユーザーでのマッチング画面表示
-4. ⏳ searching_childrenが空の場合の表示
+4. ⏳ target_peopleが空の場合の表示
 5. ⏳ マッチング申請機能の動作確認
 
 ## 互換性

@@ -1,21 +1,21 @@
--- RLS policies for searching_children table
+-- RLS policies for target_people table
 
--- Enable RLS on searching_children table
-ALTER TABLE public.searching_children ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on target_people table
+ALTER TABLE public.target_people ENABLE ROW LEVEL SECURITY;
 
 -- Searching children policies
-DROP POLICY IF EXISTS "Users can view their own searching children" ON public.searching_children;
-CREATE POLICY "Users can view their own searching children" ON public.searching_children
+DROP POLICY IF EXISTS "Users can view their own searching children" ON public.target_people;
+CREATE POLICY "Users can view their own searching children" ON public.target_people
   FOR SELECT USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can insert their own searching children" ON public.searching_children;
-CREATE POLICY "Users can insert their own searching children" ON public.searching_children
+DROP POLICY IF EXISTS "Users can insert their own searching children" ON public.target_people;
+CREATE POLICY "Users can insert their own searching children" ON public.target_people
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can update their own searching children" ON public.searching_children;
-CREATE POLICY "Users can update their own searching children" ON public.searching_children
+DROP POLICY IF EXISTS "Users can update their own searching children" ON public.target_people;
+CREATE POLICY "Users can update their own searching children" ON public.target_people
   FOR UPDATE USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can delete their own searching children" ON public.searching_children;
-CREATE POLICY "Users can delete their own searching children" ON public.searching_children
+DROP POLICY IF EXISTS "Users can delete their own searching children" ON public.target_people;
+CREATE POLICY "Users can delete their own searching children" ON public.target_people
   FOR DELETE USING (auth.uid() = user_id);

@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 
     // 探している子どもの写真を一括取得
     const { data: searchingChildren } = await admin
-      .from('searching_children')
+      .from('target_people')
       .select('id, user_id')
       .in('user_id', otherUserIds)
       .order('display_order', { ascending: true });
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     if (searchingChildren && searchingChildren.length > 0) {
       const childIds = searchingChildren.map((c: any) => c.id);
       const { data: photos } = await admin
-        .from('searching_children_photos')
+        .from('target_people_photos')
         .select('searching_child_id, photo_url')
         .in('searching_child_id', childIds)
         .order('display_order', { ascending: true });

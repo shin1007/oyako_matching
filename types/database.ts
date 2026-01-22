@@ -561,7 +561,7 @@ export type Database = {
           },
         ]
       }
-      searching_children: {
+      target_people: {
         Row: {
           birth_date: string | null
           birthplace_municipality: string | null
@@ -615,7 +615,7 @@ export type Database = {
         }
         Relationships: []
       }
-      searching_children_photos: {
+      target_people_photos: {
         Row: {
           age_at_capture: number | null
           captured_at: string | null
@@ -654,10 +654,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "searching_children_photos_searching_child_id_fkey"
+            foreignKeyName: "target_people_photos_searching_child_id_fkey"
             columns: ["searching_child_id"]
             isOneToOne: false
-            referencedRelation: "searching_children"
+            referencedRelation: "target_people"
             referencedColumns: ["id"]
           },
         ]
@@ -793,7 +793,7 @@ export type Database = {
       }
     }
     Functions: {
-      check_searching_children_limit: {
+      check_target_people_limit: {
         Args: { arg1: string }
         Returns: boolean
       }
