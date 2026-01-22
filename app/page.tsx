@@ -13,14 +13,14 @@ function HomeContent() {
 
   useEffect(() => {
     // ログイン済みならダッシュボードへリダイレクト
-    const checkAuthAndRedirect = async () => {
+    const redirectIfAuthenticated = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         router.replace("/dashboard");
       }
     };
-    checkAuthAndRedirect();
+    redirectIfAuthenticated();
   }, [router]);
 
   useEffect(() => {

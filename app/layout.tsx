@@ -30,8 +30,7 @@ export default async function RootLayout({
       .single();
     const displayNameFromProfile = (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '');
     displayName = displayNameFromProfile || user.email || "ログイン中";
-  } else {
-    displayName = null;
+
   }
 
   const heroHref = user ? "/dashboard" : "/";
