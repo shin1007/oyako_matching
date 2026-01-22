@@ -54,6 +54,61 @@ interface SearchingTarget {
 }
 
 export default function MatchingPage() {
+    // マッチングアクションボタン生成関数
+    function createMatchingActionButton(params: {
+      userRole: string | null;
+      match: Match;
+      childScore: number;
+      creating: string | null;
+      handleCreateMatch: (userId: string, score: number) => void;
+      calculateAge: (birthDate: string) => number;
+    }) {
+      const { userRole, match, childScore, creating, handleCreateMatch, calculateAge } = params;
+      const isParent = userRole === 'parent';
+      const childBirthDate = match.profile?.birth_date;
+      const isChild = match.role === 'child';
+      let isUnder18 = false;
+      if (isChild && childBirthDate) {
+        const age = calculateAge(childBirthDate);
+        isUnder18 = age < 18;
+      }
+      if (isParent && isChild && isUnder18) {
+        return (
+          <div className="w-full rounded-lg bg-yellow-100 px-3 py-2 text-yellow-800 text-sm font-semibold text-center border border-yellow-300">
+            承認申請待ち（18歳未満のため）
+          </div>
+        );
+      }
+      if (match.existingMatchStatus === 'accepted') {
+        return (
+          <Link
+            href={`/messages/${match.existingMatchId}`}
+            className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          >
+            メッセージへ
+          </Link>
+        );
+      } else if (match.existingMatchStatus === 'pending') {
+        return (
+          <button
+            disabled
+            className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
+          >
+            承認待ち
+          </button>
+        );
+      } else {
+        return (
+          <button
+            onClick={() => handleCreateMatch(match.userId, childScore)}
+            disabled={creating === match.userId}
+            className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          >
+            {creating === match.userId ? '処理中...' : 'マッチング申請'}
+          </button>
+        );
+      }
+    }
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -156,21 +211,7 @@ export default function MatchingPage() {
     return '低い';
   };
 
-  // マッチをロールごとにグループ化
-  const groupedMatches = matches;
-  // const groupedMatches = matches.reduce(
-  //   (acc, match) => {
-  //     console.log('Grouping match, accumulator:', acc);
-  //     console.log('Current match:', match);
-  //     const role = match.role || 'unknown';
-  //     if (!acc[role]) {
-  //       acc[role] = [];
-  //     }
-  //     acc[role].push(match);
-  //     return acc;
-  //   },
-  //   {} as Record<string, Match[]>
-  // );
+
 
   const getRoleLabel = (role: string) => {
     return role === 'parent' ? '親' : role === 'child' ? '子' : '不明';
@@ -441,30 +482,14 @@ export default function MatchingPage() {
                                       style={{ width: `${childScore * 100}%` }}
                                     />
                                   </div>
-
-                                  {match.existingMatchStatus === 'accepted' ? (
-                                    <Link
-                                      href={`/messages/${match.existingMatchId}`}
-                                      className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-                                    >
-                                      メッセージへ
-                                    </Link>
-                                  ) : match.existingMatchStatus === 'pending' ? (
-                                    <button
-                                      disabled
-                                      className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
-                                    >
-                                      承認待ち
-                                    </button>
-                                  ) : (
-                                    <button
-                                      onClick={() => handleCreateMatch(match.userId, childScore)}
-                                      disabled={creating === match.userId}
-                                      className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-                                    >
-                                      {creating === match.userId ? '処理中...' : 'マッチング申請'}
-                                    </button>
-                                  )}
+                                  {createMatchingActionButton({
+                                    userRole,
+                                    match,
+                                    childScore,
+                                    creating,
+                                    handleCreateMatch,
+                                    calculateAge,
+                                  })}
                                 </div>
                               </div>
                             );
