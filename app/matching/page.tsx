@@ -1,5 +1,42 @@
 "use client";
 
+// 検索ターゲットのプロフィールカードを描画する関数
+function renderTargetProfile({ target, userRole, calculateAge, getGenderLabel }: {
+  target: SearchingTarget;
+  userRole: string | null;
+  calculateAge: (birthDate: string) => number;
+  getGenderLabel: (gender?: string, role?: string) => string;
+}) {
+  return (
+    <div className="w-full lg:max-w-xs border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50 px-6 py-5">
+      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
+        {userRole === 'parent' ? '探している子ども' : '探している親'}
+      </p>
+      <h3 className="text-xl font-bold text-gray-900">
+        {target.last_name_kanji}{target.first_name_kanji || target.name_kanji || target.name_hiragana || '名前未設定'}
+      </h3>
+      <p className="text-sm text-gray-600 mt-1">
+        {target.gender ? getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent') : '性別未設定'}
+        {target.birth_date && ` • ${calculateAge(target.birth_date)}歳`}
+      </p>
+      {target.birth_date && (
+        <p className="text-xs text-gray-500 mt-1">
+          生年月日: {new Date(target.birth_date).toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </p>
+      )}
+      {(target.birthplace_prefecture || target.birthplace_municipality) && (
+        <p className="text-xs text-gray-500 mt-1">
+          出身地: {target.birthplace_prefecture || ''}
+          {target.birthplace_municipality ? ` ${target.birthplace_municipality}` : ''}
+        </p>
+      )}
+    </div>
+  );
+}
 // マッチ候補カードを描画する関数
 function renderMatchedTargetCards({
   matchedTargets,
@@ -513,33 +550,7 @@ export default function MatchingPage() {
               return (
                 <div key={target.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
                   <div className="flex flex-col gap-0 lg:flex-row">
-                    <div className="w-full lg:max-w-xs border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50 px-6 py-5">
-                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
-                        {userRole === 'parent' ? '探している子ども' : '探している親'}
-                      </p>
-                      <h3 className="text-xl font-bold text-gray-900">
-                        {target.last_name_kanji}{target.first_name_kanji || target.name_kanji || target.name_hiragana || '名前未設定'}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {target.gender ? getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent') : '性別未設定'}
-                        {target.birth_date && ` • ${calculateAge(target.birth_date)}歳`}
-                      </p>
-                      {target.birth_date && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          生年月日: {new Date(target.birth_date).toLocaleDateString('ja-JP', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-                      )}
-                      {(target.birthplace_prefecture || target.birthplace_municipality) && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          出身地: {target.birthplace_prefecture || ''}
-                          {target.birthplace_municipality ? ` ${target.birthplace_municipality}` : ''}
-                        </p>
-                      )}
-                    </div>
+                    {renderTargetProfile({ target, userRole, calculateAge, getGenderLabel })}
                     {/* 小さいほうのカード */}
                     <div className="flex-1 p-5 lg:p-6">
                       {matchedTargets.length === 0 ? (
