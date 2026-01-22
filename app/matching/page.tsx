@@ -431,8 +431,6 @@ export default function MatchingPage() {
       }
     }
 
-
-
   const handleCreateMatch = async (targetUserId: string, similarityScore: number) => {
     setCreating(targetUserId);
 
