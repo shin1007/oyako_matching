@@ -1,4 +1,51 @@
+
 'use client';
+// マッチング度合い（類似度）表示カードコンポーネント
+function MatchingSimilarityCard({
+  score,
+  label,
+  userRole,
+  children,
+}: {
+  score: number;
+  label: string;
+  userRole: string | null;
+  children?: React.ReactNode;
+}) {
+  // 色分岐
+  const getBarColor = () => {
+    if (userRole === 'child') {
+      if (score >= 0.9) return 'bg-child-600';
+      if (score >= 0.8) return 'bg-child-500';
+      if (score >= 0.7) return 'bg-child-400';
+      return 'bg-gray-600';
+    } else {
+      if (score >= 0.9) return 'bg-parent-600';
+      if (score >= 0.8) return 'bg-parent-500';
+      if (score >= 0.7) return 'bg-parent-400';
+      return 'bg-gray-600';
+    }
+  };
+  const percent = Math.round(score * 100);
+  return (
+    <div className={`w-full bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : 'from-parent-50 to-parent-50 border border-parent-100'}`}
+      style={{ background: 'linear-gradient(135deg, #FFF7F0 0%, #FFF3E0 100%)' }}
+    >
+      <div className="text-center mb-3">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>{percent}%</div>
+          <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
+        </div>
+        <div className="text-xs font-bold text-gray-700">類似度</div>
+        <div className="text-xs text-gray-500 mt-1">{label}</div>
+      </div>
+      <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">
+        <div className={`h-full rounded-full ${getBarColor()}`} style={{ width: `${percent}%` }} />
+      </div>
+      {children}
+    </div>
+  );
+}
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -446,50 +493,21 @@ export default function MatchingPage() {
                                   </div>
                                 </div>
 
-                                <div className={`w-full lg:w-48 bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : 'from-parent-50 to-parent-50 border border-parent-100'}`}>
-                                  <div className="text-center mb-3">
-                                    <div className="flex items-center justify-center gap-2 mb-1">
-                                      <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
-                                        {(childScore * 100).toFixed(0)}%
-                                      </div>
-                                      <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
-                                    </div>
-                                    <p className="text-xs text-gray-600 font-semibold">類似度</p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {getSimilarityLabel(childScore)}
-                                    </p>
-                                  </div>
-
-                                  <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${
-                                        userRole === 'child'
-                                          ? childScore >= 0.9
-                                            ? 'bg-child-600'
-                                            : childScore >= 0.8
-                                            ? 'bg-child-500'
-                                            : childScore >= 0.7
-                                            ? 'bg-child-400'
-                                            : 'bg-gray-600'
-                                          : childScore >= 0.9
-                                          ? 'bg-parent-600'
-                                          : childScore >= 0.8
-                                          ? 'bg-parent-500'
-                                          : childScore >= 0.7
-                                          ? 'bg-parent-400'
-                                          : 'bg-gray-600'
-                                      }`}
-                                      style={{ width: `${childScore * 100}%` }}
-                                    />
-                                  </div>
-                                  {createMatchingActionButton({
-                                    userRole,
-                                    match,
-                                    childScore,
-                                    creating,
-                                    handleCreateMatch,
-                                    calculateAge,
-                                  })}
+                                <div className="w-full lg:w-48">
+                                  <MatchingSimilarityCard
+                                    score={childScore}
+                                    label={getSimilarityLabel(childScore)}
+                                    userRole={userRole}
+                                  >
+                                    {createMatchingActionButton({
+                                      userRole,
+                                      match,
+                                      childScore,
+                                      creating,
+                                      handleCreateMatch,
+                                      calculateAge,
+                                    })}
+                                  </MatchingSimilarityCard>
                                 </div>
                               </div>
                             );
