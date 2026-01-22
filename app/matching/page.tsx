@@ -1,4 +1,32 @@
+
 "use client";
+
+// テストモード表示用の関数
+function renderTestModeBanners({ testModeBypassVerification, testModeBypassSubscription }: {
+  testModeBypassVerification: boolean;
+  testModeBypassSubscription: boolean;
+}) {
+  return (
+    <>
+      {testModeBypassVerification && (
+        <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✅</span>
+            <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
+          </div>
+        </div>
+      )}
+      {testModeBypassSubscription && (
+        <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✅</span>
+            <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 // 検索ターゲットのプロフィールカードを描画する関数
 function renderTargetProfile({ target, userRole, calculateAge, getGenderLabel }: {
@@ -389,12 +417,6 @@ export default function MatchingPage() {
     }
   };
 
-  const getSimilarityColor = (score: number) => {
-    if (score >= 0.9) return 'text-green-600';
-    if (score >= 0.8) return 'text-blue-600';
-    if (score >= 0.7) return 'text-yellow-600';
-    return 'text-gray-600';
-  };
 
   const getSimilarityLabel = (score: number) => {
     if (score >= 0.9) return '非常に高い';
@@ -481,23 +503,7 @@ export default function MatchingPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
-        {testModeBypassVerification && (
-          <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">✅</span>
-              <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
-            </div>
-          </div>
-        )}
-
-        {testModeBypassSubscription && (
-          <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">✅</span>
-              <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
-            </div>
-          </div>
-        )}
+        {renderTestModeBanners({ testModeBypassVerification, testModeBypassSubscription })}
         
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
