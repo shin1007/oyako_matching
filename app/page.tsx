@@ -1,12 +1,27 @@
 'use client';
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
 
 function HomeContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [showDeletedMessage, setShowDeletedMessage] = useState(false);
+
+  useEffect(() => {
+    // ログイン済みならダッシュボードへリダイレクト
+    const checkAuthAndRedirect = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.replace("/dashboard");
+      }
+    };
+    checkAuthAndRedirect();
+  }, [router]);
 
   useEffect(() => {
     if (searchParams.get('deleted') === 'true') {
