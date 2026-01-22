@@ -244,9 +244,15 @@ export async function GET(request: NextRequest) {
     const authError = await checkUserAuthorization(admin, user, userData);
     if (authError) return authError;
     const myTargetPeople = await getTargetPeopleInfo(admin, user.id);
+    // 自分のプロフィール情報（role含む）を取得
+    const { data: myProfile } = await admin
+      .from('profiles')
+      .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality, user_id, users(role)')
+      .eq('user_id', user.id)
+      .single();
     const matchDetails = await getMatchDetails(admin, user, userData, myTargetPeople);
     const candidatesWithMatchStatus = await attachExistingMatchStatus(admin, user, userData, matchDetails);
-    return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, myTargetPeople });
+    return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, myTargetPeople, profile: myProfile });
   } catch (error: any) {
     console.error('Match search error:', error);
     return NextResponse.json(
