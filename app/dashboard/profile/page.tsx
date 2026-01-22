@@ -144,7 +144,7 @@ export default function ProfilePage() {
             const { data: photosData } = await supabase
               .from('target_people_photos')
               .select('*')
-              .eq('searching_child_id', child.id)
+              .eq('target_person_id', child.id)
               .order('display_order', { ascending: true });
 
             const photos: Photo[] = photosData?.map(photo => ({
@@ -336,11 +336,11 @@ export default function ProfilePage() {
               await supabase
                 .from('target_people_photos')
                 .delete()
-                .eq('searching_child_id', insertedChild.id);
+                .eq('target_person_id', insertedChild.id);
 
               // Insert new photos
               const photosToInsert = originalChild.photos.map((photo, photoIndex) => ({
-                searching_child_id: insertedChild.id,
+                target_person_id: insertedChild.id,
                 user_id: user.id,
                 photo_url: photo.photoUrl,
                 captured_at: photo.capturedAt || null,

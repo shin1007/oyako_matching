@@ -102,7 +102,7 @@ export async function GET(
           const { data: photos } = await admin
             .from('target_people_photos')
             .select('photo_url')
-            .eq('searching_child_id', child.id)
+            .eq('target_person_id', child.id)
             .order('display_order', { ascending: true })
             .limit(1);
 

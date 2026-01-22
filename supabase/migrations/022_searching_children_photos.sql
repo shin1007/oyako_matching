@@ -8,7 +8,7 @@
 
 CREATE TABLE IF NOT EXISTS public.target_people_photos (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  searching_child_id UUID NOT NULL REFERENCES public.target_people(id) ON DELETE CASCADE,
+  target_person_id UUID NOT NULL REFERENCES public.target_people(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   photo_url TEXT NOT NULL,
   captured_at DATE,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.target_people_photos (
 
 -- コメント追加
 COMMENT ON TABLE public.target_people_photos IS '探している子ども・親の写真情報を保存するテーブル';
-COMMENT ON COLUMN public.target_people_photos.searching_child_id IS '写真が関連付けられている target_people のID';
+COMMENT ON COLUMN public.target_people_photos.target_person_id IS '写真が関連付けられている target_people のID';
 COMMENT ON COLUMN public.target_people_photos.user_id IS '写真をアップロードしたユーザーのID';
 COMMENT ON COLUMN public.target_people_photos.photo_url IS '写真のURL（Supabase Storage）';
 COMMENT ON COLUMN public.target_people_photos.captured_at IS '写真の撮影日時';
@@ -30,8 +30,8 @@ COMMENT ON COLUMN public.target_people_photos.description IS '写真の説明や
 COMMENT ON COLUMN public.target_people_photos.display_order IS '表示順序（0-4）';
 
 -- インデックス作成
-CREATE INDEX IF NOT EXISTS idx_target_people_photos_searching_child_id 
-  ON public.target_people_photos(searching_child_id);
+CREATE INDEX IF NOT EXISTS idx_target_people_photos_target_person_id 
+  ON public.target_people_photos(target_person_id);
 CREATE INDEX IF NOT EXISTS idx_target_people_photos_user_id 
   ON public.target_people_photos(user_id);
 
@@ -50,11 +50,11 @@ BEFORE UPDATE ON public.target_people_photos
 FOR EACH ROW
 EXECUTE FUNCTION update_target_people_photos_updated_at();
 
--- 写真枚数制限（1つの searching_child につき最大5枚）
+-- 写真枚数制限（1つの target_person につき最大5枚）
 CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE searching_child_id = NEW.searching_child_id) >= 5 THEN
+  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE target_person_id = NEW.target_person_id) >= 5 THEN
     RAISE EXCEPTION 'Cannot add more than 5 photos per searching child';
   END IF;
   RETURN NEW;

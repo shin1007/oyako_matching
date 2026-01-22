@@ -19,7 +19,7 @@
 | カラム名 | 型 | 説明 |
 |---------|-----|------|
 | id | UUID | 主キー |
-| searching_child_id | UUID | 関連する target_people のID（外部キー） |
+| target_person_id | UUID | 関連する target_people のID（外部キー） |
 | user_id | UUID | 写真をアップロードしたユーザーのID（外部キー） |
 | photo_url | TEXT | 写真のURL（Supabase Storage） |
 | captured_at | DATE | 写真の撮影日 |
@@ -30,7 +30,7 @@
 | updated_at | TIMESTAMPTZ | 更新日時 |
 
 **制約:**
-- 1つの `searching_child` につき1枚の写真を登録可能（2026-01-19変更）
+- 1つの `target_person` につき1枚の写真を登録可能（2026-01-19変更）
 - トリガーで枚数制限を実装
 
 #### Supabase Storage
@@ -70,7 +70,7 @@
 **Props:**
 ```typescript
 interface SearchingChildPhotoUploadProps {
-  searchingChildId: string | undefined;  // searching_child のID（保存後に利用）
+  searchingChildId: string | undefined;  // target_person のID（保存後に利用）
   userId: string;                         // ユーザーID
   photos: Photo[];                        // 現在の写真リスト
   onPhotosUpdate: (photos: Photo[]) => void;  // 写真更新時のコールバック

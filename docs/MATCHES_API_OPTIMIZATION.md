@@ -112,8 +112,8 @@ const { data: searchingChildren } = await admin
 
 const { data: photos } = await admin
   .from('target_people_photos')
-  .select('searching_child_id, photo_url')
-  .in('searching_child_id', childIds)...
+  .select('target_person_id, photo_url')
+  .in('target_person_id', childIds)...
 ```
 
 **改善**: マッチ数に関わらず、合計6クエリのみ実行
@@ -141,7 +141,7 @@ const { data: photos } = await admin
       "other_user_name": "山田太郎",
       "other_user_role": "child",
       "other_user_image": "https://...",
-      "searching_child_photos": ["https://..."],
+      "target_person_photos": ["https://..."],
       "is_requester": true,
       "unread_count": 3,
       "last_message": {

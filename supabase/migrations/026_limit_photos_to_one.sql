@@ -5,7 +5,7 @@
 
 -- ===== 既存データのクリーンアップ =====
 
--- 各 searching_child について、display_order が 0 でない写真を削除
+-- 各 target_person について、display_order が 0 でない写真を削除
 -- まず、Supabase Storage から削除するために必要な情報をログ出力
 DO $$
 DECLARE
@@ -13,13 +13,13 @@ DECLARE
 BEGIN
   -- display_order > 0 の写真を取得してログ出力
   FOR photo_record IN 
-    SELECT id, searching_child_id, photo_url 
+    SELECT id, target_person_id, photo_url 
     FROM public.target_people_photos 
     WHERE display_order > 0
-    ORDER BY searching_child_id, display_order
+    ORDER BY target_person_id, display_order
   LOOP
-    RAISE NOTICE 'Deleting photo: id=%, searching_child_id=%, photo_url=%', 
-      photo_record.id, photo_record.searching_child_id, photo_record.photo_url;
+    RAISE NOTICE 'Deleting photo: id=%, target_person_id=%, photo_url=%', 
+      photo_record.id, photo_record.target_person_id, photo_record.photo_url;
   END LOOP;
 END $$;
 
@@ -28,7 +28,7 @@ END $$;
 DELETE FROM public.target_people_photos
 WHERE display_order > 0;
 
--- 各 searching_child について複数の写真（display_order=0 が複数ある場合）がある場合、
+-- 各 target_person について複数の写真（display_order=0 が複数ある場合）がある場合、
 -- 最も古い created_at を持つものを残して他を削除
 DELETE FROM public.target_people_photos
 WHERE id IN (
@@ -37,7 +37,7 @@ WHERE id IN (
   WHERE EXISTS (
     SELECT 1
     FROM public.target_people_photos p2
-    WHERE p2.searching_child_id = p.searching_child_id
+    WHERE p2.target_person_id = p.target_person_id
       AND p2.display_order = 0
       AND p2.created_at < p.created_at
       AND p.display_order = 0
@@ -50,7 +50,7 @@ WHERE id IN (
 CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE searching_child_id = NEW.searching_child_id) >= 1 THEN
+  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE target_person_id = NEW.target_person_id) >= 1 THEN
     RAISE EXCEPTION 'Cannot add more than 1 photo per searching child';
   END IF;
   RETURN NEW;

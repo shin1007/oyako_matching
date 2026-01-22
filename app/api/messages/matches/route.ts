@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
       const childIds = searchingChildren.map((c: any) => c.id);
       const { data: photos } = await admin
         .from('target_people_photos')
-        .select('searching_child_id, photo_url')
-        .in('searching_child_id', childIds)
+        .select('target_person_id, photo_url')
+        .in('target_person_id', childIds)
         .order('display_order', { ascending: true });
 
       if (photos) {
@@ -134,11 +134,11 @@ export async function GET(request: NextRequest) {
 
         // 写真を処理（O(n)で効率的）
         photos.forEach((photo: any) => {
-          const userId = childToUserMap.get(photo.searching_child_id);
+          const userId = childToUserMap.get(photo.target_person_id);
           if (userId) {
             const firstChildId = userChildMap.get(userId);
             // 最初の子どもの最初の写真のみを追加
-            if (photo.searching_child_id === firstChildId && !photosMap.has(userId)) {
+            if (photo.target_person_id === firstChildId && !photosMap.has(userId)) {
               photosMap.set(userId, [photo.photo_url]);
             }
           }
@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
         other_user_name: otherUserName,
         other_user_role: otherUserRole,
         other_user_image: otherUserImage,
-        searching_child_photos: searchingChildPhotos,
+        target_person_photos: searchingChildPhotos,
         is_requester,
         unread_count,
         last_message,

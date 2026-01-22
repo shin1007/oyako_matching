@@ -50,19 +50,19 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_schema = 'public' 
     AND table_name = 'profiles' 
-    AND column_name = 'searching_child_birth_date'
+    AND column_name = 'target_person_birth_date'
   ) THEN
     INSERT INTO public.target_people (user_id, birth_date, name_hiragana, name_kanji, display_order)
     SELECT 
       user_id,
-      searching_child_birth_date,
-      searching_child_name_hiragana,
-      searching_child_name_kanji,
+      target_person_birth_date,
+      target_person_name_hiragana,
+      target_person_name_kanji,
       0 as display_order
     FROM public.profiles
-    WHERE searching_child_birth_date IS NOT NULL 
-       OR searching_child_name_hiragana IS NOT NULL 
-       OR searching_child_name_kanji IS NOT NULL;
+    WHERE target_person_birth_date IS NOT NULL 
+       OR target_person_name_hiragana IS NOT NULL 
+       OR target_person_name_kanji IS NOT NULL;
     
     RAISE NOTICE 'Successfully migrated existing searching child data';
   ELSE
@@ -111,11 +111,11 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_schema = 'public' 
     AND table_name = 'profiles' 
-    AND column_name = 'searching_child_birth_date'
+    AND column_name = 'target_person_birth_date'
   ) THEN
-    COMMENT ON COLUMN public.profiles.searching_child_birth_date IS 'DEPRECATED: Use target_people table instead';
-    COMMENT ON COLUMN public.profiles.searching_child_name_hiragana IS 'DEPRECATED: Use target_people table instead';
-    COMMENT ON COLUMN public.profiles.searching_child_name_kanji IS 'DEPRECATED: Use target_people table instead';
+    COMMENT ON COLUMN public.profiles.target_person_birth_date IS 'DEPRECATED: Use target_people table instead';
+    COMMENT ON COLUMN public.profiles.target_person_name_hiragana IS 'DEPRECATED: Use target_people table instead';
+    COMMENT ON COLUMN public.profiles.target_person_name_kanji IS 'DEPRECATED: Use target_people table instead';
     RAISE NOTICE 'Marked old columns as deprecated';
   END IF;
 END $$;
