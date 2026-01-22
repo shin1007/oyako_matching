@@ -1,3 +1,5 @@
+// Match型をエクスポート
+export type Match = Database['public']['Tables']['matches']['Row'];
 
 export type Json =
   | string
