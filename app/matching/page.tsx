@@ -220,6 +220,50 @@ function MatchingSimilarityCard({
   );
 }
 
+const getSimilarityLabel = (score: number) => {
+  if (score >= 0.9) return '非常に高い';
+  if (score >= 0.8) return '高い';
+  if (score >= 0.7) return '中程度';
+  return '低い';
+};
+
+const getRoleLabel = (role: string) => {
+  return role === 'parent' ? '親' : role === 'child' ? '子' : '不明';
+};
+
+const getGenderLabel = (gender?: string, role?: string) => {
+  if (!gender) return '性別未設定';
+
+  const mapParent = {
+    male: '男性',
+    female: '女性',
+    other: 'その他',
+    prefer_not_to_say: '回答しない',
+  } as const;
+
+  const mapChild = {
+    male: '男の子',
+    female: '女の子',
+    other: 'その他',
+  } as const;
+
+  if (role === 'parent') {
+    return mapParent[gender as keyof typeof mapParent] ?? '性別未設定';
+  }
+  return mapChild[gender as keyof typeof mapChild] ?? mapParent[gender as keyof typeof mapParent] ?? '性別未設定';
+};
+
+const calculateAge = (birthDate: string) => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -274,6 +318,63 @@ interface SearchingTarget {
 }
 
 export default function MatchingPage() {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [creating, setCreating] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [searchingTargets, setSearchingTargets] = useState<SearchingTarget[]>([]);
+  const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
+  const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+  useEffect(() => {
+    checkAuth();
+    checkTestMode();
+    loadMatches();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/auth/login');
+    }
+  };
+
+  const checkTestMode = async () => {
+    try {
+      const response = await fetch('/api/test-mode/status');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[MatchingPage] Test mode status:', data);
+        setTestModeBypassVerification(data.bypassVerification);
+        setTestModeBypassSubscription(data.bypassSubscription);
+      }
+    } catch (err) {
+      console.error('[MatchingPage] Failed to check test mode:', err);
+    }
+  };
+
+  const loadMatches = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/matching/search');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'マッチングの検索に失敗しました');
+      }
+      const data = await response.json();
+      setMatches(data.candidates || []);
+      setUserRole(data.userRole);
+      setSearchingTargets(data.myTargetPeople || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
     // マッチングアクションボタン生成関数
     function createMatchingActionButton(params: {
       userRole: string | null;
@@ -329,64 +430,8 @@ export default function MatchingPage() {
         );
       }
     }
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [creating, setCreating] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [searchingTargets, setSearchingTargets] = useState<SearchingTarget[]>([]);
-  const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
-  const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
 
-  useEffect(() => {
-    checkAuth();
-    checkTestMode();
-    loadMatches();
-  }, []);
 
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/auth/login');
-    }
-  };
-
-  const checkTestMode = async () => {
-    try {
-      const response = await fetch('/api/test-mode/status');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[MatchingPage] Test mode status:', data);
-        setTestModeBypassVerification(data.bypassVerification);
-        setTestModeBypassSubscription(data.bypassSubscription);
-      }
-    } catch (err) {
-      console.error('[MatchingPage] Failed to check test mode:', err);
-    }
-  };
-
-  const loadMatches = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/matching/search');
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの検索に失敗しました');
-      }
-      const data = await response.json();
-      setMatches(data.candidates || []);
-      setUserRole(data.userRole);
-      setSearchingTargets(data.myTargetPeople || []);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateMatch = async (targetUserId: string, similarityScore: number) => {
     setCreating(targetUserId);
@@ -417,52 +462,6 @@ export default function MatchingPage() {
     }
   };
 
-
-  const getSimilarityLabel = (score: number) => {
-    if (score >= 0.9) return '非常に高い';
-    if (score >= 0.8) return '高い';
-    if (score >= 0.7) return '中程度';
-    return '低い';
-  };
-
-
-
-  const getRoleLabel = (role: string) => {
-    return role === 'parent' ? '親' : role === 'child' ? '子' : '不明';
-  };
-
-  const getGenderLabel = (gender?: string, role?: string) => {
-    if (!gender) return '性別未設定';
-
-    const mapParent = {
-      male: '男性',
-      female: '女性',
-      other: 'その他',
-      prefer_not_to_say: '回答しない',
-    } as const;
-
-    const mapChild = {
-      male: '男の子',
-      female: '女の子',
-      other: 'その他',
-    } as const;
-
-    if (role === 'parent') {
-      return mapParent[gender as keyof typeof mapParent] ?? '性別未設定';
-    }
-    return mapChild[gender as keyof typeof mapChild] ?? mapParent[gender as keyof typeof mapParent] ?? '性別未設定';
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   // 相手が探している子ども/親情報を表示する関数
   function renderTheirTargetPeople(match: Match) {
