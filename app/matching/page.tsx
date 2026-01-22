@@ -197,24 +197,32 @@ function MatchingSimilarityCard({
       if (score >= 0.7) return 'bg-child-400';
       return 'bg-gray-600';
     } else {
-      if (score >= 0.9) return 'bg-parent-600';
-      if (score >= 0.8) return 'bg-parent-500';
-      if (score >= 0.7) return 'bg-parent-400';
+      // 親側は緑系
+      if (score >= 0.9) return 'bg-green-600';
+      if (score >= 0.8) return 'bg-green-500';
+      if (score >= 0.7) return 'bg-green-400';
       return 'bg-gray-600';
     }
   };
   const percent = Math.round(score * 100);
+  // 親側は緑系グラデーション・枠・テキスト
+  const parentGradient = 'from-green-50 to-green-100 border border-green-200';
+  const parentText = 'text-green-700';
+  const parentPercent = 'text-green-600';
   return (
-    <div className={`w-full bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : 'from-parent-50 to-parent-50 border border-parent-100'}`}
-      style={{ background: 'linear-gradient(135deg, #FFF7F0 0%, #FFF3E0 100%)' }}
+    <div
+      className={`w-full bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : parentGradient}`}
+      style={userRole === 'child'
+        ? { background: 'linear-gradient(135deg, #FFF7F0 0%, #FFF3E0 100%)' }
+        : { background: 'linear-gradient(135deg, #F0FFF4 0%, #E6FFFA 100%)' }}
     >
       <div className="text-center mb-3">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>{percent}%</div>
+          <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : parentPercent}`}>{percent}%</div>
           <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
         </div>
-        <div className="text-xs font-bold text-gray-700">類似度</div>
-        <div className="text-xs text-gray-500 mt-1">{label}</div>
+        <div className={`text-xs font-bold ${userRole === 'child' ? 'text-gray-700' : parentText}`}>類似度</div>
+        <div className={`text-xs mt-1 ${userRole === 'child' ? 'text-gray-500' : parentText}`}>{label}</div>
       </div>
       <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">
         <div className={`h-full rounded-full ${getBarColor()}`} style={{ width: `${percent}%` }} />
@@ -497,7 +505,7 @@ export default function MatchingPage() {
       };
       if (isParent && isChild && isUnder18) {
         return (
-          <div className="w-full rounded-lg bg-yellow-100 px-3 py-2 text-yellow-800 text-sm font-semibold text-center border border-yellow-300">
+          <div className="w-full rounded-lg bg-green-100 px-3 py-2 text-green-800 text-sm font-semibold text-center border border-green-300">
             承認申請待ち（18歳未満のため）
           </div>
         );
