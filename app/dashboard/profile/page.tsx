@@ -496,61 +496,58 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="rounded-lg bg-white p-8 shadow">
-            {/* マッチング計算式の説明セクション */}
-            <div className={`mb-6 rounded-lg p-6 border ${userRole === 'child' ? 'bg-gradient-to-r from-child-50 to-orange-50 border-child-200' : 'bg-gradient-to-r from-parent-50 to-green-50 border-parent-200'}`}>
-              <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                <span className="text-2xl">🎯</span>
-                プロフィールとマッチング精度について
-              </h2>
-              <div className="space-y-3 text-sm text-gray-700">
-                <p className="leading-relaxed">
-                  このプラットフォームでは、親子の再会の可能性を高めるため、入力された情報をもとに<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチング度を自動計算</strong>しています。
-                  より詳しい情報を入力するほど、正確なマッチングが可能になります。
-                </p>
-                
-                <div className="bg-white rounded-lg p-4 mt-3">
-                  <h3 className="font-semibold text-gray-800 mb-2">📊 マッチング度の計算方法</h3>
-                  <ul className="space-y-2 ml-2">
-                    <li className="flex items-start gap-2">
-                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎂</span>
-                      <div>
-                        <strong>生年月日</strong> - 最重要（最大80点）
-                        <div className="text-xs text-gray-600 mt-0.5">完全一致で80点、年月一致で60点、年のみ一致で50点</div>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>👤</span>
-                      <div>
-                        <strong>氏名（ひらがな）</strong> - 追加で+10点
-                        <div className="text-xs text-gray-600 mt-0.5">部分一致でもスコアが向上します</div>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>📍</span>
-                      <div>
-                        <strong>出身地</strong> - 追加で+10点
-                        <div className="text-xs text-gray-600 mt-0.5">都道府県一致で+10点、市区町村まで一致でさらに向上</div>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>⚖️</span>
-                      <div>
-                        <strong>双方向スコア</strong> - 親→子（60%）+ 子→親（40%）
-                        <div className="text-xs text-gray-600 mt-0.5">親の記憶をより重視した計算式を採用しています</div>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
 
-                <div className="bg-yellow-50 rounded-lg p-3 border-l-4 border-yellow-400 mt-3">
-                  <p className="text-xs">
-                    <strong className="text-yellow-800">💡 ポイント：</strong>
-                    すべての情報が必須ではありません。覚えている範囲で入力することで、少しずつマッチング精度が向上します。
-                    わからない項目は空欄のままでも問題ありません。
+              {/* マッチングアルゴリズム説明 */}
+              <div className={`mb-6 rounded-lg p-6 border ${userRole === 'child' ? 'bg-gradient-to-r from-child-50 to-orange-50 border-child-200' : 'bg-gradient-to-r from-parent-50 to-green-50 border-parent-200'}`}>
+                <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <span className="text-2xl">🎯</span>
+                  プロフィールとマッチングスコアについて
+                </h2>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p className="leading-relaxed">
+                    入力した情報（生年月日・氏名（ひらがな）・出身地）をもとに、親子双方の情報を比較し<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチングスコア</strong>を自動計算します。
                   </p>
+                  <div className="bg-white rounded-lg p-4 mt-3">
+                    <h3 className="font-semibold text-gray-800 mb-2">📊 マッチングスコアの計算方法</h3>
+                    <ul className="space-y-2 ml-2">
+                      <li className="flex items-start gap-2">
+                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎂</span>
+                        <div>
+                          <strong>生年月日</strong>：年月日一致で80点、月日一致70点、年月一致60点。<br />
+                          年齢差が近い場合は最大+5点加算。
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>👤</span>
+                        <div>
+                          <strong>氏名（ひらがな）</strong>：名字・名前とも一致10点、名前のみ一致7点、名字のみ一致3点。
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>📍</span>
+                        <div>
+                          <strong>出身地</strong>：都道府県・市区町村とも一致10点、都道府県のみ一致7点。
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>⚖️</span>
+                        <div>
+                          <strong>スコア合算</strong>：親→子、（60%合計60点満点）
+                          <br />
+                          ＋子→親（40%、合計40点満点）で合計100点満点。
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="bg-yellow-50 rounded-lg p-3 border-l-4 border-yellow-400 mt-3">
+                    <p className="text-xs">
+                      <strong className="text-yellow-800">💡 ポイント：</strong>
+                      すべての情報が必須ではありません。覚えている範囲で入力することで、少しずつマッチング精度が向上します。
+                      わからない項目は空欄のままでも問題ありません。
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
