@@ -148,10 +148,10 @@ function testPhotoMapping() {
   ];
 
   const photos = [
-    { searching_child_id: 'child1', photo_url: 'https://example.com/photo1.jpg' },
-    { searching_child_id: 'child1', photo_url: 'https://example.com/photo2.jpg' }, // 同じ子の2枚目（無視される）
-    { searching_child_id: 'child2', photo_url: 'https://example.com/photo3.jpg' }, // 2番目の子（無視される）
-    { searching_child_id: 'child3', photo_url: 'https://example.com/photo4.jpg' },
+    { target_person_id: 'child1', photo_url: 'https://example.com/photo1.jpg' },
+    { target_person_id: 'child1', photo_url: 'https://example.com/photo2.jpg' }, // 同じ子の2枚目（無視される）
+    { target_person_id: 'child2', photo_url: 'https://example.com/photo3.jpg' }, // 2番目の子（無視される）
+    { target_person_id: 'child3', photo_url: 'https://example.com/photo4.jpg' },
   ];
 
   const photosMap = new Map();
@@ -168,11 +168,11 @@ function testPhotoMapping() {
 
   // 最初の子どもの最初の写真のみを保持（効率的な実装）
   photos.forEach((photo) => {
-    const userId = childToUserMap.get(photo.searching_child_id);
+    const userId = childToUserMap.get(photo.target_person_id);
     if (userId) {
       const firstChildId = userChildMap.get(userId);
       // 最初の子どもの最初の写真のみを追加
-      if (photo.searching_child_id === firstChildId && !photosMap.has(userId)) {
+      if (photo.target_person_id === firstChildId && !photosMap.has(userId)) {
         photosMap.set(userId, [photo.photo_url]);
       }
     }

@@ -26,9 +26,9 @@ COMMENT ON COLUMN public.profiles.first_name_hiragana IS 'ユーザーの名前�
 COMMENT ON COLUMN public.profiles.birthplace_prefecture IS '出身地の都道府県（e.g., 東京都, 大阪府）';
 COMMENT ON COLUMN public.profiles.birthplace_municipality IS '出身地の市区町村（e.g., 渋谷区, 大阪市北区）';
 
--- ===== searching_children テーブルの更新 =====
+-- ===== target_people テーブルの更新 =====
 
-ALTER TABLE public.searching_children
+ALTER TABLE public.target_people
 ADD COLUMN IF NOT EXISTS last_name_kanji TEXT,
 ADD COLUMN IF NOT EXISTS last_name_hiragana TEXT,
 ADD COLUMN IF NOT EXISTS first_name_kanji TEXT,
@@ -37,17 +37,17 @@ ADD COLUMN IF NOT EXISTS birthplace_prefecture TEXT,
 ADD COLUMN IF NOT EXISTS birthplace_municipality TEXT;
 
 -- コメント追加
-COMMENT ON COLUMN public.searching_children.last_name_kanji IS '探している相手の苗字（漢字）';
-COMMENT ON COLUMN public.searching_children.last_name_hiragana IS '探している相手の苗字（ひらがな）';
-COMMENT ON COLUMN public.searching_children.first_name_kanji IS '探している相手の名前（漢字）';
-COMMENT ON COLUMN public.searching_children.first_name_hiragana IS '探している相手の名前（ひらがな）';
-COMMENT ON COLUMN public.searching_children.birthplace_prefecture IS '探している相手の出身地の都道府県';
-COMMENT ON COLUMN public.searching_children.birthplace_municipality IS '探している相手の出身地の市区町村';
+COMMENT ON COLUMN public.target_people.last_name_kanji IS '探している相手の苗字（漢字）';
+COMMENT ON COLUMN public.target_people.last_name_hiragana IS '探している相手の苗字（ひらがな）';
+COMMENT ON COLUMN public.target_people.first_name_kanji IS '探している相手の名前（漢字）';
+COMMENT ON COLUMN public.target_people.first_name_hiragana IS '探している相手の名前（ひらがな）';
+COMMENT ON COLUMN public.target_people.birthplace_prefecture IS '探している相手の出身地の都道府県';
+COMMENT ON COLUMN public.target_people.birthplace_municipality IS '探している相手の出身地の市区町村';
 
 -- ===== インデックス追加 =====
 
 CREATE INDEX IF NOT EXISTS idx_profiles_birthplace_prefecture 
   ON public.profiles(birthplace_prefecture);
 
-CREATE INDEX IF NOT EXISTS idx_searching_children_birthplace_prefecture 
-  ON public.searching_children(birthplace_prefecture);
+CREATE INDEX IF NOT EXISTS idx_target_people_birthplace_prefecture 
+  ON public.target_people(birthplace_prefecture);

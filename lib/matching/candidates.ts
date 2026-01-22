@@ -66,14 +66,14 @@ function calculateBirthplaceSimilarity(
 
 /**
  * 親ユーザー向け：マッチング候補を取得
- * searching_children テーブルの情報と一致する子ユーザーを検索
+ * target_people テーブルの情報と一致する子ユーザーを検索
  */
 async function getParentMatchingCandidates(userId: string): Promise<MatchingCandidate[]> {
   const supabase = await createClient();
   
   // 親ユーザーが探している子どもの情報を取得
   const { data: searchingChildren, error: searchError } = await supabase
-    .from('searching_children')
+    .from('target_people')
     .select('birth_date, gender, last_name_hiragana, first_name_hiragana, birthplace_prefecture, birthplace_municipality')
     .eq('user_id', userId)
     .not('birth_date', 'is', null);
@@ -128,7 +128,7 @@ async function getParentMatchingCandidates(userId: string): Promise<MatchingCand
 
 /**
  * 子ユーザー向け：マッチング候補を取得
- * 自身の プロフィール情報と一致する親の searching_children を検索
+ * 自身の プロフィール情報と一致する親の target_people を検索
  */
 async function getChildMatchingCandidates(userId: string): Promise<MatchingCandidate[]> {
   const supabase = await createClient();
@@ -145,9 +145,9 @@ async function getChildMatchingCandidates(userId: string): Promise<MatchingCandi
     return [];
   }
 
-  // 同じ生年月日を searching_children に持つ親ユーザーを検索
+  // 同じ生年月日を target_people に持つ親ユーザーを検索
   const { data: searchingChildren, error: searchError } = await supabase
-    .from('searching_children')
+    .from('target_people')
     .select('user_id, birth_date')
     .eq('birth_date', profile.birth_date);
 
@@ -236,10 +236,10 @@ export async function getMatchingCandidates(): Promise<{
     missingFields.push('生年月日');
   }
 
-  // 親ユーザーの場合、searching_children の確認
+  // 親ユーザーの場合、target_people の確認
   if (userData.role === 'parent') {
     const { data: searchingChildren } = await supabase
-      .from('searching_children')
+      .from('target_people')
       .select('id, birth_date')
       .eq('user_id', user.id)
       .not('birth_date', 'is', null)

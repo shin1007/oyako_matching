@@ -19,7 +19,7 @@
 - データベーストリガーを5枚制限から1枚制限に変更
 - 既存データのクリーンアップ:
   - `display_order > 0` の写真をすべて削除
-  - 同じ `searching_child_id` に複数の写真がある場合、最も古い写真（`created_at` が最小）を保持し、それ以外を削除
+  - 同じ `target_person_id` に複数の写真がある場合、最も古い写真（`created_at` が最小）を保持し、それ以外を削除
 
 ### 2. フロントエンド変更
 
@@ -61,7 +61,7 @@ supabase db push
 
 マイグレーション実行時に以下が行われます:
 1. `display_order > 0` の写真がデータベースから削除されます
-2. 同じ `searching_child_id` に複数の `display_order = 0` の写真がある場合、最も古い写真以外が削除されます
+2. 同じ `target_person_id` に複数の `display_order = 0` の写真がある場合、最も古い写真以外が削除されます
 
 削除される写真のURLがログに出力されるため、必要に応じてSupabase Storageから手動で削除できます。
 
@@ -79,16 +79,16 @@ supabase db push
 ## 既存ユーザーへの影響
 
 ### データの保持
-- 各 `searching_child` について、最も古い写真（最初にアップロードされた写真）が保持されます
+- 各 `target_person` について、最も古い写真（最初にアップロードされた写真）が保持されます
 - それ以外の写真は削除されます
 
 ### Supabase Storage
 - データベースから削除された写真のファイルはStorageに残ります
 - 必要に応じて、以下のクエリで削除対象のURLを確認できます:
   ```sql
-  SELECT photo_url FROM public.searching_children_photos 
+  SELECT photo_url FROM public.target_people_photos 
   WHERE display_order > 0 
-  ORDER BY searching_child_id, display_order;
+  ORDER BY target_person_id, display_order;
   ```
 
 ### UIの変化
@@ -100,7 +100,7 @@ supabase db push
 
 将来的に写真枚数を増やす必要がある場合:
 1. `MAX_PHOTOS_PER_CHILD` 定数を更新
-2. マイグレーションファイルで `check_searching_children_photos_limit()` 関数を更新
+2. マイグレーションファイルで `check_target_people_photos_limit()` 関数を更新
 3. UI上の制限値表示を更新
 
 ## トラブルシューティング
@@ -115,10 +115,10 @@ supabase db push
 マイグレーションを元に戻す必要がある場合:
 ```sql
 -- トリガー関数を5枚制限に戻す
-CREATE OR REPLACE FUNCTION check_searching_children_photos_limit()
+CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (SELECT COUNT(*) FROM public.searching_children_photos WHERE searching_child_id = NEW.searching_child_id) >= 5 THEN
+  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE target_person_id = NEW.target_person_id) >= 5 THEN
     RAISE EXCEPTION 'Cannot add more than 5 photos per searching child';
   END IF;
   RETURN NEW;

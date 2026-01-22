@@ -23,7 +23,7 @@ interface Match {
   other_user_name: string;
   other_user_role: string;
   other_user_image?: string | null;
-  searching_children?: Array<{
+  target_people?: Array<{
     id: string;
     last_name_kanji?: string;
     first_name_kanji?: string;
@@ -347,11 +347,11 @@ export default function MessageDetailPage() {
             </div>
 
             {/* 探している子どもの情報 */}
-            {match.searching_children && match.searching_children.length > 0 && (
+            {match.target_people && match.target_people.length > 0 && (
               <div className="border-t pt-4">
                 <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している{match.other_user_role === 'parent' ? '子ども' : '親'}:</p>
                 <div className="flex flex-wrap gap-2">
-                  {match.searching_children.map((child) => (
+                  {match.target_people.map((child) => (
                     <div key={child.id} className="flex items-center gap-2 bg-blue-50 rounded p-2">
                       {child.photo_url && (
                         <img

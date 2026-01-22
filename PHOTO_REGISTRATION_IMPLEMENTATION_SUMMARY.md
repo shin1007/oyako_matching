@@ -8,7 +8,7 @@
 
 ### 1. データベース
 
-**新規テーブル: `searching_children_photos`**
+**新規テーブル: `target_people_photos`**
 - 写真URL、撮影日時、年齢情報を保存
 - 1つの子ども・親につき1枚のみ（2026-01-19にサーバー負荷軽減のため5枚から変更）
 - RLSポリシーで保護
@@ -61,7 +61,7 @@
    ```bash
    supabase db push
    ```
-   または Supabase Dashboard で `022_searching_children_photos.sql` を実行
+   または Supabase Dashboard で `022_target_people_photos.sql` を実行
 
 2. **動作確認:**
    - プロフィールページにアクセス
@@ -106,7 +106,7 @@
 ## ファイル一覧
 
 ### 新規作成
-- `supabase/migrations/022_searching_children_photos.sql` - マイグレーション（初期実装：5枚制限）
+- `supabase/migrations/022_target_people_photos.sql` - マイグレーション（初期実装：5枚制限）
 - `supabase/migrations/026_limit_photos_to_one.sql` - マイグレーション（1枚制限へ変更）
 - `app/components/SearchingChildPhotoUpload.tsx` - 写真アップロードコンポーネント
 - `docs/PHOTO_REGISTRATION_FEATURE.md` - 機能ドキュメント

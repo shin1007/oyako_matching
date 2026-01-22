@@ -132,7 +132,7 @@ export default function ProfilePage() {
 
       // Load searching children
       const { data: childrenData, error: childrenError } = await supabase
-        .from('searching_children')
+        .from('target_people')
         .select('*')
         .eq('user_id', user.id)
         .order('display_order', { ascending: true });
@@ -142,9 +142,9 @@ export default function ProfilePage() {
         const childrenWithPhotos = await Promise.all(
           childrenData.map(async (child) => {
             const { data: photosData } = await supabase
-              .from('searching_children_photos')
+              .from('target_people_photos')
               .select('*')
-              .eq('searching_child_id', child.id)
+              .eq('target_person_id', child.id)
               .order('display_order', { ascending: true });
 
             const photos: Photo[] = photosData?.map(photo => ({
@@ -282,7 +282,7 @@ export default function ProfilePage() {
 
       // Delete all existing searching children
       await supabase
-        .from('searching_children')
+        .from('target_people')
         .delete()
         .eq('user_id', user.id);
 
@@ -309,7 +309,7 @@ export default function ProfilePage() {
 
       if (childrenToInsert.length > 0) {
         const { data: insertedChildren, error: childrenError } = await supabase
-          .from('searching_children')
+          .from('target_people')
           .insert(childrenToInsert)
           .select();
 
@@ -334,13 +334,13 @@ export default function ProfilePage() {
             if (originalChild?.photos && originalChild.photos.length > 0) {
               // Delete existing photos for this child
               await supabase
-                .from('searching_children_photos')
+                .from('target_people_photos')
                 .delete()
-                .eq('searching_child_id', insertedChild.id);
+                .eq('target_person_id', insertedChild.id);
 
               // Insert new photos
               const photosToInsert = originalChild.photos.map((photo, photoIndex) => ({
-                searching_child_id: insertedChild.id,
+                target_person_id: insertedChild.id,
                 user_id: user.id,
                 photo_url: photo.photoUrl,
                 captured_at: photo.capturedAt || null,
@@ -350,7 +350,7 @@ export default function ProfilePage() {
               }));
 
               const { error: photosError } = await supabase
-                .from('searching_children_photos')
+                .from('target_people_photos')
                 .insert(photosToInsert);
 
               if (photosError) throw photosError;
@@ -371,9 +371,21 @@ export default function ProfilePage() {
       // Reload to get IDs
       await loadProfile();
     } catch (err: any) {
+      // 詳細なエラー内容を出力
+      if (err && typeof err === 'object') {
+        console.error('プロフィール保存エラー詳細:', {
+          status: err.status,
+          body: err.body,
+          message: err.message,
+          stack: err.stack,
+          ...err
+        });
+      } else {
+        console.error('プロフィール保存エラー:', err);
+      }
       const message = String(err?.message || 'プロフィールの保存に失敗しました');
       if (message.includes("Could not find the table")) {
-        setError('必要なテーブルがありません。Supabaseのマイグレーション（001_initial_schema.sql, 006_multiple_searching_children.sql）を実行してから再試行してください。');
+        setError('必要なテーブルがありません。Supabaseのマイグレーション（001_initial_schema.sql, 006_multiple_target_people.sql）を実行してから再試行してください。');
       } else {
         setError(message);
       }

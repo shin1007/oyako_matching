@@ -12,14 +12,14 @@
 
 ### データベーススキーマ
 
-#### `searching_children_photos` テーブル
+#### `target_people_photos` テーブル
 
 探している子ども・親の写真情報を保存するテーブルです。
 
 | カラム名 | 型 | 説明 |
 |---------|-----|------|
 | id | UUID | 主キー |
-| searching_child_id | UUID | 関連する searching_children のID（外部キー） |
+| target_person_id | UUID | 関連する target_people のID（外部キー） |
 | user_id | UUID | 写真をアップロードしたユーザーのID（外部キー） |
 | photo_url | TEXT | 写真のURL（Supabase Storage） |
 | captured_at | DATE | 写真の撮影日 |
@@ -30,7 +30,7 @@
 | updated_at | TIMESTAMPTZ | 更新日時 |
 
 **制約:**
-- 1つの `searching_child` につき1枚の写真を登録可能（2026-01-19変更）
+- 1つの `target_person` につき1枚の写真を登録可能（2026-01-19変更）
 - トリガーで枚数制限を実装
 
 #### Supabase Storage
@@ -70,7 +70,7 @@
 **Props:**
 ```typescript
 interface SearchingChildPhotoUploadProps {
-  searchingChildId: string | undefined;  // searching_child のID（保存後に利用）
+  searchingChildId: string | undefined;  // target_person のID（保存後に利用）
   userId: string;                         // ユーザーID
   photos: Photo[];                        // 現在の写真リスト
   onPhotosUpdate: (photos: Photo[]) => void;  // 写真更新時のコールバック
@@ -133,7 +133,7 @@ supabase migration up
 
 2. Supabase Dashboardを使用する場合:
    - SQL Editorを開く
-   - まず `supabase/migrations/022_searching_children_photos.sql` の内容を貼り付けて実行
+   - まず `supabase/migrations/022_target_people_photos.sql` の内容を貼り付けて実行
    - 次に `supabase/migrations/026_limit_photos_to_one.sql` の内容を貼り付けて実行
 
 ### ロールバック
@@ -142,14 +142,14 @@ supabase migration up
 
 ```sql
 -- テーブルの削除
-DROP TABLE IF EXISTS public.searching_children_photos CASCADE;
+DROP TABLE IF EXISTS public.target_people_photos CASCADE;
 
 -- ストレージバケットの削除
 DELETE FROM storage.buckets WHERE id = 'searching-children-photos';
 
 -- 関数とトリガーの削除
-DROP FUNCTION IF EXISTS check_searching_children_photos_limit() CASCADE;
-DROP FUNCTION IF EXISTS update_searching_children_photos_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS check_target_people_photos_limit() CASCADE;
+DROP FUNCTION IF EXISTS update_target_people_photos_updated_at() CASCADE;
 ```
 
 ## 今後の拡張予定
@@ -206,7 +206,7 @@ DROP FUNCTION IF EXISTS update_searching_children_photos_updated_at() CASCADE;
 
 ### データベースエラー
 
-**エラーメッセージ:** `Could not find the table 'public.searching_children_photos'`
+**エラーメッセージ:** `Could not find the table 'public.target_people_photos'`
 
 **解決方法:**
 マイグレーションが実行されていない可能性があります。以下のコマンドでマイグレーションを実行してください:
@@ -217,7 +217,7 @@ supabase migration up
 
 ## 関連ファイル
 
-- **マイグレーション**: `supabase/migrations/022_searching_children_photos.sql`
+- **マイグレーション**: `supabase/migrations/022_target_people_photos.sql`
 - **コンポーネント**: `app/components/SearchingChildPhotoUpload.tsx`
 - **プロフィールページ**: `app/dashboard/profile/page.tsx`
 

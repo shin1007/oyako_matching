@@ -141,7 +141,7 @@ export default function SearchingChildPhotoUpload({
       // データベースから削除（保存済みの場合）
       if (photo.id && searchingChildId) {
         await supabase
-          .from('searching_children_photos')
+          .from('target_people_photos')
           .delete()
           .eq('id', photo.id);
       }

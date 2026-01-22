@@ -18,7 +18,7 @@ interface MatchWithProfile extends Match {
   other_user_name: string;
   other_user_role: string;
   other_user_image?: string | null;
-  searching_child_photos?: string[];
+  target_person_photos?: string[];
   is_requester: boolean; // 現在のユーザーがリクエスター（申請者）か
   unread_count?: number; // 未読メッセージ数
   last_message?: {
@@ -100,7 +100,7 @@ export default function MessagesPage() {
       if (data.matches && data.matches.length > 0) {
         console.log('[MessagesPage] First match details:', {
           other_user_image: data.matches[0].other_user_image,
-          searching_child_photos: data.matches[0].searching_child_photos,
+          target_person_photos: data.matches[0].target_person_photos,
           other_user_name: data.matches[0].other_user_name
         });
       }

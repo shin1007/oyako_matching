@@ -461,9 +461,9 @@ export type Database = {
           last_name_kanji: string | null
           parent_gender: string | null
           profile_image_url: string | null
-          searching_child_birth_date: string | null
-          searching_child_name_hiragana: string | null
-          searching_child_name_kanji: string | null
+          target_person_birth_date: string | null
+          target_person_name_hiragana: string | null
+          target_person_name_kanji: string | null
           updated_at: string | null
           user_id: string
         }
@@ -482,9 +482,9 @@ export type Database = {
           last_name_kanji?: string | null
           parent_gender?: string | null
           profile_image_url?: string | null
-          searching_child_birth_date?: string | null
-          searching_child_name_hiragana?: string | null
-          searching_child_name_kanji?: string | null
+          target_person_birth_date?: string | null
+          target_person_name_hiragana?: string | null
+          target_person_name_kanji?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -503,9 +503,9 @@ export type Database = {
           last_name_kanji?: string | null
           parent_gender?: string | null
           profile_image_url?: string | null
-          searching_child_birth_date?: string | null
-          searching_child_name_hiragana?: string | null
-          searching_child_name_kanji?: string | null
+          target_person_birth_date?: string | null
+          target_person_name_hiragana?: string | null
+          target_person_name_kanji?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -561,7 +561,7 @@ export type Database = {
           },
         ]
       }
-      searching_children: {
+      target_people: {
         Row: {
           birth_date: string | null
           birthplace_municipality: string | null
@@ -615,7 +615,7 @@ export type Database = {
         }
         Relationships: []
       }
-      searching_children_photos: {
+      target_people_photos: {
         Row: {
           age_at_capture: number | null
           captured_at: string | null
@@ -624,7 +624,7 @@ export type Database = {
           display_order: number | null
           id: string
           photo_url: string
-          searching_child_id: string
+          target_person_id: string
           updated_at: string | null
           user_id: string
         }
@@ -636,7 +636,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           photo_url: string
-          searching_child_id: string
+          target_person_id: string
           updated_at?: string | null
           user_id: string
         }
@@ -648,16 +648,16 @@ export type Database = {
           display_order?: number | null
           id?: string
           photo_url?: string
-          searching_child_id?: string
+          target_person_id?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "searching_children_photos_searching_child_id_fkey"
-            columns: ["searching_child_id"]
+            foreignKeyName: "target_people_photos_target_person_id_fkey"
+            columns: ["target_person_id"]
             isOneToOne: false
-            referencedRelation: "searching_children"
+            referencedRelation: "target_people"
             referencedColumns: ["id"]
           },
         ]
@@ -793,7 +793,7 @@ export type Database = {
       }
     }
     Functions: {
-      check_searching_children_limit: {
+      check_target_people_limit: {
         Args: { arg1: string }
         Returns: boolean
       }

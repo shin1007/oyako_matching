@@ -42,7 +42,7 @@ supabase db push
 4. 「New Query」をクリック
 
 5. 以下のファイルの内容をコピー&ペースト:
-   - `supabase/migrations/022_searching_children_photos.sql`
+   - `supabase/migrations/022_target_people_photos.sql`
 
 6. 「Run」ボタンをクリックして実行
 
@@ -55,7 +55,7 @@ supabase db push
 1. Supabase Dashboard の「Table Editor」を開く
 
 2. 以下のテーブルが存在することを確認:
-   - `searching_children_photos`
+   - `target_people_photos`
 
 3. 「Storage」セクションを開く
 
@@ -78,10 +78,10 @@ supabase db push
 
 ```sql
 -- テーブルのポリシーを削除
-DROP POLICY IF EXISTS "Users can view their own searching children photos" ON public.searching_children_photos;
-DROP POLICY IF EXISTS "Users can insert their own searching children photos" ON public.searching_children_photos;
-DROP POLICY IF EXISTS "Users can update their own searching children photos" ON public.searching_children_photos;
-DROP POLICY IF EXISTS "Users can delete their own searching children photos" ON public.searching_children_photos;
+DROP POLICY IF EXISTS "Users can view their own searching children photos" ON public.target_people_photos;
+DROP POLICY IF EXISTS "Users can insert their own searching children photos" ON public.target_people_photos;
+DROP POLICY IF EXISTS "Users can update their own searching children photos" ON public.target_people_photos;
+DROP POLICY IF EXISTS "Users can delete their own searching children photos" ON public.target_people_photos;
 
 -- ストレージのポリシーを削除
 DROP POLICY IF EXISTS "Users can upload their own searching children photos" ON storage.objects;

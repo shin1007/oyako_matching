@@ -1,11 +1,11 @@
 -- target_people テーブルへのリネーム
-ALTER TABLE searching_children RENAME TO target_people;
+ALTER TABLE target_people RENAME TO target_people;
 
 -- target_people_photos テーブルへのリネーム
-ALTER TABLE searching_children_photos RENAME TO target_people_photos;
+ALTER TABLE target_people_photos RENAME TO target_people_photos;
 
 -- target_people_photos の外部キー・カラム名修正
-ALTER TABLE target_people_photos RENAME COLUMN searching_child_id TO target_person_id;
+ALTER TABLE target_people_photos RENAME COLUMN target_person_id TO target_person_id;
 
 -- 必要に応じてインデックス名や外部キー制約名も変更
 -- 例: 外部キー制約名変更（PostgreSQLの場合）

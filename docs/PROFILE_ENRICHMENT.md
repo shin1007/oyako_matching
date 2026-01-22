@@ -16,7 +16,7 @@ Issue #29 のプロフィール充実化機能が完成しました。
 - `birthplace_prefecture` (TEXT) - 出身地の都道府県
 - `birthplace_municipality` (TEXT) - 出身地の市区町村
 
-#### `searching_children` テーブルに追加されたカラム：
+#### `target_people` テーブルに追加されたカラム：
 同じく以下を追加：
 - `last_name_kanji`、`last_name_hiragana`
 - `first_name_kanji`、`first_name_hiragana`
@@ -28,7 +28,7 @@ Issue #29 のプロフィール充実化機能が完成しました。
 
 [types/database.ts](types/database.ts) を更新し、新しいカラムの型定義を追加：
 - `profiles` テーブルの Row/Insert/Update 型に新フィールドを追加
-- `searching_children` テーブルの Row/Insert/Update 型に新フィールドを追加
+- `target_people` テーブルの Row/Insert/Update 型に新フィールドを追加
 
 ### 3. フロントエンド UI更新
 
@@ -45,7 +45,7 @@ Issue #29 のプロフィール充実化機能が完成しました。
    - 都道府県：[ドロップダウン] - 47都道府県全て対応
    - 市区町村：[入力欄] - 自由記述
 
-#### 子ども/親情報の詳細表示（searching_children）：
+#### 子ども/親情報の詳細表示（target_people）：
 各エントリーに以下の情報を入力可能：
 - 生年月日（日付選択）
 - 性別（ドロップダウン: 未選択/男性/女性/その他）
