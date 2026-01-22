@@ -1,4 +1,20 @@
 "use client";
+// 親の同意モーダル（仮）
+function ParentApprovalModal({ open, onApprove, onCancel }: { open: boolean; onApprove: () => void; onCancel: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-orange-50 rounded-lg shadow-lg p-8 max-w-md w-full border-2 border-orange-300">
+        <h2 className="text-xl font-bold mb-4 text-orange-700">親の同意が必要です</h2>
+        <p className="mb-6 text-orange-800">18歳未満の方は親の同意が必要です。親御様の同意を得てから申請してください。</p>
+        <div className="flex gap-4 justify-end">
+          <button onClick={onCancel} className="px-4 py-2 rounded bg-orange-200 text-orange-900 font-semibold hover:bg-orange-300">キャンセル</button>
+          <button onClick={onApprove} className="px-4 py-2 rounded bg-orange-500 text-white font-semibold hover:bg-orange-600">親の同意を得たので申請</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -181,24 +197,32 @@ function MatchingSimilarityCard({
       if (score >= 0.7) return 'bg-child-400';
       return 'bg-gray-600';
     } else {
-      if (score >= 0.9) return 'bg-parent-600';
-      if (score >= 0.8) return 'bg-parent-500';
-      if (score >= 0.7) return 'bg-parent-400';
+      // 親側は緑系
+      if (score >= 0.9) return 'bg-green-600';
+      if (score >= 0.8) return 'bg-green-500';
+      if (score >= 0.7) return 'bg-green-400';
       return 'bg-gray-600';
     }
   };
   const percent = Math.round(score * 100);
+  // 親側は緑系グラデーション・枠・テキスト
+  const parentGradient = 'from-green-50 to-green-100 border border-green-200';
+  const parentText = 'text-green-700';
+  const parentPercent = 'text-green-600';
   return (
-    <div className={`w-full bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : 'from-parent-50 to-parent-50 border border-parent-100'}`}
-      style={{ background: 'linear-gradient(135deg, #FFF7F0 0%, #FFF3E0 100%)' }}
+    <div
+      className={`w-full bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : parentGradient}`}
+      style={userRole === 'child'
+        ? { background: 'linear-gradient(135deg, #FFF7F0 0%, #FFF3E0 100%)' }
+        : { background: 'linear-gradient(135deg, #F0FFF4 0%, #E6FFFA 100%)' }}
     >
       <div className="text-center mb-3">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>{percent}%</div>
+          <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : parentPercent}`}>{percent}%</div>
           <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
         </div>
-        <div className="text-xs font-bold text-gray-700">類似度</div>
-        <div className="text-xs text-gray-500 mt-1">{label}</div>
+        <div className={`text-xs font-bold ${userRole === 'child' ? 'text-gray-700' : parentText}`}>類似度</div>
+        <div className={`text-xs mt-1 ${userRole === 'child' ? 'text-gray-500' : parentText}`}>{label}</div>
       </div>
       <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">
         <div className={`h-full rounded-full ${getBarColor()}`} style={{ width: `${percent}%` }} />
@@ -391,9 +415,14 @@ export default function MatchingPage() {
   const [error, setError] = useState('');
   const [creating, setCreating] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [searchingTargets, setSearchingTargets] = useState<SearchingTarget[]>([]);
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
+  // 親の同意モーダル表示状態
+  const [showParentApprovalModal, setShowParentApprovalModal] = useState(false);
+  // 申請対象ユーザーIDとスコアを一時保存
+  const [pendingMatchInfo, setPendingMatchInfo] = useState<{userId: string, score: number} | null>(null);
   const router = useRouter();
   const supabase = createClient();
   useEffect(() => {
@@ -436,6 +465,7 @@ export default function MatchingPage() {
       const data = await response.json();
       setMatches(data.candidates || []);
       setUserRole(data.userRole);
+      setProfile(data.profile || null);
       setSearchingTargets(data.myTargetPeople || []);
     } catch (err: any) {
       setError(err.message);
@@ -461,9 +491,21 @@ export default function MatchingPage() {
         const age = calculateAge(childBirthDate);
         isUnder18 = age < 18;
       }
+      // 申請ボタン押下時の処理
+      const handleRequestClick = () => {
+        // 自分が18歳未満かつrole=childなら親の同意モーダル表示
+        const myAge = profile?.birth_date ? calculateAge(profile.birth_date) : null;
+        const myRole = profile?.users?.role;
+        if (myRole === 'child' && myAge !== null && myAge < 18) {
+          setPendingMatchInfo({ userId: match.userId, score: childScore });
+          setShowParentApprovalModal(true);
+        } else {
+          handleCreateMatch(match.userId, childScore);
+        }
+      };
       if (isParent && isChild && isUnder18) {
         return (
-          <div className="w-full rounded-lg bg-yellow-100 px-3 py-2 text-yellow-800 text-sm font-semibold text-center border border-yellow-300">
+          <div className="w-full rounded-lg bg-green-100 px-3 py-2 text-green-800 text-sm font-semibold text-center border border-green-300">
             承認申請待ち（18歳未満のため）
           </div>
         );
@@ -489,7 +531,7 @@ export default function MatchingPage() {
       } else {
         return (
           <button
-            onClick={() => handleCreateMatch(match.userId, childScore)}
+            onClick={handleRequestClick}
             disabled={creating === match.userId}
             className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
           >
@@ -497,6 +539,22 @@ export default function MatchingPage() {
           </button>
         );
       }
+    // 親の同意モーダル（仮）
+    function ParentApprovalModal({ open, onApprove, onCancel }: { open: boolean; onApprove: () => void; onCancel: () => void }) {
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">親の同意が必要です</h2>
+            <p className="mb-6 text-gray-700">18歳未満の方は親の同意が必要です。親御様の同意を得てから申請してください。</p>
+            <div className="flex gap-4 justify-end">
+              <button onClick={onCancel} className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold">キャンセル</button>
+              <button onClick={onApprove} className="px-4 py-2 rounded bg-parent-600 text-white font-semibold">親の同意を得たので申請</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
     }
 
   const handleCreateMatch = async (targetUserId: string, similarityScore: number) => {
@@ -569,15 +627,10 @@ export default function MatchingPage() {
     <div className="min-h-screen bg-gray-100">
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
         {renderTestModeBanners()}
-        
         {renderTitle(userRole)}
-
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
-            {error}
-          </div>
+          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>
         )}
-
         {loading ? (
           renderFindingMatch()
         ) : matches.length === 0 ? (
@@ -587,6 +640,21 @@ export default function MatchingPage() {
         ) : (
           renderNoTargetRegisteredCard(userRole)
         )}
+        {/* 親の同意モーダル */}
+        <ParentApprovalModal
+          open={showParentApprovalModal}
+          onApprove={() => {
+            setShowParentApprovalModal(false);
+            if (pendingMatchInfo) {
+              handleCreateMatch(pendingMatchInfo.userId, pendingMatchInfo.score);
+              setPendingMatchInfo(null);
+            }
+          }}
+          onCancel={() => {
+            setShowParentApprovalModal(false);
+            setPendingMatchInfo(null);
+          }}
+        />
       </main>
     </div>
   );
