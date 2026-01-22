@@ -1,178 +1,166 @@
-
 "use client";
 
-// テストモード表示用の関数
-function renderTestModeBanners({ testModeBypassVerification, testModeBypassSubscription }: {
-  testModeBypassVerification: boolean;
-  testModeBypassSubscription: boolean;
-}) {
-  return (
-    <>
-      {testModeBypassVerification && (
-        <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">✅</span>
-            <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
-          </div>
-        </div>
-      )}
-      {testModeBypassSubscription && (
-        <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">✅</span>
-            <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
-          </div>
-        </div>
-      )}
-    </>
-  );
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
+import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
+
+interface Match {
+  userId: string;
+  targetScores: Array<{
+    target: any;
+    birthdayScore: number;
+    nameScore: number;
+    birthplaceScore: number;
+    oppositeScore: number;
+  }>;
+  existingMatchId?: string | null;
+  existingMatchStatus?: 'pending' | 'accepted' | 'rejected' | 'blocked' | null;
+  profile?: {
+    role?: string;
+    last_name_kanji?: string;
+    first_name_kanji?: string;
+    last_name_hiragana?: string;
+    first_name_hiragana?: string;
+    birth_date?: string;
+    bio?: string;
+    profile_image_url?: string;
+    gender?: string;
+    birthplace_prefecture?: string;
+    birthplace_municipality?: string;
+  };
+  theirTargetPeople?: Array<{
+    id: string;
+    last_name_kanji?: string;
+    first_name_kanji?: string;
+    birthplace_prefecture?: string;
+    birthplace_municipality?: string;
+    photo_url?: string | null;
+  }>;
+  role?: string;
+}
+interface SearchingTarget {
+  id: string;
+  last_name_kanji?: string;
+  first_name_kanji?: string;
+  name_kanji?: string;
+  name_hiragana?: string;
+  birth_date?: string;
+  gender?: string;
+  birthplace_prefecture?: string;
+  birthplace_municipality?: string;
+  display_order?: number;
 }
 
-// 検索ターゲットのプロフィールカードを描画する関数
-function renderTargetProfile({ target, userRole, calculateAge, getGenderLabel }: {
-  target: SearchingTarget;
-  userRole: string | null;
-  calculateAge: (birthDate: string) => number;
-  getGenderLabel: (gender?: string, role?: string) => string;
-}) {
+// タイトル部分
+function renderTitle(userRole: string | null) {
   return (
-    <div className="w-full lg:max-w-xs border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50 px-6 py-5">
-      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
-        {userRole === 'parent' ? '探している子ども' : '探している親'}
+    <div className="mb-8">
+      <h1 className="text-3xl font-bold text-gray-900">
+        {userRole === 'child' ? '親を探す' : '子を探す'}
+      </h1>
+      <p className="mt-2 text-gray-600">
+        {userRole === 'child'
+          ? 'プロフィール情報に基づいて、あなたに合った親を表示しています'
+          : 'プロフィール情報に基づいて、あなたに合った子を表示しています'}
       </p>
-      <h3 className="text-xl font-bold text-gray-900">
-        {target.last_name_kanji}{target.first_name_kanji || target.name_kanji || target.name_hiragana || '名前未設定'}
-      </h3>
-      <p className="text-sm text-gray-600 mt-1">
-        {target.gender ? getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent') : '性別未設定'}
-        {target.birth_date && ` • ${calculateAge(target.birth_date)}歳`}
-      </p>
-      {target.birth_date && (
-        <p className="text-xs text-gray-500 mt-1">
-          生年月日: {new Date(target.birth_date).toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </p>
-      )}
-      {(target.birthplace_prefecture || target.birthplace_municipality) && (
-        <p className="text-xs text-gray-500 mt-1">
-          出身地: {target.birthplace_prefecture || ''}
-          {target.birthplace_municipality ? ` ${target.birthplace_municipality}` : ''}
-        </p>
-      )}
     </div>
   );
 }
-// マッチ候補カードを描画する関数
-function renderMatchedTargetCards({
-  matchedTargets,
-  target,
-  userRole,
-  creating,
-  handleCreateMatch,
-  calculateAge,
-  getRoleLabel,
-  getGenderLabel,
-  getSimilarityLabel,
-  renderTheirTargetPeople,
-  createMatchingActionButton,
-}: {
-  matchedTargets: Match[];
-  target: SearchingTarget;
-  userRole: string | null;
-  creating: string | null;
-  handleCreateMatch: (userId: string, score: number) => void;
-  calculateAge: (birthDate: string) => number;
-  getRoleLabel: (role: string) => string;
-  getGenderLabel: (gender?: string, role?: string) => string;
-  getSimilarityLabel: (score: number) => string;
-  renderTheirTargetPeople: (match: Match) => React.ReactNode;
-  createMatchingActionButton: (params: {
-    userRole: string | null;
-    match: Match;
-    childScore: number;
-    creating: string | null;
-    handleCreateMatch: (userId: string, score: number) => void;
-    calculateAge: (birthDate: string) => number;
-  }) => React.ReactNode;
-}) {
-  return matchedTargets.map((match) => {
-    // targetScoresから該当ターゲットのスコア合計を取得
-    const scoreObj = Array.isArray(match.targetScores)
-      ? match.targetScores.find((ts) => ts.target.id === target.id)
-      : undefined;
-    const childScore = scoreObj
-      ? (scoreObj.birthdayScore + scoreObj.nameScore + scoreObj.birthplaceScore + scoreObj.oppositeScore) / 100
-      : 0;
-    return (
-      <div
-        key={match.userId}
-        className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition lg:flex-row lg:items-center lg:justify-between"
-      >
-        <div className="flex-1 flex gap-4">
-          {match.profile?.profile_image_url && (
-            <div className="flex-shrink-0">
-              <img
-                src={match.profile.profile_image_url}
-                alt={`${match.profile.last_name_kanji ?? ''}${match.profile.first_name_kanji ?? ''}`}
-                className="h-20 w-20 rounded-lg object-cover border border-gray-200"
-              />
-            </div>
-          )}
-          <div className="flex-1">
-            <span className={`mb-1 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'child' ? 'bg-child-50 text-child-700' : 'bg-parent-50 text-parent-700'}`}>
-              登録済み{getRoleLabel(match.role || '')}ユーザー
-            </span>
-            <h4 className="text-lg font-semibold text-gray-900">{match.profile?.last_name_kanji ?? ''}{match.profile?.first_name_kanji ?? ''}</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              {getGenderLabel(match.profile?.gender, match.role)}
-              {match.profile?.birth_date && ` • ${calculateAge(match.profile.birth_date)}歳`}
-            </p>
-            {match.profile?.bio && (
-              <p className="mt-2 text-sm text-gray-600 line-clamp-2">{match.profile.bio}</p>
-            )}
-            {match.profile?.birth_date && (
-              <p className="text-xs text-gray-500 mt-1">
-                生年月日: {new Date(match.profile.birth_date).toLocaleDateString('ja-JP', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            )}
-            {(match.profile?.birthplace_prefecture || match.profile?.birthplace_municipality) && (
-              <p className="text-xs text-gray-500 mt-1">
-                出身地: {match.profile?.birthplace_prefecture || ''}
-                {match.profile?.birthplace_municipality ? ` ${match.profile.birthplace_municipality}` : ''}
-              </p>
-            )}
-            {renderTheirTargetPeople(match)}
-          </div>
-        </div>
 
-        <div className="w-full lg:w-48">
-          <MatchingSimilarityCard
-            score={childScore}
-            label={getSimilarityLabel(childScore)}
-            userRole={userRole}
-          >
-            {createMatchingActionButton({
-              userRole,
-              match,
-              childScore,
-              creating,
-              handleCreateMatch,
-              calculateAge,
-            })}
-          </MatchingSimilarityCard>
-        </div>
+// 検索中
+function renderFindingMatch() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <div className="mb-4 text-4xl">🔍</div>
+        <p className="text-gray-600">マッチングを検索中...</p>
       </div>
-    );
-  });
+    </div>
+  );
 }
 
+// 「探している子ども/親を登録してください」カードを返す関数
+function renderNoTargetRegisteredCard(userRole: string | null) {
+  return (
+    <div className="rounded-lg bg-white p-12 text-center shadow">
+      <div className="mb-4 text-6xl">📝</div>
+      <h2 className="mb-2 text-xl font-semibold text-gray-900">
+        {userRole === 'parent' ? '探している子どもを登録してください' : '探している親を登録してください'}
+      </h2>
+      <p className="mb-6 text-gray-600">
+        {userRole === 'parent' 
+          ? '探している子どもの情報を登録すると、マッチングが表示されます'
+          : '探している親の情報を登録すると、マッチングが表示されます'
+        }
+      </p>
+      <Link
+        href="/dashboard/profile"
+        className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+      >
+        プロフィールを編集
+      </Link>
+    </div>
+  );
+}
+
+
+  // 「マッチングが見つかりませんでした」カードを返す関数
+  function renderNoMatchingCard(userRole: string | null) {
+    return (
+      <div className="rounded-lg bg-white p-12 text-center shadow">
+        <div className="mb-4 text-6xl">😔</div>
+        <h2 className="mb-2 text-xl font-semibold text-gray-900">
+          マッチングが見つかりませんでした
+        </h2>
+        <p className="mb-6 text-gray-600">
+          プロフィールを充実させると、マッチングの精度が向上します
+        </p>
+        <Link
+          href="/dashboard/profile"
+          className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+        >
+          プロフィールを編集
+        </Link>
+      </div>
+    );
+  }
+
+// 大きいほうのカード（登録している探している子ども/親ごとに表示）
+function renderTargetCards(
+  searchingTargets: SearchingTarget[],
+  matches: Match[],
+  renderTargetProfile: (target: SearchingTarget) => React.ReactNode,
+  renderMatchedTargetCards: (matchedTargets: Match[], target: SearchingTarget) => React.ReactNode
+) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-8 w-full max-w-5xl mx-auto">
+        {searchingTargets.map((target) => {
+          const matchedTargets = matches;
+          return (
+            <div key={target.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
+              <div className="flex flex-col gap-0 lg:flex-row">
+                {renderTargetProfile(target)}
+                {/* 小さいほうのカード */}
+                <div className="flex-1 p-5 lg:p-6">
+                  {matchedTargets.length === 0 ? (
+                    <div className="flex h-full min-h-[120px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-gray-600">
+                      マッチング相手がまだ見つかっていません
+                    </div>
+                  ) : (
+                    renderMatchedTargetCards(matchedTargets, target)
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 // マッチング度合い（類似度）表示カードコンポーネント
 function MatchingSimilarityCard({
   score,
@@ -264,60 +252,140 @@ const calculateAge = (birthDate: string) => {
   return age;
 };
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
-import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
-
-interface Match {
-  userId: string;
-  targetScores: Array<{
-    target: any;
-    birthdayScore: number;
-    nameScore: number;
-    birthplaceScore: number;
-    oppositeScore: number;
-  }>;
-  existingMatchId?: string | null;
-  existingMatchStatus?: 'pending' | 'accepted' | 'rejected' | 'blocked' | null;
-  profile?: {
-    role?: string;
-    last_name_kanji?: string;
-    first_name_kanji?: string;
-    last_name_hiragana?: string;
-    first_name_hiragana?: string;
-    birth_date?: string;
-    bio?: string;
-    profile_image_url?: string;
-    gender?: string;
-    birthplace_prefecture?: string;
-    birthplace_municipality?: string;
-  };
-  theirTargetPeople?: Array<{
-    id: string;
-    last_name_kanji?: string;
-    first_name_kanji?: string;
-    birthplace_prefecture?: string;
-    birthplace_municipality?: string;
-    photo_url?: string | null;
-  }>;
-  role?: string;
-}
-interface SearchingTarget {
-  id: string;
-  last_name_kanji?: string;
-  first_name_kanji?: string;
-  name_kanji?: string;
-  name_hiragana?: string;
-  birth_date?: string;
-  gender?: string;
-  birthplace_prefecture?: string;
-  birthplace_municipality?: string;
-  display_order?: number;
-}
 
 export default function MatchingPage() {
+  // --- ここからヘルパー関数をreturnより前に配置 ---
+  function renderTestModeBanners() {
+    return (
+      <>
+        {testModeBypassVerification && (
+          <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
+            </div>
+          </div>
+        )}
+        {testModeBypassSubscription && (
+          <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  function renderTargetProfile(target: SearchingTarget) {
+    return (
+      <div className="w-full lg:max-w-xs border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50 px-6 py-5">
+        <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
+          {userRole === 'parent' ? '探している子ども' : '探している親'}
+        </p>
+        <h3 className="text-xl font-bold text-gray-900">
+          {target.last_name_kanji}{target.first_name_kanji || target.name_kanji || target.name_hiragana || '名前未設定'}
+        </h3>
+        <p className="text-sm text-gray-600 mt-1">
+          {target.gender ? getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent') : '性別未設定'}
+          {target.birth_date && ` • ${calculateAge(target.birth_date)}歳`}
+        </p>
+        {target.birth_date && (
+          <p className="text-xs text-gray-500 mt-1">
+            生年月日: {new Date(target.birth_date).toLocaleDateString('ja-JP', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+        )}
+        {(target.birthplace_prefecture || target.birthplace_municipality) && (
+          <p className="text-xs text-gray-500 mt-1">
+            出身地: {target.birthplace_prefecture || ''}
+            {target.birthplace_municipality ? ` ${target.birthplace_municipality}` : ''}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  function renderMatchedTargetCards(matchedTargets: Match[], target: SearchingTarget) {
+    return matchedTargets.map((match) => {
+      // targetScoresから該当ターゲットのスコア合計を取得
+      const scoreObj = Array.isArray(match.targetScores)
+        ? match.targetScores.find((ts) => ts.target.id === target.id)
+        : undefined;
+      const childScore = scoreObj
+        ? (scoreObj.birthdayScore + scoreObj.nameScore + scoreObj.birthplaceScore + scoreObj.oppositeScore) / 100
+        : 0;
+      return (
+        <div
+          key={match.userId}
+          className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition lg:flex-row lg:items-center lg:justify-between"
+        >
+          <div className="flex-1 flex gap-4">
+            {match.profile?.profile_image_url && (
+              <div className="flex-shrink-0">
+                <img
+                  src={match.profile.profile_image_url}
+                  alt={`${match.profile.last_name_kanji ?? ''}${match.profile.first_name_kanji ?? ''}`}
+                  className="h-20 w-20 rounded-lg object-cover border border-gray-200"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <span className={`mb-1 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'child' ? 'bg-child-50 text-child-700' : 'bg-parent-50 text-parent-700'}`}>
+                登録済み{getRoleLabel(match.role || '')}ユーザー
+              </span>
+              <h4 className="text-lg font-semibold text-gray-900">{match.profile?.last_name_kanji ?? ''}{match.profile?.first_name_kanji ?? ''}</h4>
+              <p className="text-sm text-gray-600 mt-1">
+                {getGenderLabel(match.profile?.gender, match.role)}
+                {match.profile?.birth_date && ` • ${calculateAge(match.profile.birth_date)}歳`}
+              </p>
+              {match.profile?.bio && (
+                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{match.profile.bio}</p>
+              )}
+              {match.profile?.birth_date && (
+                <p className="text-xs text-gray-500 mt-1">
+                  生年月日: {new Date(match.profile.birth_date).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              )}
+              {(match.profile?.birthplace_prefecture || match.profile?.birthplace_municipality) && (
+                <p className="text-xs text-gray-500 mt-1">
+                  出身地: {match.profile?.birthplace_prefecture || ''}
+                  {match.profile?.birthplace_municipality ? ` ${match.profile.birthplace_municipality}` : ''}
+                </p>
+              )}
+              {renderTheirTargetPeople(match)}
+            </div>
+          </div>
+
+          <div className="w-full lg:w-48">
+            <MatchingSimilarityCard
+              score={childScore}
+              label={getSimilarityLabel(childScore)}
+              userRole={userRole}
+            >
+              {createMatchingActionButton({
+                userRole,
+                match,
+                childScore,
+                creating,
+                handleCreateMatch,
+                calculateAge,
+              })}
+            </MatchingSimilarityCard>
+          </div>
+        </div>
+      );
+    });
+  }
+  // --- ここまで ---
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -500,19 +568,9 @@ export default function MatchingPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
-        {renderTestModeBanners({ testModeBypassVerification, testModeBypassSubscription })}
+        {renderTestModeBanners()}
         
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {userRole === 'child' ? '親を探す' : '子を探す'}
-          </h1>
-          <p className="mt-2 text-gray-600">
-            {userRole === 'child' 
-              ? 'プロフィール情報に基づいて、あなたに合った親を表示しています'
-              : 'プロフィール情報に基づいて、あなたに合った子を表示しています'
-            }
-          </p>
-        </div>
+        {renderTitle(userRole)}
 
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
@@ -521,87 +579,13 @@ export default function MatchingPage() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="mb-4 text-4xl">🔍</div>
-              <p className="text-gray-600">マッチングを検索中...</p>
-            </div>
-          </div>
+          renderFindingMatch()
         ) : matches.length === 0 ? (
-          <div className="rounded-lg bg-white p-12 text-center shadow">
-            <div className="mb-4 text-6xl">😔</div>
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">
-              マッチングが見つかりませんでした
-            </h2>
-            <p className="mb-6 text-gray-600">
-              プロフィールを充実させると、マッチングの精度が向上します
-            </p>
-            <Link
-              href="/dashboard/profile"
-              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-            >
-              プロフィールを編集
-            </Link>
-          </div>
+          renderNoMatchingCard(userRole)
         ) : searchingTargets.length > 0 ? (
-          <div className="space-y-8 w-full max-w-5xl mx-auto">
-            {searchingTargets.map((target) => {
-              // For child users, matches are parents; for parent users, matches are children
-              console.log('Rendering matches for searching target', target);
-              const matchedTargets = matches; 
-              console.log('Matched Targets for searching target', matchedTargets);
-              return (
-                <div key={target.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
-                  <div className="flex flex-col gap-0 lg:flex-row">
-                    {renderTargetProfile({ target, userRole, calculateAge, getGenderLabel })}
-                    {/* 小さいほうのカード */}
-                    <div className="flex-1 p-5 lg:p-6">
-                      {matchedTargets.length === 0 ? (
-                        <div className="flex h-full min-h-[120px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-gray-600">
-                          マッチング相手がまだ見つかっていません
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {renderMatchedTargetCards({
-                            matchedTargets,
-                            target,
-                            userRole,
-                            creating,
-                            handleCreateMatch,
-                            calculateAge,
-                            getRoleLabel,
-                            getGenderLabel,
-                            getSimilarityLabel,
-                            renderTheirTargetPeople,
-                            createMatchingActionButton,
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          renderTargetCards(searchingTargets, matches, renderTargetProfile, renderMatchedTargetCards)
         ) : (
-          <div className="rounded-lg bg-white p-12 text-center shadow">
-            <div className="mb-4 text-6xl">📝</div>
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">
-              {userRole === 'parent' ? '探している子どもを登録してください' : '探している親を登録してください'}
-            </h2>
-            <p className="mb-6 text-gray-600">
-              {userRole === 'parent' 
-                ? '探している子どもの情報を登録すると、マッチングが表示されます'
-                : '探している親の情報を登録すると、マッチングが表示されます'
-              }
-            </p>
-            <Link
-              href="/dashboard/profile"
-              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-            >
-              プロフィールを編集
-            </Link>
-          </div>
+          renderNoTargetRegisteredCard(userRole)
         )}
       </main>
     </div>
