@@ -10,21 +10,22 @@ interface HeaderNavProps {
 }
 
 export function HeaderNav({ user, displayName }: HeaderNavProps) {
+
   const [pendingCount, setPendingCount] = useState(0);
   const [totalNotifications, setTotalNotifications] = useState(0);
   const [loading, setLoading] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
 
+  // user/displayNameが変化したらリフレッシュ（サインアウト直後のヘッダー反映対策）
+  useEffect(() => {
+    router.refresh();
+  }, [user, displayName, router]);
+
   useEffect(() => {
     if (!user) return;
-
-    // 初回読み込み
     fetchNotifications();
-
-    // 30秒ごとにポーリング
     const interval = setInterval(fetchNotifications, 30000);
-
     return () => clearInterval(interval);
   }, [user]);
 

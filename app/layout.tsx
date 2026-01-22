@@ -15,13 +15,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   let displayName: string | null = null;
-
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -30,6 +30,8 @@ export default async function RootLayout({
       .single();
     const displayNameFromProfile = (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '');
     displayName = displayNameFromProfile || user.email || "ログイン中";
+  } else {
+    displayName = null;
   }
 
   const heroHref = user ? "/dashboard" : "/";
