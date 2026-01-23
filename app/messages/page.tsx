@@ -179,10 +179,20 @@ export default function MessagesPage() {
         )}
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">メッセージ</h1>
-          <p className="mt-2 text-gray-900">
-            マッチング相手とのメッセージ履歴
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">メッセージ</h1>
+              <p className="mt-2 text-gray-900">
+                マッチング相手とのメッセージ履歴
+              </p>
+            </div>
+            <Link
+              href="/matching"
+              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+            >
+              マッチング一覧に戻る
+            </Link>
+          </div>
         </div>
 
         {error && (
