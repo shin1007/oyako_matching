@@ -329,17 +329,18 @@ export default function MessageDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <div className="font-bold text-2xl text-gray-900">メッセージ</div>
+            <div className="flex-1">
+              <UserHeader match={match} />
+            </div>
             <Link
               href="/messages"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              className={`inline-block rounded-lg px-4 py-2 text-white font-semibold text-base ml-4 ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
             >
               メッセージ一覧に戻る
             </Link>
           </div>
           {/* 親ユーザー向け注意喚起ボックス */}
           {userRole === 'parent' && <ParentWarningBox />}
-          <UserHeader match={match} />
         </div>
 
         {/* Messages Container */}
