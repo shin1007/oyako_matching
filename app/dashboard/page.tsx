@@ -57,6 +57,23 @@ export default async function DashboardPage() {
         <div className="mb-8">
           <h1 className={`text-3xl font-bold ${userData?.role === 'child' ? 'text-child-900' : 'text-parent-900'}`}>ダッシュボード</h1>
         </div>
+        {/* テストモード表示（認証・サブスクスキップ） */}
+        {bypassVerification && (
+          <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
+            </div>
+          </div>
+        )}
+        {bypassSubscription && (
+          <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
+            </div>
+          </div>
+        )}
         {/* Pending Notifications */}
         <PendingNotification userRole={userData?.role} />
         <div className="lg:grid lg:grid-cols-[350px_550px] lg:gap-6 mb-6">
