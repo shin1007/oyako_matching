@@ -1,5 +1,5 @@
 'use client';
-
+import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
 import ImageUpload from '@/app/components/ImageUpload';
 import SearchingChildPhotoUpload from '@/app/components/SearchingChildPhotoUpload';
+import { ProfileBasicForm } from './components/ProfileBasicForm';
 
 interface Photo {
   id?: string;
@@ -575,30 +576,13 @@ export default function ProfilePage() {
               )}
 
               {/* プロフィール画像 */}
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-md font-medium text-gray-900 mb-3">プロフィール画像</h3>
-                <ImageUpload
-                  currentImageUrl={profileImageUrl}
-                  onImageSelect={(file) => {
-                    setSelectedImageFile(file);
-                  }}
-                  onUploadComplete={(publicUrl) => {
-                    setProfileImageUrl(publicUrl);
-                    // アップロード完了後、selectedImageFileをクリアして二重アップロード防止
-                    setSelectedImageFile(null);
-                    // 保存前の一時パスを保持（戻る/キャンセルで削除するため）
-                    tempImagePathRef.current = extractProfilePath(publicUrl);
-                    hasSavedRef.current = false;
-                    setSuccess('画像がアップロードされました！');
-                    setTimeout(() => setSuccess(''), 3000);
-                  }}
-                  onError={(message) => {
-                    setError(message);
-                    setTimeout(() => setError(''), 5000);
-                  }}
-                  userRole={userRole || undefined}
-                />
-              </div>
+              <ProfileImageUpload
+                profileImageUrl={profileImageUrl}
+                setProfileImageUrl={setProfileImageUrl}
+                selectedImageFile={selectedImageFile}
+                setSelectedImageFile={setSelectedImageFile}
+                loading={loading}
+              />
 
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>

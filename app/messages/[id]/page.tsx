@@ -5,6 +5,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { linkifyText } from '@/lib/utils/linkify';
+import { MessageList } from '../components/MessageList';
+import { MessageInputForm } from '../components/MessageInputForm';
+import { ParentWarningBox } from '../components/ParentWarningBox';
+import { UserHeader } from '../components/UserHeader';
 
 interface Message {
   id: string;
@@ -294,81 +298,8 @@ export default function MessageDetailPage() {
             ← メッセージ一覧に戻る
           </Link>
           {/* 親ユーザー向け注意喚起ボックス */}
-          {userRole === 'parent' && (
-            <div className="mb-4 rounded-lg border-l-8 border-red-500 bg-red-50 p-4 shadow flex gap-3">
-              <div className="text-3xl">⚠️</div>
-              <div>
-                <div className="font-bold text-red-700 mb-1">【ご利用にあたっての重要なお願い】</div>
-                <div className="text-sm text-red-800 mb-2">
-                  お子様との再会を望むお気持ちは大切ですが、以下の行為は刑法（未成年者略取・誘拐罪）やストーカー規制法、住居侵入罪などの法令に抵触し、警察の捜査対象となる可能性があります。
-                </div>
-                <ul className="list-disc ml-5 text-sm text-red-800 mb-2">
-                  <li>相手の同意なく、現在の居住地や学校、職場へ押し掛けること</li>
-                  <li>相手の意思に反して、無理やり連れ出そうとすること</li>
-                  <li>拒絶されているにもかかわらず、執拗にメッセージを送り続けること</li>
-                </ul>
-                <div className="text-xs text-gray-700 mb-2">お互いの安全と法的保護のため、節度ある交流をお願いいたします。</div>
-                <div className="text-xs text-gray-700">
-                  <span className="font-bold">未成年者略取・誘拐罪（刑法224条）</span><br />
-                  たとえ親であっても、監護権（育てている側の権利）を持つ親の同意なく子供を連れ去ると犯罪になります。連れ去られた子供を引き戻すとしても同様です。<br />
-                  <span className="font-bold">ストーカー行為等の規制等に関する法律</span><br />
-                  2021年の改正以降、GPSによる位置情報の取得や、拒否されている中での連続したメッセージ送信も規制対象に含まれます。<br />
-                  <span className="font-bold">住居侵入罪（刑法130条）</span><br />
-                  敷地内に無断で入る行為です。<br />
-                  <span className="font-bold">民法（不法行為）</span><br />
-                  精神的苦痛を与えたとして、慰謝料請求の対象になります。
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="rounded-lg bg-white p-4 shadow">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex gap-2">
-                {match.other_user_image ? (
-                  <img
-                    src={match.other_user_image}
-                    alt={match.other_user_name}
-                    className="h-12 w-12 rounded-full object-cover border border-gray-200"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl">
-                    {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
-                  </div>
-                )}
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {match.other_user_name}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {match.other_user_role === 'parent' ? '親' : '子'}
-                </p>
-              </div>
-            </div>
-
-            {/* 探している子どもの情報 */}
-            {match.target_people && match.target_people.length > 0 && (
-              <div className="border-t pt-4">
-                <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している{match.other_user_role === 'parent' ? '子ども' : '親'}:</p>
-                <div className="flex flex-wrap gap-2">
-                  {match.target_people.map((child) => (
-                    <div key={child.id} className="flex items-center gap-2 bg-blue-50 rounded p-2">
-                      {child.photo_url && (
-                        <img
-                          src={child.photo_url}
-                          alt={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
-                          className="h-10 w-10 rounded object-cover border border-gray-200"
-                        />
-                      )}
-                      <p className="text-sm font-semibold text-gray-900">
-                        {child.last_name_kanji || ''}{child.first_name_kanji || ''}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          {userRole === 'parent' && <ParentWarningBox />}
+          <UserHeader match={match} />
         </div>
 
         {/* Messages Container */}
@@ -391,98 +322,22 @@ export default function MessageDetailPage() {
                   </button>
                 </div>
               )}
-              {messages.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-4xl mb-2">💬</div>
-                  <p>まだメッセージがありません</p>
-                  <p className="text-sm mt-1">最初のメッセージを送ってみましょう</p>
-                </div>
-              ) : (
-                messages.map((message) => {
-                  const isOwnMessage = message.sender_id === currentUserId;
-                  return (
-                    <div
-                      key={message.id}
-                      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                            isOwnMessage
-                              ? userRole === 'child' 
-                                ? 'bg-child-600 text-white'
-                                : 'bg-parent-500 text-white'
-                              : 'bg-gray-200 text-gray-900'
-                          }`}
-                      >
-                        <p className="whitespace-pre-wrap break-words">
-                          {linkifyText(message.content)}
-                        </p>
-                        <div className={`flex items-center justify-between gap-2 mt-1`}>
-                          <p
-                            className={`text-xs ${
-                              isOwnMessage 
-                                ? userRole === 'child'
-                                  ? 'text-child-100'
-                                  : 'text-parent-100'
-                                : 'text-gray-500'
-                            }`}
-                          >
-                            {new Date(message.created_at).toLocaleString('ja-JP', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                          {isOwnMessage && (
-                            <span
-                              className={`text-xs ${
-                                message.read_at 
-                                  ? userRole === 'child'
-                                    ? 'text-child-200'
-                                    : 'text-parent-200'
-                                  : userRole === 'child'
-                                    ? 'text-child-300'
-                                    : 'text-parent-300'
-                              }`}
-                            >
-                              {message.read_at ? '既読' : '未読'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+              <MessageList
+                messages={messages}
+                currentUserId={currentUserId}
+                userRole={userRole}
+                linkifyText={linkifyText}
+              />
               <div ref={messagesEndRef} />
             </div>
-
             {/* Message Input */}
             <div className="border-t border-gray-200 p-4">
-              <form onSubmit={handleSendMessage} className="flex gap-2">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="メッセージを入力..."
-                  className={`flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none resize-none ${userRole === 'child' ? 'focus:border-child-500' : 'focus:border-parent-500'}`}
-                  rows={2}
-                  disabled={sending}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={!newMessage.trim() || sending}
-                  className={`rounded-lg px-6 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-                >
-                  {sending ? '送信中...' : '送信'}
-                </button>
-              </form>
+              <MessageInputForm
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                sending={sending}
+                onSend={handleSendMessage}
+              />
               <p className="text-xs text-gray-500 mt-2">
                 Shift + Enter で改行、Enter で送信
               </p>
