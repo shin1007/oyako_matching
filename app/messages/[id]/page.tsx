@@ -142,8 +142,45 @@ export default function MessageDetailPage() {
       }
 
       const matchData = await matchResponse.json();
-      setMatch(matchData.match);
-      
+      console.log('[MessageDetailPage] matchData.match:', matchData.match);
+      if (!matchData.match) {
+        setError('マッチ情報が取得できませんでした');
+        setMatch(null);
+        setMessages([]);
+        setPagination(null);
+        return;
+      }
+
+      // 相手ユーザーIDを判定
+      let otherUserId = null;
+      if (userRole === 'parent') {
+        otherUserId = matchData.match.child_id;
+      } else if (userRole === 'child') {
+        otherUserId = matchData.match.parent_id;
+      }
+
+      let otherUserProfile = null;
+      if (otherUserId) {
+        // Supabaseから相手ユーザー情報を取得
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('id, role, name, profile_image_url, last_name_kanji, first_name_kanji')
+          .eq('id', otherUserId)
+          .single();
+        if (!userError && user) {
+          otherUserProfile = user;
+        }
+      }
+
+      // matchに相手プロフィール情報をマージ
+      const mergedMatch = {
+        ...matchData.match,
+        other_user_name: otherUserProfile ? (otherUserProfile.name || `${otherUserProfile.last_name_kanji || ''}${otherUserProfile.first_name_kanji || ''}`) : '',
+        other_user_role: otherUserProfile ? otherUserProfile.role : '',
+        other_user_image: otherUserProfile ? otherUserProfile.profile_image_url : '',
+      };
+      setMatch(mergedMatch);
+
       // 降順で取得したメッセージを昇順に並び替えて表示
       const sortedMessages = sortMessagesByDate(matchData.messages || []);
       setMessages(sortedMessages);
