@@ -1,13 +1,39 @@
 import Link from 'next/link';
 
+
+interface MatchProfile {
+  birth_date?: string;
+}
+interface Match {
+  status: string;
+  profile?: MatchProfile;
+  role?: string;
+}
+
 interface ParentFeaturePanelProps {
   isVerified: boolean;
   isSubscriptionActive: boolean;
   subscription: any;
+  matches?: Match[]; // 追加: acceptedマッチ一覧
 }
 
-export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscription }: ParentFeaturePanelProps) {
-  return (
+// 18歳未満判定関数
+  function isUnder18(birthDate?: string): boolean {
+    if (!birthDate) return false;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age < 18;
+  }
+  // acceptedかつ18歳未満の子どもマッチが存在するか
+  const hasAcceptedUnder18Match = (Array.isArray(matches) ? matches : []).some(
+    (m) => m.status === 'accepted' && m.role === 'child' && isUnder18(m.profile?.birth_date)
+  );
+    return (
     <div className="space-y-4">
       {/* Forum Card - Always available for parents */}
       <Link
@@ -121,7 +147,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
             </div>
           )}
           {/* Messages Card */}
-          {isVerified && isSubscriptionActive ? (
+          {(isVerified && isSubscriptionActive) || hasAcceptedUnder18Match ? (
             <Link
               href="/messages"
               className="block rounded-lg bg-white p-5 shadow hover:shadow-md transition"
@@ -131,6 +157,9 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
                 <div className="flex-1">
                   <h4 className="text-base font-semibold text-gray-900">メッセージ</h4>
                   <p className="mt-1 text-sm text-gray-900">マッチング相手とのメッセージ</p>
+                  {(!isVerified || !isSubscriptionActive) && hasAcceptedUnder18Match && (
+                    <p className="mt-2 text-xs text-green-700 font-medium">※18歳未満のマッチがあるため利用可能</p>
+                  )}
                 </div>
               </div>
             </Link>
