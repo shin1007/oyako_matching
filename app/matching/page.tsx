@@ -291,7 +291,7 @@ export default function MatchingPage() {
     };
 
     // 既存マッチのステータスに応じた表示
-    if (match.existingMatchStatus === 'accepted') {
+    if (match.existingMatchStatus === 'accepted' || match.existingMatchStatus === 'blocked') {
       return (
         <Link
           href={`/messages/${match.existingMatchId}`}
