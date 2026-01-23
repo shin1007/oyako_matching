@@ -60,12 +60,15 @@ export default function MessageDetailPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+
+  // 認証・ロール取得
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // userRoleが取得できてからmatch取得
   useEffect(() => {
-    if (currentUserId) {
+    if (currentUserId && userRole) {
       loadMatchAndMessages();
       // リアルタイムで新しいメッセージを購読
       const channel = supabase
@@ -89,7 +92,7 @@ export default function MessageDetailPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [currentUserId, matchId]);
+  }, [currentUserId, userRole, matchId]);
 
   useEffect(() => {
     scrollToBottom();
