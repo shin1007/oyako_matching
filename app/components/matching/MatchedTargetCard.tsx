@@ -63,7 +63,8 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
           label={''}
           userRole={userRole}
         >
-          {/* アクションボタンは親で制御 */}
+          {/** アクションボタンはchildren経由で受け取る */}
+          {typeof (arguments[0] as any)?.children !== 'undefined' ? (arguments[0] as any).children : null}
         </MatchingSimilarityCard>
       </div>
     </div>

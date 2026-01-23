@@ -416,6 +416,15 @@ export default function MatchingPage() {
               const childScore = scoreObj
                 ? (scoreObj.birthdayScore + scoreObj.nameScore + scoreObj.birthplaceScore + scoreObj.oppositeScore) / 100
                 : 0;
+              // アクションボタンを生成
+              const actionButton = createMatchingActionButton({
+                userRole,
+                match,
+                childScore,
+                creating,
+                handleCreateMatch,
+                calculateAge,
+              });
               return (
                 <MatchedTargetCard
                   key={match.userId}
@@ -426,7 +435,9 @@ export default function MatchingPage() {
                   creating={creating}
                   handleCreateMatch={handleCreateMatch}
                   renderTheirTargetPeople={(m) => <TheirTargetPeopleList theirTargetPeople={m.theirTargetPeople || []} role={m.role} />}
-                />
+                >
+                  {actionButton}
+                </MatchedTargetCard>
               );
             })
           )
