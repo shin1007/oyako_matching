@@ -253,16 +253,19 @@ export default function MessageDetailPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="text-xl font-bold text-gray-900">メッセージ</div>
+            <Link
+              href="/messages"
+              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+            >
+              メッセージ一覧に戻る
+            </Link>
+          </div>
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
             {error}
           </div>
-          <Link
-            href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-          >
-            ← メッセージ一覧に戻る
-          </Link>
         </main>
       </div>
     );
@@ -271,16 +274,19 @@ export default function MessageDetailPage() {
   if (!match) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="text-xl font-bold text-gray-900">メッセージ</div>
+            <Link
+              href="/messages"
+              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+            >
+              メッセージ一覧に戻る
+            </Link>
+          </div>
           <div className="mb-6 rounded-lg bg-yellow-50 p-4 text-yellow-600">
             マッチ情報が見つかりません
           </div>
-          <Link
-            href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-          >
-            ← メッセージ一覧に戻る
-          </Link>
         </main>
       </div>
     );
@@ -291,14 +297,14 @@ export default function MessageDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-6">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="text-xl font-bold text-gray-900">メッセージ</div>
             <Link
               href="/messages"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
+              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
             >
-              ← メッセージ一覧に戻る
+              メッセージ一覧に戻る
             </Link>
-            <UserHeader match={match} />
           </div>
           <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
             <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
@@ -327,16 +333,18 @@ export default function MessageDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="text-xl font-bold text-gray-900">メッセージ</div>
+            {userRole === 'parent' && <ParentWarningBox />}
+            <UserHeader match={match} />
+          </div>
           <Link
             href="/messages"
-            className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
+            className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
           >
-            ← メッセージ一覧に戻る
+            メッセージ一覧に戻る
           </Link>
-          {/* 親ユーザー向け注意喚起ボックス */}
-          {userRole === 'parent' && <ParentWarningBox />}
-          <UserHeader match={match} />
         </div>
 
         {/* Messages Container */}
