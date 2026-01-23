@@ -105,7 +105,7 @@ export default function PasskeyList() {
   if (passkeys.length === 0) {
     return (
       <div className="rounded-lg bg-gray-50 p-6 text-center">
-        <p className="text-gray-600">登録されているパスキーはありません</p>
+        <p className="text-gray-900">登録されているパスキーはありません</p>
         <p className="mt-2 text-sm text-gray-500">
           パスキーを登録すると、より安全で便利にログインできます
         </p>

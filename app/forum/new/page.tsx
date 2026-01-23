@@ -174,7 +174,7 @@ export default function NewPostPage() {
             )}
 
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-900">
                 カテゴリ（任意）
               </label>
               <select
@@ -197,7 +197,7 @@ export default function NewPostPage() {
             </div>
 
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-900">
                 タイトル
               </label>
               <input
@@ -217,7 +217,7 @@ export default function NewPostPage() {
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="content" className="block text-sm font-medium text-gray-900">
                 内容
               </label>
               <textarea
@@ -261,7 +261,7 @@ export default function NewPostPage() {
               </button>
               <Link
                 href={userRole === 'parent' ? '/forum/parent' : '/forum/child'}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-center text-gray-700 hover:bg-gray-50"
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-center text-gray-900 hover:bg-gray-50"
               >
                 キャンセル
               </Link>

@@ -112,7 +112,7 @@ export default function ChangePasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
       <div>
-        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-900 mb-2">
           現在のパスワード
         </label>
         <input
@@ -128,7 +128,7 @@ export default function ChangePasswordForm() {
       </div>
 
       <div>
-        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-900 mb-2">
           新しいパスワード
         </label>
         <input
@@ -145,7 +145,7 @@ export default function ChangePasswordForm() {
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-2">
           新しいパスワード（確認）
         </label>
         <input

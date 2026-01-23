@@ -1,12 +1,17 @@
 'use client';
-
+import { DeleteProfileDialog } from './components/DeleteProfileDialog';
+import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';
+import { useRoleTheme } from '@/contexts/RoleThemeContext';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
 import ImageUpload from '@/app/components/ImageUpload';
-import SearchingChildPhotoUpload from '@/app/components/SearchingChildPhotoUpload';
+import { TargetPhotoManager } from './components/TargetPhotoManager';
+import { TargetPersonInfoHeader } from './components/TargetPersonInfoHeader';
+import { ProfileBasicForm } from './components/ProfileBasicForm';
+import { TargetPersonForm } from './components/TargetPersonForm';
 
 interface Photo {
   id?: string;
@@ -32,6 +37,7 @@ interface SearchingChild {
 }
 
 export default function ProfilePage() {
+  const { userRole, setUserRole } = useRoleTheme();
   // 親のプロフィール
   const [lastNameKanji, setLastNameKanji] = useState('');
   const [lastNameHiragana, setLastNameHiragana] = useState('');
@@ -61,7 +67,7 @@ export default function ProfilePage() {
       photos: []
     }
   ]);
-  const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null);
+  // userRole, setUserRoleは上で宣言済み
   const [userId, setUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,7 +109,7 @@ export default function ProfilePage() {
         .single();
       
       if (userData?.role) {
-        setUserRole(userData.role as 'parent' | 'child');
+        setUserRole(userData.role as 'parent' | 'child'); // グローバルテーマにも反映
       }
 
       // Load profile
@@ -509,55 +515,24 @@ export default function ProfilePage() {
         ) : (
           <div className="rounded-lg bg-white p-8 shadow">
 
-              {/* マッチングアルゴリズム説明 */}
-              <div className={`mb-6 rounded-lg p-6 border ${userRole === 'child' ? 'bg-gradient-to-r from-child-50 to-orange-50 border-child-200' : 'bg-gradient-to-r from-parent-50 to-green-50 border-parent-200'}`}>
+              {/* マッチングアルゴリズム説明へのリンク */}
+              <div className={`mb-6 rounded-lg p-6 border bg-gradient-to-r ${userRole === 'child' ? 'from-orange-50 to-orange-100 border-child-200' : 'from-green-50 to-green-100 border-parent-200'}`}>
                 <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                   <span className="text-2xl">🎯</span>
                   プロフィールとマッチングスコアについて
                 </h2>
-                <div className="space-y-3 text-sm text-gray-700">
-                  <p className="leading-relaxed">
-                    入力した情報（生年月日・氏名（ひらがな）・出身地）をもとに、親子双方の情報を比較し<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチングスコア</strong>を自動計算します。
+                <div className="text-sm text-gray-700">
+                  <p className="leading-relaxed mb-2">
+                    入力した情報をもとに、親子双方の情報を比較し<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチングスコア</strong>を自動計算します。
                   </p>
-                  <div className="bg-white rounded-lg p-4 mt-3">
-                    <h3 className="font-semibold text-gray-800 mb-2">📊 マッチングスコアの計算方法</h3>
-                    <ul className="space-y-2 ml-2">
-                      <li className="flex items-start gap-2">
-                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎂</span>
-                        <div>
-                          <strong>生年月日</strong>：年月日一致で80点、月日一致70点、年月一致60点。<br />
-                          年齢差が近い場合は最大+5点加算。
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>👤</span>
-                        <div>
-                          <strong>氏名（ひらがな）</strong>：名字・名前とも一致10点、名前のみ一致7点、名字のみ一致3点。
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>📍</span>
-                        <div>
-                          <strong>出身地</strong>：都道府県・市区町村とも一致10点、都道府県のみ一致7点。
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className={`font-bold mt-0.5 ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>⚖️</span>
-                        <div>
-                          <strong>スコア合算</strong>：親→子、（60%合計60点満点）
-                          <br />
-                          ＋子→親（40%、合計40点満点）で合計100点満点。
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-yellow-50 rounded-lg p-3 border-l-4 border-yellow-400 mt-3">
-                    <p className="text-xs">
-                      <strong className="text-yellow-800">💡 ポイント：</strong>
-                      すべての情報が必須ではありません。覚えている範囲で入力することで、少しずつマッチング精度が向上します。
-                      わからない項目は空欄のままでも問題ありません。
-                    </p>
-                  </div>
+                  <a
+                    href="/docs/MATCHING_ALGORITHM.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-block mt-2 px-4 py-2 text-white rounded-lg transition-colors ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+                  >
+                    マッチングアルゴリズムの詳細を見る
+                  </a>
                 </div>
               </div>
 
@@ -575,421 +550,50 @@ export default function ProfilePage() {
               )}
 
               {/* プロフィール画像 */}
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-md font-medium text-gray-900 mb-3">プロフィール画像</h3>
-                <ImageUpload
-                  currentImageUrl={profileImageUrl}
-                  onImageSelect={(file) => {
-                    setSelectedImageFile(file);
-                  }}
-                  onUploadComplete={(publicUrl) => {
-                    setProfileImageUrl(publicUrl);
-                    // アップロード完了後、selectedImageFileをクリアして二重アップロード防止
-                    setSelectedImageFile(null);
-                    // 保存前の一時パスを保持（戻る/キャンセルで削除するため）
-                    tempImagePathRef.current = extractProfilePath(publicUrl);
-                    hasSavedRef.current = false;
-                    setSuccess('画像がアップロードされました！');
-                    setTimeout(() => setSuccess(''), 3000);
-                  }}
-                  onError={(message) => {
-                    setError(message);
-                    setTimeout(() => setError(''), 5000);
-                  }}
-                  userRole={userRole || undefined}
-                />
-              </div>
+              <ProfileImageUpload
+                profileImageUrl={profileImageUrl}
+                setProfileImageUrl={setProfileImageUrl}
+                selectedImageFile={selectedImageFile}
+                setSelectedImageFile={setSelectedImageFile}
+                loading={loading}
+                userRole={userRole}
+              />
 
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="lastNameKanji" className="block text-sm font-medium text-gray-700">
-                        苗字（漢字）<span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <input
-                        id="lastNameKanji"
-                        type="text"
-                        value={lastNameKanji}
-                        onChange={(e) => setLastNameKanji(e.target.value)}
-                        required
-                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                        placeholder="例: 山田"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="firstNameKanji" className="block text-sm font-medium text-gray-700">
-                        名前（漢字）<span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <input
-                        id="firstNameKanji"
-                        type="text"
-                        value={firstNameKanji}
-                        onChange={(e) => setFirstNameKanji(e.target.value)}
-                        required
-                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                        placeholder="例: 太郎"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="lastNameHiragana" className="block text-sm font-medium text-gray-700">
-                        苗字（ひらがな）
-                        <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
-                      </label>
-                      <input
-                        id="lastNameHiragana"
-                        type="text"
-                        value={lastNameHiragana}
-                        onChange={(e) => setLastNameHiragana(e.target.value)}
-                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                        placeholder="例: やまだ"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
-                        名前（ひらがな）
-                        <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
-                      </label>
-                      <input
-                        id="firstNameHiragana"
-                        type="text"
-                        value={firstNameHiragana}
-                        onChange={(e) => setFirstNameHiragana(e.target.value)}
-                        className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                        placeholder="例: たろう"
-                      />
-                    </div>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    氏名が一致するとマッチング度が+10点向上します。
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
-                  生年月日
-                  <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎯 マッチングで最重要</span>
-                </label>
-                <input
-                  id="birthDate"
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  required
-                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  完全一致で基本スコア80点。年月のみ一致でも60点。マッチングに最も重要な項目です。
-                </p>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <h3 className="text-md font-medium text-gray-900 mb-3">
-                  出身地
-                  <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="birthplacePrefecture" className="block text-sm font-medium text-gray-700">
-                      都道府県
-                    </label>
-                    <select
-                      id="birthplacePrefecture"
-                      value={birthplacePrefecture}
-                      onChange={(e) => {
-                        setBirthplacePrefecture(e.target.value);
-                        // Reset municipality when prefecture changes
-                        setBirthplaceMunicipality('');
-                      }}
-                      className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
-                    >
-                      <option value="">選択してください</option>
-                      {PREFECTURES.map(prefecture => (
-                        <option key={prefecture} value={prefecture}>{prefecture}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="birthplaceMunicipality" className="block text-sm font-medium text-gray-700">
-                      市区町村
-                    </label>
-                    <input
-                      id="birthplaceMunicipality"
-                      type="text"
-                      value={birthplaceMunicipality}
-                      onChange={(e) => setBirthplaceMunicipality(e.target.value)}
-                      className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                      placeholder="例: 渋谷区、北区"
-                    />
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  都道府県が一致するとマッチング度が+10点向上します。市区町村まで一致するとさらに精度が上がります。
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="parentGender" className="block text-sm font-medium text-gray-700">
-                  性別（親）
-                  <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>⚠️ 逆方向マッチングで必須</span>
-                </label>
-                <select
-                  id="parentGender"
-                  value={parentGender}
-                  onChange={(e) => setParentGender(e.target.value as typeof parentGender)}
-                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
-                >
-                  <option value="">未選択</option>
-                  <option value="male">男性</option>
-                  <option value="female">女性</option>
-                  <option value="other">その他</option>
-                  <option value="prefer_not_to_say">回答しない</option>
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  相手が親を探している場合、性別が一致しないと候補から除外されます。
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="forumDisplayName" className="block text-sm font-medium text-gray-700">
-                  掲示板での表示名
-                </label>
-                <input
-                  id="forumDisplayName"
-                  type="text"
-                  value={forumDisplayName}
-                  onChange={(e) => setForumDisplayName(e.target.value)}
-                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                  placeholder="例: ゆうこママ、たろうパパ"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  ピアサポート掲示板で表示される名前です。本名を避け、ニックネームを設定することをお勧めします。
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
-                  自己紹介
-                </label>
-                <textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={4}
-                  className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
-                  placeholder="簡単な自己紹介を記入してください"
-                />
-              </div>
+              <ProfileBasicForm
+                lastNameKanji={lastNameKanji}
+                setLastNameKanji={setLastNameKanji}
+                firstNameKanji={firstNameKanji}
+                setFirstNameKanji={setFirstNameKanji}
+                lastNameHiragana={lastNameHiragana}
+                setLastNameHiragana={setLastNameHiragana}
+                firstNameHiragana={firstNameHiragana}
+                setFirstNameHiragana={setFirstNameHiragana}
+                birthDate={birthDate}
+                setBirthDate={setBirthDate}
+                birthplacePrefecture={birthplacePrefecture}
+                setBirthplacePrefecture={setBirthplacePrefecture}
+                birthplaceMunicipality={birthplaceMunicipality}
+                setBirthplaceMunicipality={setBirthplaceMunicipality}
+                parentGender={parentGender}
+                setParentGender={setParentGender}
+                forumDisplayName={forumDisplayName}
+                setForumDisplayName={setForumDisplayName}
+                bio={bio}
+                setBio={setBio}
+                userRole={userRole}
+              />
 
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}
-                </h3>
-                <div className={`${userRole === 'child' ? 'bg-child-50 border-l-4 border-child-400' : 'bg-parent-50 border-l-4 border-parent-400'} rounded-lg p-4 mb-4`}>
-                  <p className="text-sm text-gray-700 mb-2">
-                    {userRole === 'child' 
-                      ? <><strong>親を探す情報（任意）：</strong>この情報を登録すると、双方向マッチングで精度が向上します。登録しない場合は、親があなたを探す情報のみでマッチングされます。</> 
-                      : <><strong>子どもを探す情報（任意）：</strong>この情報がマッチングの基準になります。覚えている範囲で詳しく入力するほど、正確なマッチングが可能になります。最大5人まで登録できます。</>}
-                  </p>
-                  <ul className="text-xs text-gray-600 space-y-1 ml-4">
-                    <li>• <strong>生年月日</strong>が最も重要な情報です（最大80点）</li>
-                    <li>• <strong>氏名</strong>を入力すると+10点のボーナス</li>
-                    <li>• <strong>出身地</strong>を入力すると+10点のボーナス</li>
-                    <li>• {userRole === 'child' ? '性別が不一致の場合は候補から除外されます' : 'すべての項目が任意です'}</li>
-                  </ul>
-                </div>
+                <TargetPersonInfoHeader userRole={userRole} />
 
-                <div className="space-y-6">
-                  {searchingChildren.map((child, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg relative">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-sm font-medium text-gray-700">
-                          {userRole === 'child' ? '親' : '子ども'} {index + 1}
-                        </h4>
-                        {searchingChildren.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSearchingChild(index)}
-                            className="text-sm text-red-600 hover:text-red-700"
-                          >
-                            削除
-                          </button>
-                        )}
-                      </div>
 
-                      <div className="space-y-4">
-                        <div>
-                          <label htmlFor={`searchingChildBirthDate-${index}`} className="block text-sm font-medium text-gray-700">
-                            生年月日
-                            <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>🎯 最重要（最大80点）</span>
-                          </label>
-                          <input
-                            id={`searchingChildBirthDate-${index}`}
-                            type="date"
-                            value={child.birthDate}
-                            onChange={(e) => updateSearchingChild(index, 'birthDate', e.target.value)}
-                            className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor={`searchingChildGender-${index}`} className="block text-sm font-medium text-gray-700">
-                            性別
-                            {userRole === 'child' && <span className="ml-2 text-xs text-red-600">⚠️ 必須チェック</span>}
-                          </label>
-                          <select
-                            id={`searchingChildGender-${index}`}
-                            value={child.gender}
-                            onChange={(e) => updateSearchingChild(index, 'gender', e.target.value as SearchingChild['gender'])}
-                            className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
-                          >
-                            <option value="">未選択</option>
-                            <option value="male">男性</option>
-                            <option value="female">女性</option>
-                            <option value="other">その他</option>
-                          </select>
-                          {userRole === 'child' && (
-                            <p className="mt-1 text-xs text-gray-500">
-                              性別が不一致の場合、候補から除外されます
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            新形式：詳細な氏名
-                            <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
-                          </label>
-                          <div className="space-y-2">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label htmlFor={`searchingChildLastNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
-                                  苗字（漢字）
-                                </label>
-                                <input
-                                  id={`searchingChildLastNameKanji-${index}`}
-                                  type="text"
-                                  value={child.lastNameKanji}
-                                  onChange={(e) => updateSearchingChild(index, 'lastNameKanji', e.target.value)}
-                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
-                                  placeholder="例: 山田"
-                                />
-                              </div>
-                              <div>
-                                <label htmlFor={`searchingChildFirstNameKanji-${index}`} className="block text-xs font-medium text-gray-600">
-                                  名前（漢字）
-                                </label>
-                                <input
-                                  id={`searchingChildFirstNameKanji-${index}`}
-                                  type="text"
-                                  value={child.firstNameKanji}
-                                  onChange={(e) => updateSearchingChild(index, 'firstNameKanji', e.target.value)}
-                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
-                                  placeholder="例: 太郎"
-                                />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label htmlFor={`searchingChildLastNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
-                                  苗字（ひらがな）
-                                </label>
-                                <input
-                                  id={`searchingChildLastNameHiragana-${index}`}
-                                  type="text"
-                                  value={child.lastNameHiragana}
-                                  onChange={(e) => updateSearchingChild(index, 'lastNameHiragana', e.target.value)}
-                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
-                                  placeholder="例: やまだ"
-                                />
-                              </div>
-                              <div>
-                                <label htmlFor={`searchingChildFirstNameHiragana-${index}`} className="block text-xs font-medium text-gray-600">
-                                  名前（ひらがな）
-                                </label>
-                                <input
-                                  id={`searchingChildFirstNameHiragana-${index}`}
-                                  type="text"
-                                  value={child.firstNameHiragana}
-                                  onChange={(e) => updateSearchingChild(index, 'firstNameHiragana', e.target.value)}
-                                  className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
-                                  placeholder="例: たろう"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            出身地
-                            <span className={`ml-2 text-xs ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>+10点</span>
-                          </label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label htmlFor={`searchingChildBirthplacePrefecture-${index}`} className="block text-xs font-medium text-gray-600">
-                                都道府県
-                              </label>
-                              <select
-                                id={`searchingChildBirthplacePrefecture-${index}`}
-                                value={child.birthplacePrefecture}
-                                onChange={(e) => updateSearchingChild(index, 'birthplacePrefecture', e.target.value)}
-                                className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
-                              >
-                                <option value="">選択</option>
-                                {PREFECTURES.map(prefecture => (
-                                  <option key={prefecture} value={prefecture}>{prefecture}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label htmlFor={`searchingChildBirthplaceMunicipality-${index}`} className="block text-xs font-medium text-gray-600">
-                                市区町村
-                              </label>
-                              <input
-                                id={`searchingChildBirthplaceMunicipality-${index}`}
-                                type="text"
-                                value={child.birthplaceMunicipality}
-                                onChange={(e) => updateSearchingChild(index, 'birthplaceMunicipality', e.target.value)}
-                                className={`mt-1 block w-full rounded-md border border-gray-300 px-2 py-1 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-sm`}
-                                placeholder="例: 渋谷区"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Photo Upload Section */}
-                        <div>
-                          <SearchingChildPhotoUpload
-                            searchingChildId={child.id}
-                            userId={userId}
-                            photos={child.photos || []}
-                            onPhotosUpdate={(photos) => updateSearchingChildPhotos(index, photos)}
-                            onError={(message) => {
-                              setError(message);
-                              setTimeout(() => setError(''), 5000);
-                            }}
-                            userRole={userRole || undefined}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {searchingChildren.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={addSearchingChild}
-                      className={`w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 ${userRole === 'child' ? 'hover:border-child-500 hover:text-child-600' : 'hover:border-parent-500 hover:text-parent-600'} transition-colors`}
-                    >
-                      + {userRole === 'child' ? '親' : '子ども'}を追加
-                    </button>
-                  )}
-                </div>
+                {/* 写真管理（1人目のみ） */}
+                <TargetPhotoManager
+                  photos={searchingChildren[0]?.photos || []}
+                  setPhotos={photos => updateSearchingChildPhotos(0, photos)}
+                  loading={loading}
+                  userRole={userRole}
+                />
               </div>
 
               <div className="flex gap-3">
@@ -1040,75 +644,19 @@ export default function ProfilePage() {
                 </button>
               )}
 
-              {showDeleteWarning && !showDeleteConfirm && (
-                <div className="rounded-lg bg-red-50 p-6 border border-red-200">
-                  <h4 className="text-lg font-medium text-red-900 mb-3">
-                    ⚠️ 警告：アカウント削除について
-                  </h4>
-                  <div className="text-sm text-red-800 mb-4 space-y-2">
-                    <p>以下のデータが完全に削除されます：</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>プロフィール情報</li>
-                      <li>{userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}</li>
-                      <li>マッチング情報とメッセージ</li>
-                      <li>掲示板の投稿とコメント</li>
-                      <li>サブスクリプション情報</li>
-                      <li>パスキー認証情報</li>
-                    </ul>
-                    <p className="font-semibold mt-3">
-                      この操作は取り消すことができません。
-                    </p>
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteWarning(false)}
-                      className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDeleteWarning(false);
-                        setShowDeleteConfirm(true);
-                      }}
-                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                    >
-                      削除を続行
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {showDeleteConfirm && (
-                <div className="rounded-lg bg-red-50 p-6 border-2 border-red-300">
-                  <h4 className="text-lg font-medium text-red-900 mb-3">
-                    🚨 最終確認
-                  </h4>
-                  <p className="text-sm text-red-800 mb-4">
-                    本当にアカウントを削除しますか？すべてのデータが完全に削除され、元に戻すことはできません。
-                  </p>
-                  <div className="flex space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      disabled={deleting}
-                      className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300 disabled:opacity-50"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDeleteAccount}
-                      disabled={deleting}
-                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {deleting ? '削除中...' : '完全に削除する'}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <DeleteProfileDialog
+                open={showDeleteWarning || showDeleteConfirm}
+                onClose={() => {
+                  setShowDeleteWarning(false);
+                  setShowDeleteConfirm(false);
+                }}
+                onConfirm={() => {
+                  setShowDeleteWarning(false);
+                  setShowDeleteConfirm(false);
+                  handleDeleteAccount();
+                }}
+                loading={deleting}
+              />
             </div>
           </div>
         )}

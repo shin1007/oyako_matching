@@ -76,7 +76,7 @@ export default function RegisterForm() {
               onChange={(e) => setAgreeTerms(e.target.checked)}
               className="mt-1 rounded border-gray-300"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-900">
               <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
                 利用規約
               </Link>
@@ -90,7 +90,7 @@ export default function RegisterForm() {
               onChange={(e) => setAgreePrivacy(e.target.checked)}
               className="mt-1 rounded border-gray-300"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-900">
               <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">
                 プライバシーポリシー
               </Link>
@@ -214,7 +214,7 @@ export default function RegisterForm() {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-900 mb-2">
             登録タイプ
           </label>
           <div className="grid grid-cols-2 gap-4">
@@ -224,7 +224,7 @@ export default function RegisterForm() {
               className={`rounded-lg border-2 px-4 py-3 text-center transition ${
                 role === 'parent'
                   ? 'border-green-600 bg-green-50 text-green-700'
-                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                  : 'border-gray-300 text-gray-900 hover:border-gray-400'
               }`}
             >
               <div className="text-2xl mb-1">👨‍👩‍👧‍👦</div>
@@ -237,7 +237,7 @@ export default function RegisterForm() {
               className={`rounded-lg border-2 px-4 py-3 text-center transition ${
                 role === 'child'
                   ? 'border-orange-600 bg-orange-50 text-orange-700'
-                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                  : 'border-gray-300 text-gray-900 hover:border-gray-400'
               }`}
             >
               <div className="text-2xl mb-1">👦👧</div>
@@ -248,7 +248,7 @@ export default function RegisterForm() {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-900">
             メールアドレス
           </label>
           <input
@@ -262,7 +262,7 @@ export default function RegisterForm() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-900">
             パスワード
           </label>
           <input
@@ -278,7 +278,7 @@ export default function RegisterForm() {
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900">
             パスワード（確認）
           </label>
           <input
@@ -299,7 +299,7 @@ export default function RegisterForm() {
               onChange={(e) => setAgreeTerms(e.target.checked)}
               className="mt-1 rounded border-gray-300"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-900">
               <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">利用規約</Link>に同意します
             </span>
           </label>
@@ -310,7 +310,7 @@ export default function RegisterForm() {
               onChange={(e) => setAgreePrivacy(e.target.checked)}
               className="mt-1 rounded border-gray-300"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-900">
               <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">プライバシーポリシー</Link>に同意します
             </span>
           </label>
@@ -328,7 +328,7 @@ export default function RegisterForm() {
       </form>
 
       <div className="mt-6 text-center text-sm">
-        <p className="text-gray-600">
+        <p className="text-gray-900">
           すでにアカウントをお持ちの方は{' '}
           <Link href="/auth/login" className="text-blue-600 hover:underline">
             ログイン

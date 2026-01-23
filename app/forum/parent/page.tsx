@@ -142,7 +142,7 @@ export default function ParentForumPage() {
               className={`rounded-full px-4 py-2 text-sm transition ${
                 selectedCategory === null
                   ? 'bg-parent-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  : 'bg-white text-gray-900 hover:bg-gray-100'
               }`}
             >
               すべて
@@ -154,7 +154,7 @@ export default function ParentForumPage() {
                 className={`rounded-full px-4 py-2 text-sm transition ${
                   selectedCategory === category.id
                     ? 'bg-parent-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    : 'bg-white text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 {category.icon} {category.name}
@@ -172,7 +172,7 @@ export default function ParentForumPage() {
         {/* Posts */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-gray-600">読み込み中...</p>
+            <p className="text-gray-900">読み込み中...</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
@@ -180,7 +180,7 @@ export default function ParentForumPage() {
             <h2 className="mb-2 text-xl font-semibold text-gray-900">
               まだ投稿がありません
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-900">
               最初の投稿者になりませんか？
             </p>
           </div>
@@ -215,7 +215,7 @@ export default function ParentForumPage() {
                           </span>
                         )}
                         {post.category && (
-                          <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                          <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-900">
                             {post.category.icon} {post.category.name}
                           </span>
                         )}
@@ -223,7 +223,7 @@ export default function ParentForumPage() {
                       <h3 className="mb-2 text-lg font-semibold text-gray-900">
                         {post.title}
                       </h3>
-                      <p className="mb-4 text-sm text-gray-600 line-clamp-2">
+                      <p className="mb-4 text-sm text-gray-900 line-clamp-2">
                         {post.content}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">

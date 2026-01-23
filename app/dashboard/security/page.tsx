@@ -29,7 +29,7 @@ export default async function SecurityPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">セキュリティ設定</h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-gray-900">
             パスキーを管理して、アカウントのセキュリティを強化しましょう
           </p>
         </div>
@@ -69,7 +69,7 @@ export default async function SecurityPage() {
             <h2 className="mb-4 text-xl font-semibold text-gray-900">
               パスキーについて
             </h2>
-            <div className="space-y-4 text-sm text-gray-600">
+            <div className="space-y-4 text-sm text-gray-900">
               <div>
                 <h3 className="font-medium text-gray-900">🔐 セキュリティ</h3>
                 <p className="mt-1">
@@ -99,7 +99,7 @@ export default async function SecurityPage() {
 
           {/* Account Settings Link */}
           <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               メールアドレスの変更や、その他のアカウント設定は{' '}
               <a href="/dashboard/profile" className={`hover:underline ${userRole === 'child' ? 'text-child-600' : 'text-parent-600'}`}>
                 プロフィール設定

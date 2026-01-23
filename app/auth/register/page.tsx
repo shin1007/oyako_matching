@@ -7,10 +7,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900">新規登録</h1>
-          <p className="mt-2 text-gray-600">親子マッチング</p>
+          <p className="mt-2 text-gray-900">親子マッチング</p>
         </div>
         <Suspense fallback={
-          <div className="rounded-lg bg-white p-8 shadow-lg text-center text-gray-600">読み込み中...</div>
+          <div className="rounded-lg bg-white p-8 shadow-lg text-center text-gray-900">読み込み中...</div>
         }>
           <RegisterForm />
         </Suspense>
