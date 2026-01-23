@@ -60,15 +60,12 @@ export default function MessageDetailPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-
-  // 認証・ロール取得
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // userRoleが取得できてからmatch取得
   useEffect(() => {
-    if (currentUserId && userRole) {
+    if (currentUserId) {
       loadMatchAndMessages();
       // リアルタイムで新しいメッセージを購読
       const channel = supabase
@@ -92,7 +89,7 @@ export default function MessageDetailPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [currentUserId, userRole, matchId]);
+  }, [currentUserId, matchId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -145,45 +142,8 @@ export default function MessageDetailPage() {
       }
 
       const matchData = await matchResponse.json();
-      console.log('[MessageDetailPage] matchData.match:', matchData.match);
-      if (!matchData.match) {
-        setError('マッチ情報が取得できませんでした');
-        setMatch(null);
-        setMessages([]);
-        setPagination(null);
-        return;
-      }
-
-      // 相手ユーザーIDを判定
-      let otherUserId = null;
-      if (userRole === 'parent') {
-        otherUserId = matchData.match.child_id;
-      } else if (userRole === 'child') {
-        otherUserId = matchData.match.parent_id;
-      }
-
-      let otherUserProfile = null;
-      if (otherUserId) {
-        // Supabaseから相手ユーザー情報を取得
-        const { data: user, error: userError } = await supabase
-          .from('users')
-          .select('id, role, name, profile_image_url, last_name_kanji, first_name_kanji')
-          .eq('id', otherUserId)
-          .single();
-        if (!userError && user) {
-          otherUserProfile = user;
-        }
-      }
-
-      // matchに相手プロフィール情報をマージ
-      const mergedMatch = {
-        ...matchData.match,
-        other_user_name: otherUserProfile ? (otherUserProfile.name || `${otherUserProfile.last_name_kanji || ''}${otherUserProfile.first_name_kanji || ''}`) : '',
-        other_user_role: otherUserProfile ? otherUserProfile.role : '',
-        other_user_image: otherUserProfile ? otherUserProfile.profile_image_url : '',
-      };
-      setMatch(mergedMatch);
-
+      setMatch(matchData.match);
+      
       // 降順で取得したメッセージを昇順に並び替えて表示
       const sortedMessages = sortMessagesByDate(matchData.messages || []);
       setMessages(sortedMessages);
@@ -293,19 +253,16 @@ export default function MessageDetailPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="text-xl font-bold text-gray-900">メッセージ</div>
-            <Link
-              href="/messages"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
-            >
-              メッセージ一覧に戻る
-            </Link>
-          </div>
+        <main className="container mx-auto px-4 py-8">
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
             {error}
           </div>
+          <Link
+            href="/messages"
+            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          >
+            ← メッセージ一覧に戻る
+          </Link>
         </main>
       </div>
     );
@@ -314,19 +271,16 @@ export default function MessageDetailPage() {
   if (!match) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="text-xl font-bold text-gray-900">メッセージ</div>
-            <Link
-              href="/messages"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
-            >
-              メッセージ一覧に戻る
-            </Link>
-          </div>
+        <main className="container mx-auto px-4 py-8">
           <div className="mb-6 rounded-lg bg-yellow-50 p-4 text-yellow-600">
             マッチ情報が見つかりません
           </div>
+          <Link
+            href="/messages"
+            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          >
+            ← メッセージ一覧に戻る
+          </Link>
         </main>
       </div>
     );
@@ -337,14 +291,14 @@ export default function MessageDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="text-xl font-bold text-gray-900">メッセージ</div>
+          <div className="mb-6">
             <Link
               href="/messages"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
             >
-              メッセージ一覧に戻る
+              ← メッセージ一覧に戻る
             </Link>
+            <UserHeader match={match} />
           </div>
           <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
             <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
@@ -373,18 +327,19 @@ export default function MessageDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="text-xl font-bold text-gray-900">メッセージ</div>
-            {userRole === 'parent' && <ParentWarningBox />}
-            <UserHeader match={match} />
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="font-bold text-2xl text-gray-900">メッセージ</div>
+            <Link
+              href="/messages"
+              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+            >
+              メッセージ一覧に戻る
+            </Link>
           </div>
-          <Link
-            href="/messages"
-            className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
-          >
-            メッセージ一覧に戻る
-          </Link>
+          {/* 親ユーザー向け注意喚起ボックス */}
+          {userRole === 'parent' && <ParentWarningBox />}
+          <UserHeader match={match} />
         </div>
 
         {/* Messages Container */}
