@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 
+
+import { ReactNode } from 'react';
+
 interface MatchedTargetCardProps {
   match: any;
   target: any;
@@ -13,12 +16,15 @@ interface MatchedTargetCardProps {
   creating: string | null;
   handleCreateMatch: (userId: string, score: number) => void;
   renderTheirTargetPeople: (match: any) => React.ReactNode;
+  children?: ReactNode;
 }
 
 
-export function MatchedTargetCard({ match, target, userRole, childScore, creating, handleCreateMatch, renderTheirTargetPeople }: MatchedTargetCardProps) {
+export function MatchedTargetCard({ match, target, userRole, childScore, creating, handleCreateMatch, renderTheirTargetPeople, children }: MatchedTargetCardProps) {
   const [blockLoading, setBlockLoading] = useState(false);
   const [blocked, setBlocked] = useState(match.existingMatchStatus === 'blocked');
+  // blocked_byが自分以外なら「ブロックされています」表示
+  const isBlockedByOther = match.existingMatchStatus === 'blocked' && match.blocked_by && match.blocked_by !== match.currentUserId;
 
   // ブロックAPI呼び出し
   const handleBlock = async () => {
@@ -105,17 +111,23 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
           userRole={userRole}
         >
           {/* アクションボタンはchildren経由で受け取る */}
-          {typeof (arguments[0] as any)?.children !== 'undefined' ? (arguments[0] as any).children : null}
-          {/* ブロック・ブロック解除ボタン */}
+          {children}
+          {/* ブロック・ブロック解除ボタン or ブロックされています表示 */}
           <div className="mt-2">
             {blocked ? (
-              <button
-                className="w-full rounded bg-gray-400 px-3 py-2 text-white text-xs font-semibold hover:bg-gray-500 disabled:opacity-50"
-                onClick={handleUnblock}
-                disabled={blockLoading}
-              >
-                {blockLoading ? '解除中...' : 'ブロック解除'}
-              </button>
+              isBlockedByOther ? (
+                <div className="w-full rounded bg-gray-200 px-3 py-2 text-gray-600 text-xs font-semibold text-center cursor-not-allowed">
+                  ブロックされています
+                </div>
+              ) : (
+                <button
+                  className="w-full rounded bg-gray-400 px-3 py-2 text-white text-xs font-semibold hover:bg-gray-500 disabled:opacity-50"
+                  onClick={handleUnblock}
+                  disabled={blockLoading}
+                >
+                  {blockLoading ? '解除中...' : 'ブロック解除'}
+                </button>
+              )
             ) : (
               <button
                 className="w-full rounded bg-red-500 px-3 py-2 text-white text-xs font-semibold hover:bg-red-600 disabled:opacity-50"

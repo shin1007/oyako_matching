@@ -14,9 +14,10 @@ export async function POST(req: Request) {
 
   // matchesテーブルでstatusをblockedに更新
   // parent_id/child_idの両方向で一致するレコードをブロック
+  // 自分がブロックしたことを記録するためblocked_byもセット
   const { error } = await supabase
     .from('matches')
-    .update({ status: 'blocked' })
+    .update({ status: 'blocked', blocked_by: user.id })
     .or(
       `and(parent_id.eq.${user.id},child_id.eq.${targetUserId}),and(parent_id.eq.${targetUserId},child_id.eq.${user.id})`
     )
