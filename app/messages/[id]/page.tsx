@@ -244,7 +244,7 @@ export default function MessageDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="mb-4 text-4xl">💬</div>
-          <p className="text-gray-600">読み込み中...</p>
+          <p className="text-gray-900">読み込み中...</p>
         </div>
       </div>
     );

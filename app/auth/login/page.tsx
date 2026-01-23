@@ -175,7 +175,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900">ログイン</h1>
-          <p className="mt-2 text-gray-600">親子マッチング</p>
+          <p className="mt-2 text-gray-900">親子マッチング</p>
         </div>
 
         <div className="rounded-lg bg-white p-8 shadow-lg">
@@ -260,7 +260,7 @@ export default function LoginPage() {
               🔐 パスキーでログイン
             </Link>
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-gray-900">
               アカウントをお持ちでない方は{' '}
               <Link href="/auth/register" className="text-blue-600 hover:underline">
                 新規登録
@@ -268,7 +268,7 @@ export default function LoginPage() {
             </p>
             
             {!isVerified && (
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-gray-900">
                 メール確認がまだの方は{' '}
                 <Link href="/auth/verify-email-pending" className="text-blue-600 hover:underline">
                   こちら

@@ -24,7 +24,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
         <h1 className="text-2xl font-bold text-gray-900">
           {match.other_user_name}
         </h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-900">
           {match.other_user_role === 'parent' ? '親' : '子'}
         </p>
       </div>
@@ -32,7 +32,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
     {/* 探している子どもの情報 */}
     {match.target_people && match.target_people.length > 0 && (
       <div className="border-t pt-4">
-        <p className="text-xs font-semibold text-gray-700 mb-2">この方が探している{match.other_user_role === 'parent' ? '子ども' : '親'}:</p>
+        <p className="text-xs font-semibold text-gray-900 mb-2">この方が探している{match.other_user_role === 'parent' ? '子ども' : '親'}:</p>
         <div className="flex flex-wrap gap-2">
           {match.target_people.map((child: any) => (
             <div key={child.id} className="flex items-center gap-2 bg-blue-50 rounded p-2">

@@ -13,8 +13,8 @@ export const ParentWarningBox: React.FC = () => (
         <li>相手の意思に反して、無理やり連れ出そうとすること</li>
         <li>拒絶されているにもかかわらず、執拗にメッセージを送り続けること</li>
       </ul>
-      <div className="text-xs text-gray-700 mb-2">お互いの安全と法的保護のため、節度ある交流をお願いいたします。</div>
-      <div className="text-xs text-gray-700">
+      <div className="text-xs text-gray-900 mb-2">お互いの安全と法的保護のため、節度ある交流をお願いいたします。</div>
+      <div className="text-xs text-gray-900">
         <span className="font-bold">未成年者略取・誘拐罪（刑法224条）</span><br />
         たとえ親であっても、監護権（育てている側の権利）を持つ親の同意なく子供を連れ去ると犯罪になります。連れ去られた子供を引き戻すとしても同様です。<br />
         <span className="font-bold">ストーカー行為等の規制等に関する法律</span><br />

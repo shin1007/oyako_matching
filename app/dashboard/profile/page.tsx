@@ -2,6 +2,7 @@
 import { DeleteProfileDialog } from './components/DeleteProfileDialog';
 import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';
+import { useRoleTheme } from '@/contexts/RoleThemeContext';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -36,6 +37,7 @@ interface SearchingChild {
 }
 
 export default function ProfilePage() {
+  const { userRole, setUserRole } = useRoleTheme();
   // 親のプロフィール
   const [lastNameKanji, setLastNameKanji] = useState('');
   const [lastNameHiragana, setLastNameHiragana] = useState('');
@@ -65,7 +67,7 @@ export default function ProfilePage() {
       photos: []
     }
   ]);
-  const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null);
+  // userRole, setUserRoleは上で宣言済み
   const [userId, setUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -107,7 +109,7 @@ export default function ProfilePage() {
         .single();
       
       if (userData?.role) {
-        setUserRole(userData.role as 'parent' | 'child');
+        setUserRole(userData.role as 'parent' | 'child'); // グローバルテーマにも反映
       }
 
       // Load profile
@@ -514,20 +516,20 @@ export default function ProfilePage() {
           <div className="rounded-lg bg-white p-8 shadow">
 
               {/* マッチングアルゴリズム説明へのリンク */}
-              <div className="mb-6 rounded-lg p-6 border bg-gradient-to-r from-green-50 to-green-100 border-parent-200">
+              <div className={`mb-6 rounded-lg p-6 border bg-gradient-to-r ${userRole === 'child' ? 'from-orange-50 to-orange-100 border-child-200' : 'from-green-50 to-green-100 border-parent-200'}`}>
                 <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                   <span className="text-2xl">🎯</span>
                   プロフィールとマッチングスコアについて
                 </h2>
                 <div className="text-sm text-gray-700">
                   <p className="leading-relaxed mb-2">
-                    入力した情報をもとに、親子双方の情報を比較し<strong className="text-parent-700">マッチングスコア</strong>を自動計算します。
+                    入力した情報をもとに、親子双方の情報を比較し<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチングスコア</strong>を自動計算します。
                   </p>
                   <a
                     href="/docs/MATCHING_ALGORITHM.md"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block mt-2 px-4 py-2 bg-parent-600 text-white rounded-lg hover:bg-parent-700 transition-colors"
+                    className={`inline-block mt-2 px-4 py-2 text-white rounded-lg transition-colors ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                   >
                     マッチングアルゴリズムの詳細を見る
                   </a>
@@ -547,13 +549,14 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* 自分のプロフィール画像 */}
+              {/* プロフィール画像 */}
               <ProfileImageUpload
                 profileImageUrl={profileImageUrl}
                 setProfileImageUrl={setProfileImageUrl}
                 selectedImageFile={selectedImageFile}
                 setSelectedImageFile={setSelectedImageFile}
                 loading={loading}
+                userRole={userRole}
               />
 
               <ProfileBasicForm
@@ -579,19 +582,17 @@ export default function ProfilePage() {
                 setBio={setBio}
                 userRole={userRole}
               />
-              
-              {/* 探している相手の情報 */}
+
               <div className="border-t border-gray-200 pt-6">
                 <TargetPersonInfoHeader userRole={userRole} />
 
-                <TargetPersonForm
-                  searchingChildren={searchingChildren}
-                  updateSearchingChild={updateSearchingChild}
-                  updateSearchingChildPhotos={updateSearchingChildPhotos}
-                  removeSearchingChild={removeSearchingChild}
-                  addSearchingChild={addSearchingChild}
-                  userRole={userRole}
+
+                {/* 写真管理（1人目のみ） */}
+                <TargetPhotoManager
+                  photos={searchingChildren[0]?.photos || []}
+                  setPhotos={photos => updateSearchingChildPhotos(0, photos)}
                   loading={loading}
+                  userRole={userRole}
                 />
               </div>
 
@@ -624,7 +625,7 @@ export default function ProfilePage() {
               </div>
             </form>
 
-            {/* アカウント削除 */}
+            {/* Account Deletion Section */}
             <div className="mt-8 border-t border-gray-200 pt-8">
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 アカウント削除

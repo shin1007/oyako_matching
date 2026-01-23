@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">メール送信完了</h1>
           </div>
 
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-gray-900 text-center mb-6">
             パスワードリセットリンクを <span className="font-semibold">{submittedEmail}</span> に送信しました。
           </p>
 
@@ -100,11 +100,11 @@ export default function ForgotPasswordPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">パスワードをリセット</h1>
-        <p className="text-gray-600 mb-6">登録済みのメールアドレスを入力してください。パスワードリセットリンクを送信します。</p>
+        <p className="text-gray-900 mb-6">登録済みのメールアドレスを入力してください。パスワードリセットリンクを送信します。</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
               メールアドレス
             </label>
             <input
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
         </form>
 
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-center text-gray-600 text-sm">
+          <p className="text-center text-gray-900 text-sm">
             パスワードを思い出した場合は{' '}
             <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-semibold">
               ログイン

@@ -14,7 +14,7 @@ export function TheirTargetPeopleList({ theirTargetPeople, role }: TheirTargetPe
   if (!theirTargetPeople || theirTargetPeople.length === 0) return null;
   return (
     <div className="mt-4 pt-4 border-t border-gray-200">
-      <p className="text-xs font-semibold text-gray-700 mb-2">
+      <p className="text-xs font-semibold text-gray-900 mb-2">
         この方が探している{role === 'parent' ? '子ども' : '親'}:
       </p>
       <div className="space-y-2">
@@ -32,7 +32,7 @@ export function TheirTargetPeopleList({ theirTargetPeople, role }: TheirTargetPe
                 {searchingPerson.last_name_kanji || ''}{searchingPerson.first_name_kanji || ''}
               </p>
               {(searchingPerson.birthplace_prefecture || searchingPerson.birthplace_municipality) && (
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-900">
                   出身地: {searchingPerson.birthplace_prefecture || ''}
                   {searchingPerson.birthplace_municipality ? ` ${searchingPerson.birthplace_municipality}` : ''}
                 </p>

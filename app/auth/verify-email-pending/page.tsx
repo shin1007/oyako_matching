@@ -361,7 +361,7 @@ function VerifyEmailPendingContent() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 メール確認完了
               </h1>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-900 mb-6">
                 メールアドレスの確認が完了しました
               </p>
               {success && (
@@ -395,11 +395,11 @@ function VerifyEmailPendingContent() {
               メールアドレスの確認
             </h1>
             {email && !showEmailInput ? (
-              <p className="text-gray-600">
+              <p className="text-gray-900">
                 {email} に確認メールを送信しました
               </p>
             ) : (
-              <p className="text-gray-600">
+              <p className="text-gray-900">
                 確認メールを送信します
               </p>
             )}
@@ -447,7 +447,7 @@ function VerifyEmailPendingContent() {
             </ol>
           </div>
 
-          <div className="mb-6 text-sm text-gray-600">
+          <div className="mb-6 text-sm text-gray-900">
             <p className="mb-2">メールが届かない場合：</p>
             <ul className="list-inside list-disc space-y-1 text-sm">
               <li>迷惑メールフォルダを確認</li>
@@ -481,7 +481,7 @@ function VerifyEmailPendingContent() {
 
             <Link
               href="/auth/login"
-              className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-center text-gray-700 hover:bg-gray-50"
+              className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-center text-gray-900 hover:bg-gray-50"
             >
               ログイン画面に戻る
             </Link>
@@ -503,7 +503,7 @@ export default function VerifyEmailPendingPage() {
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md">
-          <div className="rounded-lg bg-white p-8 shadow-lg text-center text-gray-600">
+          <div className="rounded-lg bg-white p-8 shadow-lg text-center text-gray-900">
             読み込み中...
           </div>
         </div>

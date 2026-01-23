@@ -52,7 +52,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
                 </div>
                 <button
                   disabled
-                  className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap flex-shrink-0"
+                  className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-900 font-medium cursor-not-allowed whitespace-nowrap flex-shrink-0"
                 >
                   認証済み
                 </button>
@@ -80,7 +80,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
                 </div>
                 <button
                   disabled
-                  className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-600 font-medium cursor-not-allowed whitespace-nowrap flex-shrink-0"
+                  className="rounded-lg bg-gray-400 px-4 py-2 text-sm text-gray-900 font-medium cursor-not-allowed whitespace-nowrap flex-shrink-0"
                 >
                   登録済み
                 </button>
@@ -104,7 +104,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
                 <div className="text-3xl mr-4">🔍</div>
                 <div className="flex-1">
                   <h4 className="text-base font-semibold text-gray-900">親子マッチング</h4>
-                  <p className="mt-1 text-sm text-gray-600">マッチングを探す</p>
+                  <p className="mt-1 text-sm text-gray-900">マッチングを探す</p>
                 </div>
               </div>
             </Link>
@@ -113,7 +113,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
               <div className="flex items-start">
                 <div className="text-3xl mr-4">🔍</div>
                 <div className="flex-1">
-                  <h4 className="text-base font-semibold text-gray-700">親子マッチング</h4>
+                  <h4 className="text-base font-semibold text-gray-900">親子マッチング</h4>
                   <p className="mt-1 text-sm text-gray-500">マッチングを探す</p>
                   <p className="mt-2 text-xs text-green-700 font-medium">🔒 マイナンバー認証とサブスクリプションが必要</p>
                 </div>
@@ -130,7 +130,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
                 <div className="text-3xl mr-4">💬</div>
                 <div className="flex-1">
                   <h4 className="text-base font-semibold text-gray-900">メッセージ</h4>
-                  <p className="mt-1 text-sm text-gray-600">マッチング相手とのメッセージ</p>
+                  <p className="mt-1 text-sm text-gray-900">マッチング相手とのメッセージ</p>
                 </div>
               </div>
             </Link>
@@ -139,7 +139,7 @@ export function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscript
               <div className="flex items-start">
                 <div className="text-3xl mr-4">💬</div>
                 <div className="flex-1">
-                  <h4 className="text-base font-semibold text-gray-700">メッセージ</h4>
+                  <h4 className="text-base font-semibold text-gray-900">メッセージ</h4>
                   <p className="mt-1 text-sm text-gray-500">マッチング相手とのメッセージ</p>
                   <p className="mt-2 text-xs text-green-700 font-medium">🔒 マイナンバー認証とサブスクリプションが必要</p>
                 </div>

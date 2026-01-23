@@ -37,7 +37,7 @@ export function MatchingSimilarityCard({ score, label, userRole, children }: Mat
           <div className={`text-3xl font-bold ${userRole === 'child' ? 'text-child-600' : parentPercent}`}>{percent}%</div>
           <ScoreExplanation userRole={userRole as 'parent' | 'child'} />
         </div>
-        <div className={`text-xs font-bold ${userRole === 'child' ? 'text-gray-700' : parentText}`}>類似度</div>
+        <div className={`text-xs font-bold ${userRole === 'child' ? 'text-gray-900' : parentText}`}>類似度</div>
         <div className={`text-xs mt-1 ${userRole === 'child' ? 'text-gray-500' : parentText}`}>{label}</div>
       </div>
       <div className="w-full h-1 bg-gray-300 rounded-full mb-3 overflow-hidden">

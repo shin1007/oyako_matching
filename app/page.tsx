@@ -53,7 +53,7 @@ function HomeContent() {
             <br />
             マッチングプラットフォーム
           </h2>
-          <p className="mb-12 text-xl text-gray-700 font-medium">
+          <p className="mb-12 text-xl text-gray-900 font-medium">
             マイナンバーカード認証による厳格な本人確認で
             <br />
             離れ離れになった親子の再会を支援します
@@ -65,8 +65,8 @@ function HomeContent() {
               <div>
                 <div className="mb-4 text-4xl">👨‍👩‍👧‍👦</div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">離別した親の方へ</h3>
-                <p className="mb-6 text-gray-600">プロフィール情報を登録して、<br />お子さまとの再会を目指しましょう。</p>
-                <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-700">
+                <p className="mb-6 text-gray-900">プロフィール情報を登録して、<br />お子さまとの再会を目指しましょう。</p>
+                <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-900">
                   <p className="font-semibold">基本登録無料</p>
                   <p className="mt-2">
                     • 親同士の情報交換<br /><br />
@@ -95,8 +95,8 @@ function HomeContent() {
               <div>
                 <div className="mb-4 text-4xl">👦👧</div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">親を探す子どもの方へ</h3>
-                <p className="mb-6 text-gray-600">12歳以上の方が対象です。プロフィールを登録して、親御さんとの再会を目指しましょう。</p>
-                <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-700">
+                <p className="mb-6 text-gray-900">12歳以上の方が対象です。プロフィールを登録して、親御さんとの再会を目指しましょう。</p>
+                <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-900">
                   <p className="font-semibold">完全無料</p>
                   <p className="mt-2">
                     • 子ども同士の情報交換<br />• マイナンバーカード認証<br />• 親とのマッチング機能<br />• 安全なメッセージ機能<br />
@@ -127,7 +127,7 @@ function HomeContent() {
                 <div className="rounded-xl bg-white p-8 shadow-xl border-t-4 border-blue-300 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
                   <div className="mb-4 text-4xl">🔒</div>
                   <h4 className="mb-2 text-lg font-extrabold text-blue-700">厳格な本人確認</h4>
-                  <p className="text-base text-gray-700 font-medium">
+                  <p className="text-base text-gray-900 font-medium">
                     マイナンバーカードによる確実な本人確認で、
                     <br />
                     両者の安全を守ります
@@ -136,7 +136,7 @@ function HomeContent() {
                 <div className="rounded-xl bg-white p-8 shadow-xl border-t-4 border-blue-300 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
                   <div className="mb-4 text-4xl">🛡️</div>
                   <h4 className="mb-2 text-lg font-extrabold text-blue-700">プライバシー保護</h4>
-                  <p className="text-base text-gray-700 font-medium">
+                  <p className="text-base text-gray-900 font-medium">
                     ストーカー規制法に準拠した非公開照合で、
                     <br />
                     両者の安全を守ります
@@ -150,7 +150,7 @@ function HomeContent() {
 
       {/* Footer */}
       <footer className="border-t bg-gradient-to-r from-blue-100 to-white py-8 mt-12">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-900">
           <p className="font-semibold tracking-wide">&copy; 2025 親子マッチング. All rights reserved.</p>
           <div className="mt-4 flex justify-center gap-8">
             <Link href="/terms" className="hover:text-blue-700 font-medium transition-colors">利用規約</Link>
@@ -167,7 +167,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-gray-600">読み込み中...</p></div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-gray-900">読み込み中...</p></div>}>
       <HomeContent />
     </Suspense>
   );

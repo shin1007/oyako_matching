@@ -10,10 +10,10 @@ interface ProfileImageUploadProps {
   selectedImageFile: File | null;
   setSelectedImageFile: (f: File | null) => void;
   loading: boolean;
+  userRole?: 'parent' | 'child';
 }
-
 export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
-  profileImageUrl, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading
+  profileImageUrl, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading, userRole
 }) => {
   const [showCropper, setShowCropper] = useState(false);
   const [crop, setCrop] = useState<Crop>({ unit: '%', width: 80, aspect: 1 });
@@ -132,7 +132,7 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
             onChange={handleFileSelect}
             className="hidden"
           />
-          <span className="inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors bg-parent-600 hover:bg-parent-700">
+          <span className={`inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}> 
             {profileImageUrl ? '画像を変更' : '画像をアップロード'}
           </span>
         </label>

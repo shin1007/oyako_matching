@@ -15,10 +15,11 @@ interface TargetPhotoManagerProps {
   photos: Photo[];
   setPhotos: (v: Photo[]) => void;
   loading: boolean;
+  userRole?: 'parent' | 'child';
 }
 
 
-export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, setPhotos, loading }) => {
+export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, setPhotos, loading, userRole }) => {
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,14 +126,14 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
               <span className={`inline-block rounded-lg px-3 py-1.5 text-xs text-white transition-colors ${
                 uploading 
                   ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-parent-600 hover:bg-parent-700'
+                  : userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'
               }`}>
                 {uploading ? 'アップロード中...' : '+ 写真を追加'}
               </span>
             </label>
           )}
         </div>
-        <p className="text-xs text-gray-600 mb-3">
+        <p className="text-xs text-gray-900 mb-3">
           JPEG、PNG、WebP形式、最大5MB、1枚のみ登録可能
           <br />
           撮影日時と年齢を記録すると、将来的にAIで現在の姿を推定できるようになります。
@@ -161,7 +162,7 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
                   <div className="flex-1 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">
+                        <label className="block text-xs text-gray-900 mb-1">
                           撮影日
                         </label>
                         <input
@@ -171,7 +172,7 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
                           className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-parent-500 focus:border-parent-500" />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">
+                        <label className="block text-xs text-gray-900 mb-1">
                           撮影時の年齢
                         </label>
                         <input
@@ -185,7 +186,7 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">
+                      <label className="block text-xs text-gray-900 mb-1">
                         メモ・説明
                       </label>
                       <input

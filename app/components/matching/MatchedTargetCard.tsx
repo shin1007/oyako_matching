@@ -32,12 +32,12 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
             登録済み{getRoleLabel(match.role || '')}ユーザー
           </span>
           <h4 className="text-lg font-semibold text-gray-900">{match.profile?.last_name_kanji ?? ''}{match.profile?.first_name_kanji ?? ''}</h4>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-900 mt-1">
             {getGenderLabel(match.profile?.gender, match.role)}
             {match.profile?.birth_date && ` • ${calculateAge(match.profile.birth_date)}歳`}
           </p>
           {match.profile?.bio && (
-            <p className="mt-2 text-sm text-gray-600 line-clamp-2">{match.profile.bio}</p>
+            <p className="mt-2 text-sm text-gray-900 line-clamp-2">{match.profile.bio}</p>
           )}
           {match.profile?.birth_date && (
             <p className="text-xs text-gray-500 mt-1">

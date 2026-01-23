@@ -27,7 +27,7 @@ export function ScoreExplanation({ userRole }: ScoreExplanationProps) {
             <div className="px-6 py-6 space-y-6">
               <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400 mb-4">
                 <h4 className="font-bold text-blue-800 mb-2">親・子ども双方の情報をもとにスコアを算出します</h4>
-                <ul className="text-sm text-gray-700 list-disc ml-5">
+                <ul className="text-sm text-gray-900 list-disc ml-5">
                   <li>生年月日、氏名（ひらがな）、出身地（都道府県・市区町村）を比較</li>
                   <li>親→子、子→親の両方向でスコアを計算し合算</li>
                 </ul>
@@ -35,7 +35,7 @@ export function ScoreExplanation({ userRole }: ScoreExplanationProps) {
               <div className="space-y-4">
                 <div>
                   <h5 className="font-bold text-gray-800 mb-1">🎂 生年月日一致度</h5>
-                  <ul className="text-sm text-gray-600 ml-4 list-disc">
+                  <ul className="text-sm text-gray-900 ml-4 list-disc">
                     <li>年月日すべて一致: <span className="font-bold text-blue-600">80点</span></li>
                     <li>月日一致: <span className="font-bold text-blue-600">70点</span></li>
                     <li>年月一致: <span className="font-bold text-blue-600">60点</span></li>
@@ -44,7 +44,7 @@ export function ScoreExplanation({ userRole }: ScoreExplanationProps) {
                 </div>
                 <div>
                   <h5 className="font-bold text-gray-800 mb-1">👤 氏名（ひらがな）一致度</h5>
-                  <ul className="text-sm text-gray-600 ml-4 list-disc">
+                  <ul className="text-sm text-gray-900 ml-4 list-disc">
                     <li>名字・名前とも一致: <span className="font-bold text-blue-600">10点</span></li>
                     <li>名前のみ一致: <span className="font-bold text-blue-600">7点</span></li>
                     <li>名字のみ一致: <span className="font-bold text-blue-600">3点</span></li>
@@ -52,7 +52,7 @@ export function ScoreExplanation({ userRole }: ScoreExplanationProps) {
                 </div>
                 <div>
                   <h5 className="font-bold text-gray-800 mb-1">📍 出身地一致度</h5>
-                  <ul className="text-sm text-gray-600 ml-4 list-disc">
+                  <ul className="text-sm text-gray-900 ml-4 list-disc">
                     <li>都道府県・市区町村とも一致: <span className="font-bold text-blue-600">10点</span></li>
                     <li>都道府県のみ一致: <span className="font-bold text-blue-600">7点</span></li>
                   </ul>
@@ -60,7 +60,7 @@ export function ScoreExplanation({ userRole }: ScoreExplanationProps) {
               </div>
               <div className="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-400 mt-4">
                 <h5 className="font-bold text-purple-800 mb-2">スコア合算方法</h5>
-                <ul className="text-sm text-gray-700 list-disc ml-5">
+                <ul className="text-sm text-gray-900 list-disc ml-5">
                   <li>親→子のスコア × 0.6</li>
                   <li>子→親のスコア × 0.4</li>
                   <li>合計100点満点で算出</li>

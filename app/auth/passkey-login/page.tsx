@@ -143,7 +143,7 @@ export default function PasskeyLoginPage() {
           <h1 className="text-3xl font-bold text-gray-900">
             パスキーでログイン
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-gray-900">
             指紋、顔認証、またはデバイスのロック解除でログイン
           </p>
         </div>
@@ -209,7 +209,7 @@ export default function PasskeyLoginPage() {
           )}
 
           <div className="mt-6 space-y-2 text-center text-sm">
-            <p className="text-gray-600">
+            <p className="text-gray-900">
               <Link
                 href="/auth/login"
                 className="text-blue-600 hover:underline"
@@ -217,7 +217,7 @@ export default function PasskeyLoginPage() {
                 メール/パスワードでログイン
               </Link>
             </p>
-            <p className="text-gray-600">
+            <p className="text-gray-900">
               アカウントをお持ちでない方は{' '}
               <Link
                 href="/auth/register"

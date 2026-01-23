@@ -52,7 +52,7 @@ export function MatchingCandidatesNotification({ userRole, isVerified, matchingD
             >
               <div>
                 <p className="font-medium text-gray-900">{candidate.lastNameKanji}{candidate.firstNameKanji}</p>
-                <p className="text-gray-600 text-xs">
+                <p className="text-gray-900 text-xs">
                   生年月日: {candidate.birthDate ? new Date(candidate.birthDate).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '未設定'}
                 </p>
               </div>

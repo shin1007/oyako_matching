@@ -1,3 +1,26 @@
+/* 親/子どもテーマ切り替え用クラス */
+.role-parent {
+  --role-primary: var(--color-parent-600);
+  --role-primary-hover: var(--color-parent-700);
+  --role-bg: var(--color-parent-50);
+  --role-border: var(--color-parent-200);
+  --role-accent: var(--color-parent-400);
+}
+.role-child {
+  --role-primary: var(--color-child-600);
+  --role-primary-hover: var(--color-child-700);
+  --role-bg: var(--color-child-50);
+  --role-border: var(--color-child-200);
+  --role-accent: var(--color-child-400);
+}
+
+/* ユーティリティクラス例（必要に応じて追加） */
+.bg-role-primary { background-color: var(--role-primary) !important; }
+.bg-role-primary-hover:hover { background-color: var(--role-primary-hover) !important; }
+.bg-role-bg { background-color: var(--role-bg) !important; }
+.border-role-border { border-color: var(--role-border) !important; }
+.text-role-primary { color: var(--role-primary) !important; }
+.text-role-accent { color: var(--role-accent) !important; }
 /* 全体のh2, p要素の文字色を濃くする */
 h2, p {
   color: #171717;

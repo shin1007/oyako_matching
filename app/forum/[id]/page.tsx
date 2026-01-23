@@ -418,7 +418,7 @@ export default function PostDetailPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-600">読み込み中...</p>
+        <p className="text-gray-900">読み込み中...</p>
       </div>
     );
   }
@@ -427,7 +427,7 @@ export default function PostDetailPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="mb-4 text-gray-600">投稿が見つかりません</p>
+          <p className="mb-4 text-gray-900">投稿が見つかりません</p>
           <Link href="/forum" className="text-blue-600 hover:underline">
             掲示板に戻る
           </Link>
@@ -459,7 +459,7 @@ export default function PostDetailPage() {
                 </div>
               )}
               <div className="mb-4">
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-900">
                   タイトル
                 </label>
                 <input
@@ -470,7 +470,7 @@ export default function PostDetailPage() {
                 />
               </div>
               <div className="mb-4">
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-900">
                   内容
                 </label>
                 <textarea
@@ -491,7 +491,7 @@ export default function PostDetailPage() {
                 <button
                   onClick={handleCancelEditPost}
                   disabled={submitting}
-                  className="rounded-lg bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  className="rounded-lg bg-gray-200 px-4 py-2 text-gray-900 hover:bg-gray-300 disabled:opacity-50"
                 >
                   キャンセル
                 </button>
@@ -507,7 +507,7 @@ export default function PostDetailPage() {
                   </span>
                 )}
                 {post.category && (
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-900">
                     {post.category.icon} {post.category.name}
                   </span>
                 )}
@@ -527,13 +527,13 @@ export default function PostDetailPage() {
                 <span>👁️ {post.view_count}回閲覧</span>
                 <span>🕒 {formatDate(post.created_at)}</span>
                 {post.updated_at !== post.created_at && (
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-900">
                     編集済み
                   </span>
                 )}
               </div>
 
-              <div className="prose max-w-none whitespace-pre-wrap text-gray-700 mb-6">
+              <div className="prose max-w-none whitespace-pre-wrap text-gray-900 mb-6">
                 {post.content}
               </div>
 
@@ -596,13 +596,13 @@ export default function PostDetailPage() {
               {/* Preview of post to be deleted */}
               {post && (
                 <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-sm text-gray-600 mb-1">削除する投稿:</p>
+                  <p className="text-sm text-gray-900 mb-1">削除する投稿:</p>
                   <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">{post.title}</h4>
-                  <p className="text-sm text-gray-700 line-clamp-3">{post.content}</p>
+                  <p className="text-sm text-gray-900 line-clamp-3">{post.content}</p>
                 </div>
               )}
               
-              <p id="delete-post-dialog-description" className="mb-4 text-sm text-gray-600">
+              <p id="delete-post-dialog-description" className="mb-4 text-sm text-gray-900">
                 この操作は取り消せません。投稿とすべてのコメント（{comments.length}件）が削除されます。
               </p>
               {error && (
@@ -614,7 +614,7 @@ export default function PostDetailPage() {
                 <button
                   onClick={() => setShowDeletePostDialog(false)}
                   disabled={submitting}
-                  className="rounded-lg bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  className="rounded-lg bg-gray-200 px-4 py-2 text-gray-900 hover:bg-gray-300 disabled:opacity-50"
                 >
                   キャンセル
                 </button>
@@ -701,7 +701,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={handleCancelEditComment}
                           disabled={submitting}
-                          className="rounded-lg bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                          className="rounded-lg bg-gray-200 px-3 py-1 text-sm text-gray-900 hover:bg-gray-300 disabled:opacity-50"
                         >
                           キャンセル
                         </button>
@@ -718,17 +718,17 @@ export default function PostDetailPage() {
                             className="h-8 w-8 rounded-full object-cover border border-gray-200"
                           />
                         )}
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-gray-900">
                           {comment.author_profile.forum_display_name}
                         </span>
                         <span>🕒 {formatDate(comment.created_at)}</span>
                         {comment.updated_at !== comment.created_at && (
-                          <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                          <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-900">
                             編集済み
                           </span>
                         )}
                       </div>
-                      <p className="whitespace-pre-wrap text-gray-700 mb-2">{comment.content}</p>
+                      <p className="whitespace-pre-wrap text-gray-900 mb-2">{comment.content}</p>
                       
                       {/* Edit/Delete/Report Buttons */}
                       <div className="flex gap-2 mt-2">
@@ -787,11 +787,11 @@ export default function PostDetailPage() {
                         
                         {/* Preview of comment to be deleted */}
                         <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                          <p className="text-sm text-gray-600 mb-1">削除するコメント:</p>
-                          <p className="text-sm text-gray-700 line-clamp-4">{comment.content}</p>
+                          <p className="text-sm text-gray-900 mb-1">削除するコメント:</p>
+                          <p className="text-sm text-gray-900 line-clamp-4">{comment.content}</p>
                         </div>
                         
-                        <p id="delete-comment-dialog-description" className="mb-4 text-sm text-gray-600">
+                        <p id="delete-comment-dialog-description" className="mb-4 text-sm text-gray-900">
                           この操作は取り消せません。
                         </p>
                         {error && (
@@ -803,7 +803,7 @@ export default function PostDetailPage() {
                           <button
                             onClick={() => setShowDeleteCommentDialog(null)}
                             disabled={submitting}
-                            className="rounded-lg bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                            className="rounded-lg bg-gray-200 px-4 py-2 text-gray-900 hover:bg-gray-300 disabled:opacity-50"
                           >
                             キャンセル
                           </button>

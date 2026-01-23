@@ -77,7 +77,7 @@ export default function VerificationPage() {
           <div className="mb-8 text-center">
             <div className="mb-4 text-6xl">🔐</div>
             <h1 className="text-3xl font-bold text-gray-900">本人確認</h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-900">
               マイナンバーカードによる本人確認が必要です
             </p>
           </div>

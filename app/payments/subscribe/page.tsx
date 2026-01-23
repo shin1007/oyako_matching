@@ -102,7 +102,7 @@ export default function SubscribePage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-600">読み込み中...</p>
+        <p className="text-gray-900">読み込み中...</p>
       </div>
     );
   }
@@ -115,7 +115,7 @@ export default function SubscribePage() {
           <h1 className="mb-4 text-center text-2xl font-bold text-gray-900">
             サブスクリプション不要
           </h1>
-          <p className="mb-6 text-center text-gray-600">
+          <p className="mb-6 text-center text-gray-900">
             子どもアカウントは無料でご利用いただけます
           </p>
           <Link
@@ -136,7 +136,7 @@ export default function SubscribePage() {
           <h1 className="mb-4 text-4xl font-bold text-gray-900">
             サブスクリプション登録
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-900">
             親アカウントでマッチング機能を利用するには、サブスクリプションが必要です
           </p>
         </div>
@@ -153,7 +153,7 @@ export default function SubscribePage() {
             <h2 className="mb-2 text-3xl font-bold text-gray-900">親プラン</h2>
             <div className="mb-4">
               <span className="text-5xl font-bold text-parent-600">¥980</span>
-              <span className="text-gray-600"> / 月</span>
+              <span className="text-gray-900"> / 月</span>
             </div>
           </div>
 
@@ -162,28 +162,28 @@ export default function SubscribePage() {
               <div className="text-xl">✓</div>
               <div>
                 <p className="font-semibold text-gray-900">マイナンバーカード認証</p>
-                <p className="text-sm text-gray-600">厳格な本人確認で安全性を確保</p>
+                <p className="text-sm text-gray-900">厳格な本人確認で安全性を確保</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="text-xl">✓</div>
               <div>
                 <p className="font-semibold text-gray-900">AIマッチング</p>
-                <p className="text-sm text-gray-600">プロフィール情報による高精度マッチング</p>
+                <p className="text-sm text-gray-900">プロフィール情報による高精度マッチング</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="text-xl">✓</div>
               <div>
                 <p className="font-semibold text-gray-900">メッセージ機能</p>
-                <p className="text-sm text-gray-600">マッチング相手との安全なメッセージ</p>
+                <p className="text-sm text-gray-900">マッチング相手との安全なメッセージ</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="text-xl">✓</div>
               <div>
                 <p className="font-semibold text-gray-900">AI成長写真生成</p>
-                <p className="text-sm text-gray-600">子どもの成長をシミュレーション</p>
+                <p className="text-sm text-gray-900">子どもの成長をシミュレーション</p>
               </div>
             </div>
           </div>

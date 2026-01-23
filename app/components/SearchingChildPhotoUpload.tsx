@@ -199,7 +199,7 @@ export default function SearchingChildPhotoUpload({
           )}
         </div>
 
-        <p className="text-xs text-gray-600 mb-3">
+        <p className="text-xs text-gray-900 mb-3">
           JPEG、PNG、WebP形式、最大5MB、1枚のみ登録可能
           <br />
           撮影日時と年齢を記録すると、将来的にAIで現在の姿を推定できるようになります。
@@ -233,7 +233,7 @@ export default function SearchingChildPhotoUpload({
                   <div className="flex-1 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">
+                        <label className="block text-xs text-gray-900 mb-1">
                           撮影日
                         </label>
                         <input
@@ -244,7 +244,7 @@ export default function SearchingChildPhotoUpload({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">
+                        <label className="block text-xs text-gray-900 mb-1">
                           撮影時の年齢
                         </label>
                         <input
@@ -259,7 +259,7 @@ export default function SearchingChildPhotoUpload({
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">
+                      <label className="block text-xs text-gray-900 mb-1">
                         メモ・説明
                       </label>
                       <input

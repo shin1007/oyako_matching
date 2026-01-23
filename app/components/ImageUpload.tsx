@@ -314,7 +314,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
                 type="button"
                 onClick={handleCancel}
                 disabled={uploading}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+                className="px-4 py-2 text-gray-900 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
               >
                 キャンセル
               </button>

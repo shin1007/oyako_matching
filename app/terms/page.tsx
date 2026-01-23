@@ -11,7 +11,7 @@ export default function TermsPage() {
 
           <h1 className="mb-8 text-4xl font-bold text-gray-900">利用規約</h1>
 
-          <div className="space-y-8 text-gray-700">
+          <div className="space-y-8 text-gray-900">
             <section>
               <h2 className="mb-4 text-2xl font-bold text-gray-900">第1条 総則</h2>
               <p>
@@ -131,7 +131,7 @@ export default function TermsPage() {
             </section>
 
             <section className="border-t pt-8">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 最終更新日：2026年1月18日
               </p>
             </section>
@@ -141,7 +141,7 @@ export default function TermsPage() {
 
       {/* Footer */}
       <footer className="border-t bg-gray-50 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-900">
           <p>&copy; 2024 親子マッチング. All rights reserved.</p>
         </div>
       </footer>

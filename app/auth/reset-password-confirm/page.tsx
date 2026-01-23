@@ -101,7 +101,7 @@ function ResetPasswordConfirmContent() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">パスワード変更完了</h1>
           </div>
 
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-gray-900 text-center mb-6">
             パスワードが正常にリセットされました。ログインページにリダイレクトしています...
           </p>
 
@@ -124,7 +124,7 @@ function ResetPasswordConfirmContent() {
         <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">リセットリンクが無効です</h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-900 mb-6">
               パスワードリセットのリンクが見つかりません。メール内のリンクから再度アクセスしてください。
             </p>
             <Link
@@ -143,11 +143,11 @@ function ResetPasswordConfirmContent() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">新しいパスワードを設定</h1>
-        <p className="text-gray-600 mb-6">新しいパスワードを入力してください。</p>
+        <p className="text-gray-900 mb-6">新しいパスワードを入力してください。</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
               新しいパスワード
             </label>
             <input
@@ -164,7 +164,7 @@ function ResetPasswordConfirmContent() {
           </div>
 
           <div>
-            <label htmlFor="passwordConfirm" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="passwordConfirm" className="block text-sm font-medium text-gray-900 mb-2">
               パスワード確認
             </label>
             <input
@@ -195,7 +195,7 @@ function ResetPasswordConfirmContent() {
         </form>
 
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-center text-gray-600 text-sm">
+          <p className="text-center text-gray-900 text-sm">
             <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-semibold">
               ログインページに戻る
             </Link>
@@ -208,7 +208,7 @@ function ResetPasswordConfirmContent() {
 
 export default function ResetPasswordConfirmPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><p className="text-gray-600">読み込み中...</p></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><p className="text-gray-900">読み込み中...</p></div>}>
       <ResetPasswordConfirmContent />
     </Suspense>
   );

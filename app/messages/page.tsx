@@ -180,7 +180,7 @@ export default function MessagesPage() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">メッセージ</h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-gray-900">
             マッチング相手とのメッセージ履歴
           </p>
         </div>
@@ -195,7 +195,7 @@ export default function MessagesPage() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="mb-4 text-4xl">💬</div>
-              <p className="text-gray-600">読み込み中...</p>
+              <p className="text-gray-900">読み込み中...</p>
             </div>
           </div>
         ) : matches.length === 0 ? (
@@ -204,7 +204,7 @@ export default function MessagesPage() {
             <h2 className="mb-2 text-xl font-semibold text-gray-900">
               まだマッチングがありません
             </h2>
-            <p className="mb-6 text-gray-600">
+            <p className="mb-6 text-gray-900">
               マッチングを探して、再会への第一歩を踏み出しましょう
             </p>
             <Link
@@ -249,7 +249,7 @@ export default function MessagesPage() {
                         類似度: {(match.similarity_score * 100).toFixed(0)}%
                       </p>
                       {match.last_message ? (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                        <p className="text-sm text-gray-900 mt-1 line-clamp-1">
                           {match.last_message.is_own && '自分: '}
                           {match.last_message.content}
                         </p>

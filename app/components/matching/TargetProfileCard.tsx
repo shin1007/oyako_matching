@@ -14,7 +14,7 @@ export function TargetProfileCard({ target, userRole }: TargetProfileCardProps) 
       <h3 className="text-xl font-bold text-gray-900">
         {target.last_name_kanji}{target.first_name_kanji || target.name_kanji || target.name_hiragana || '名前未設定'}
       </h3>
-      <p className="text-sm text-gray-600 mt-1">
+      <p className="text-sm text-gray-900 mt-1">
         {target.gender ? getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent') : '性別未設定'}
         {target.birth_date && ` • ${calculateAge(target.birth_date)}歳`}
       </p>
