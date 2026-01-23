@@ -291,14 +291,15 @@ export default function MessageDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-6">
-            <Link
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <Link
               href="/messages"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
-            >
-              ← メッセージ一覧に戻る
-            </Link>
-            <UserHeader match={match} />
+                className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              >
+              メッセージ一覧に戻る
+              </Link>
+            </div>
           </div>
           <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
             <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
