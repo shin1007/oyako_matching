@@ -310,7 +310,7 @@ export default function MessagesPage() {
                   </div>
                 )}
 
-                {match.status === 'accepted' && (
+                {(match.status === 'accepted' || match.status === 'blocked') && (
                   <div className="mt-4">
                     <Link
                       href={`/messages/${match.id}`}
