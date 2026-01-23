@@ -206,7 +206,7 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
       const candidateColumn = userData.role === 'parent' ? 'child_id' : 'parent_id';
       const { data: existingMatch } = await admin
         .from('matches')
-        .select('id, status')
+        .select('id, status, blocked_by')
         .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
         .maybeSingle();
 
@@ -222,6 +222,8 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
         ...candidate,
         existingMatchId: existingMatch?.id || null,
         existingMatchStatus: existingMatch?.status || null,
+        blocked_by: existingMatch?.blocked_by || null,
+        currentUserId: user.id,
         profile: userProfile || null,
         theirTargetPeople: await getTargetPeopleInfo(admin, candidate.userId),
         role: userProfile?.users?.role || null,

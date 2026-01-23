@@ -326,6 +326,7 @@ export type Database = {
           similarity_score: number
           status: string
           updated_at: string | null
+          blocked_by: string | null // 追加: ブロックしたユーザーID
         }
         Insert: {
           child_id: string
@@ -335,6 +336,7 @@ export type Database = {
           similarity_score: number
           status?: string
           updated_at?: string | null
+          blocked_by?: string | null
         }
         Update: {
           child_id?: string
@@ -344,6 +346,7 @@ export type Database = {
           similarity_score?: number
           status?: string
           updated_at?: string | null
+          blocked_by?: string | null
         }
         Relationships: [
           {
