@@ -1,4 +1,5 @@
 'use client';
+import { DeleteProfileDialog } from './components/DeleteProfileDialog';
 import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -1024,75 +1025,19 @@ export default function ProfilePage() {
                 </button>
               )}
 
-              {showDeleteWarning && !showDeleteConfirm && (
-                <div className="rounded-lg bg-red-50 p-6 border border-red-200">
-                  <h4 className="text-lg font-medium text-red-900 mb-3">
-                    ⚠️ 警告：アカウント削除について
-                  </h4>
-                  <div className="text-sm text-red-800 mb-4 space-y-2">
-                    <p>以下のデータが完全に削除されます：</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>プロフィール情報</li>
-                      <li>{userRole === 'child' ? '探している親の情報' : '探している子どもの情報'}</li>
-                      <li>マッチング情報とメッセージ</li>
-                      <li>掲示板の投稿とコメント</li>
-                      <li>サブスクリプション情報</li>
-                      <li>パスキー認証情報</li>
-                    </ul>
-                    <p className="font-semibold mt-3">
-                      この操作は取り消すことができません。
-                    </p>
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteWarning(false)}
-                      className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDeleteWarning(false);
-                        setShowDeleteConfirm(true);
-                      }}
-                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                    >
-                      削除を続行
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {showDeleteConfirm && (
-                <div className="rounded-lg bg-red-50 p-6 border-2 border-red-300">
-                  <h4 className="text-lg font-medium text-red-900 mb-3">
-                    🚨 最終確認
-                  </h4>
-                  <p className="text-sm text-red-800 mb-4">
-                    本当にアカウントを削除しますか？すべてのデータが完全に削除され、元に戻すことはできません。
-                  </p>
-                  <div className="flex space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      disabled={deleting}
-                      className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300 disabled:opacity-50"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDeleteAccount}
-                      disabled={deleting}
-                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {deleting ? '削除中...' : '完全に削除する'}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <DeleteProfileDialog
+                open={showDeleteWarning || showDeleteConfirm}
+                onClose={() => {
+                  setShowDeleteWarning(false);
+                  setShowDeleteConfirm(false);
+                }}
+                onConfirm={() => {
+                  setShowDeleteWarning(false);
+                  setShowDeleteConfirm(false);
+                  handleDeleteAccount();
+                }}
+                loading={deleting}
+              />
             </div>
           </div>
         )}
