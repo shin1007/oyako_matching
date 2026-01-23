@@ -367,7 +367,17 @@ export default function MatchingPage() {
     <div className="min-h-screen bg-gray-100">
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
         {renderTestModeBanners()}
-        {renderTitle(userRole)}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>{renderTitle(userRole)}</div>
+            <Link
+              href="/dashboard"
+              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+            >
+              ダッシュボードに戻る
+            </Link>
+          </div>
+        </div>
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>
         )}
@@ -379,7 +389,7 @@ export default function MatchingPage() {
           renderTargetCards(
             searchingTargets,
             matches,
-            (target) => <TargetProfileCard target={target} userRole={userRole?userRole:""} />,
+            (target) => <TargetProfileCard target={target} userRole={userRole ?? ''} />,
             (matchedTargets, target) => matchedTargets.map((match) => {
               // targetScoresから該当ターゲットのスコア合計を取得
               const scoreObj = Array.isArray(match.targetScores)
@@ -402,7 +412,7 @@ export default function MatchingPage() {
                   key={match.userId}
                   match={match}
                   target={target}
-                  userRole={userRole}
+                  userRole={userRole ?? ''}
                   childScore={childScore}
                   creating={creating}
                   handleCreateMatch={handleCreateMatch}

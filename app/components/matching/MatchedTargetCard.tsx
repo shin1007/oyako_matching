@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 
+
+import { ReactNode } from 'react';
+
 interface MatchedTargetCardProps {
   match: any;
   target: any;
@@ -13,10 +16,11 @@ interface MatchedTargetCardProps {
   creating: string | null;
   handleCreateMatch: (userId: string, score: number) => void;
   renderTheirTargetPeople: (match: any) => React.ReactNode;
+  children?: ReactNode;
 }
 
 
-export function MatchedTargetCard({ match, target, userRole, childScore, creating, handleCreateMatch, renderTheirTargetPeople }: MatchedTargetCardProps) {
+export function MatchedTargetCard({ match, target, userRole, childScore, creating, handleCreateMatch, renderTheirTargetPeople, children }: MatchedTargetCardProps) {
   const [blockLoading, setBlockLoading] = useState(false);
   const [blocked, setBlocked] = useState(match.existingMatchStatus === 'blocked');
 
@@ -105,7 +109,7 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
           userRole={userRole}
         >
           {/* アクションボタンはchildren経由で受け取る */}
-          {typeof (arguments[0] as any)?.children !== 'undefined' ? (arguments[0] as any).children : null}
+          {children}
           {/* ブロック・ブロック解除ボタン */}
           <div className="mt-2">
             {blocked ? (
