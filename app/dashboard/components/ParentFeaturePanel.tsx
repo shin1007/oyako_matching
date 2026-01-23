@@ -1,6 +1,5 @@
 import Link from 'next/link';
 
-
 interface MatchProfile {
   birth_date?: string;
 }
@@ -14,10 +13,11 @@ interface ParentFeaturePanelProps {
   isVerified: boolean;
   isSubscriptionActive: boolean;
   subscription: any;
-  matches?: Match[]; // 追加: acceptedマッチ一覧
+  matches?: Match[];
 }
 
-// 18歳未満判定関数
+export default function ParentFeaturePanel({ isVerified, isSubscriptionActive, subscription, matches }: ParentFeaturePanelProps) {
+  // 18歳未満判定関数
   function isUnder18(birthDate?: string): boolean {
     if (!birthDate) return false;
     const today = new Date();
@@ -33,7 +33,8 @@ interface ParentFeaturePanelProps {
   const hasAcceptedUnder18Match = (Array.isArray(matches) ? matches : []).some(
     (m) => m.status === 'accepted' && m.role === 'child' && isUnder18(m.profile?.birth_date)
   );
-    return (
+
+  return (
     <div className="space-y-4">
       {/* Forum Card - Always available for parents */}
       <Link

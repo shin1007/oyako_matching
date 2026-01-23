@@ -65,10 +65,10 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // マッチが承認されているか確認
-    if (match.status !== 'accepted') {
+    // マッチが承認済みまたはブロック状態ならメッセージ一覧を表示可能
+    if (match.status !== 'accepted' && match.status !== 'blocked') {
       return NextResponse.json(
-        { error: 'Match is not accepted yet' },
+        { error: 'Match is not accepted or blocked' },
         { status: 400 }
       );
     }

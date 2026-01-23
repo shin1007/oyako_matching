@@ -27,6 +27,9 @@ export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
         <p className="text-sm text-gray-900">
           {match.other_user_role === 'parent' ? '親' : '子'}
         </p>
+        {match.status === 'blocked' && (
+          <span className="inline-block mt-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">ブロック中</span>
+        )}
       </div>
     </div>
     {/* 探している子どもの情報 */}

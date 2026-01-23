@@ -286,6 +286,43 @@ export default function MessageDetailPage() {
     );
   }
 
+  // ブロック状態の場合のUI（警告＋メッセージ一覧のみ表示、入力欄は非表示）
+  if (match.status === 'blocked') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="mb-6">
+            <Link
+              href="/messages"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
+            >
+              ← メッセージ一覧に戻る
+            </Link>
+            <UserHeader match={match} />
+          </div>
+          <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
+            <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
+            <div className="text-sm">このユーザーとのメッセージ送信はできません。必要に応じて設定画面からブロック解除してください。</div>
+          </div>
+          {/* メッセージ一覧のみ表示 */}
+          <div className="bg-white rounded-lg shadow mb-4" style={{ minHeight: '300px' }}>
+            <div className="h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <MessageList
+                  messages={messages}
+                  currentUserId={currentUserId}
+                  userRole={userRole}
+                  linkifyText={linkifyText}
+                />
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-4xl">
