@@ -6,19 +6,9 @@ import { PendingNotification } from '@/app/components/dashboard/pending-notifica
 import { ProfileCard } from './components/ProfileCard';
 import { MatchingCandidatesNotification } from './components/MatchingCandidatesNotification';
 import { ChildFeaturePanel } from './components/ChildFeaturePanel';
-import { ParentFeaturePanel } from './components/ParentFeaturePanel';
+import ParentFeaturePanel from './components/ParentFeaturePanel';
 
 export default async function DashboardPage() {
-    // acceptedマッチ一覧（親のみ）
-    let acceptedMatches = [];
-    if (userData?.role === 'parent') {
-      const { data: matches } = await supabase
-        .from('matches')
-        .select('status, profile:child_profile_id(birth_date), role')
-        .eq('parent_id', user.id)
-        .eq('status', 'accepted');
-      acceptedMatches = matches || [];
-    }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -32,6 +22,17 @@ export default async function DashboardPage() {
     .select('role, verification_status, mynumber_verified')
     .eq('id', user.id)
     .single();
+
+  // acceptedマッチ一覧（親のみ）
+  let acceptedMatches = [];
+  if (userData?.role === 'parent') {
+    const { data: matches } = await supabase
+      .from('matches')
+      .select('status, profile:child_profile_id(birth_date), role')
+      .eq('parent_id', user.id)
+      .eq('status', 'accepted');
+    acceptedMatches = matches || [];
+  }
 
 
   const { data: profile } = await supabase

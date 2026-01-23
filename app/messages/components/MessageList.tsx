@@ -27,19 +27,30 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
     ) : (
       messages.map((message) => {
         const isOwnMessage = message.sender_id === currentUserId;
+        let bgClass = '';
+        let textClass = '';
+        if (isOwnMessage) {
+          if (userRole === 'child') {
+            bgClass = 'bg-child-600';
+          } else {
+            bgClass = 'bg-parent-600';
+          }
+        } else {
+          bgClass = 'bg-gray-200';
+        }
+        // 600以上のbgクラスならtext-white
+        if (/bg-(child|parent|orange|red|green|blue|purple|yellow)-(6|7|8|9)00/.test(bgClass)) {
+          textClass = 'text-white';
+        } else {
+          textClass = 'text-gray-900';
+        }
         return (
           <div
             key={message.id}
             className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                isOwnMessage
-                  ? userRole === 'child'
-                    ? 'bg-child-600 text-white'
-                    : 'bg-parent-500 text-white'
-                  : 'bg-gray-200 text-gray-900'
-              }`}
+              className={`max-w-[70%] rounded-lg px-4 py-2 ${bgClass} ${textClass}`}
             >
               <p className="whitespace-pre-wrap break-words">
                 {linkifyText(message.content)}
