@@ -9,6 +9,16 @@ import { ChildFeaturePanel } from './components/ChildFeaturePanel';
 import { ParentFeaturePanel } from './components/ParentFeaturePanel';
 
 export default async function DashboardPage() {
+    // acceptedマッチ一覧（親のみ）
+    let acceptedMatches = [];
+    if (userData?.role === 'parent') {
+      const { data: matches } = await supabase
+        .from('matches')
+        .select('status, profile:child_profile_id(birth_date), role')
+        .eq('parent_id', user.id)
+        .eq('status', 'accepted');
+      acceptedMatches = matches || [];
+    }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -89,7 +99,7 @@ export default async function DashboardPage() {
             {userData?.role === 'child' ? (
               <ChildFeaturePanel isVerified={isVerified} />
             ) : (
-              <ParentFeaturePanel isVerified={isVerified} isSubscriptionActive={isSubscriptionActive} subscription={subscription} />
+              <ParentFeaturePanel isVerified={isVerified} isSubscriptionActive={isSubscriptionActive} subscription={subscription} matches={acceptedMatches} />
             )}
           </div>
         </div>
