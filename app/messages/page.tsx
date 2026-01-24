@@ -139,8 +139,10 @@ export default function MessagesPage() {
 
   // getStatusBadgeはStatusBadgeコンポーネントで代替
 
+  // 親子ロールに応じてラッパーにクラスを付与
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
       <main className="container mx-auto px-4 py-8">
         {testModeBypassVerification && (
           <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">

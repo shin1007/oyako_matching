@@ -12,11 +12,11 @@ interface ProfileImageUploadProps {
   loading: boolean;
   userRole?: 'parent' | 'child';
 }
-export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
+export const ProfileImageUpload = ({
   profileImageUrl, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading, userRole
-}) => {
+}: ProfileImageUploadProps) => {
   const [showCropper, setShowCropper] = useState(false);
-  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 80, aspect: 1 });
+  const [crop, setCrop] = useState<Crop>({ unit: '%', x: 10, y: 10, width: 80, height: 80 }); // aspectはReactCropのpropsで指定
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -79,8 +79,10 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       // canvas→blob
       const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
       if (!blob) throw new Error('画像変換に失敗しました');
+      // BlobをFileに変換
+      const tempFile = new File([blob], selectedImageFile?.name || 'profile.jpg', { type: 'image/jpeg' });
       // 圧縮
-      const compressed = await imageCompression(blob, { maxSizeMB: 1, maxWidthOrHeight: 512, useWebWorker: true });
+      const compressed = await imageCompression(tempFile, { maxSizeMB: 1, maxWidthOrHeight: 512, useWebWorker: true });
       // File化
       const croppedFile = new File([compressed], selectedImageFile?.name || 'profile.jpg', { type: 'image/jpeg' });
       setSelectedImageFile(croppedFile);
@@ -105,8 +107,10 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // 親子ロールに応じてラッパーにクラスを付与
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${roleClass}`}>  
       {/* 現在の画像またはプレビュー */}
       <div className="flex justify-center">
         {profileImageUrl ? (
@@ -132,7 +136,7 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
             onChange={handleFileSelect}
             className="hidden"
           />
-          <span className={`inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}> 
+          <span className="inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors bg-role-primary bg-role-primary-hover">
             {profileImageUrl ? '画像を変更' : '画像をアップロード'}
           </span>
         </label>
@@ -190,7 +194,7 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
                 type="button"
                 onClick={handleCropComplete}
                 disabled={uploading}
-                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 text-white bg-role-primary bg-role-primary-hover rounded-lg disabled:opacity-50"
               >
                 {uploading ? 'アップロード中...' : '切り取りを確定'}
               </button>

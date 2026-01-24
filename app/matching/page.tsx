@@ -358,8 +358,10 @@ export default function MatchingPage() {
 
   // 相手が探している子ども/親情報を表示する関数
   // TheirTargetPeopleListに置換
+  // 親子ロールに応じてラッパーにクラスを付与
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen bg-gray-100 ${roleClass}`}> 
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
         {renderTestModeBanners()}
         <div className="mb-8">

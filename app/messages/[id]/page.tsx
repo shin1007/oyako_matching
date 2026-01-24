@@ -213,9 +213,10 @@ export default function MessageDetailPage() {
     }
   };
 
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={`min-h-screen bg-gray-50 flex items-center justify-center ${roleClass}`}>
         <div className="text-center">
           <div className="mb-4 text-4xl">💬</div>
           <p className="text-gray-900">読み込み中...</p>
@@ -226,7 +227,7 @@ export default function MessageDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
         <main className="container mx-auto px-4 py-8">
           <ErrorAlert message={error} onClose={() => setError('')} />
           <Link
@@ -242,7 +243,7 @@ export default function MessageDetailPage() {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
         <main className="container mx-auto px-4 py-8">
           <div className="mb-6 rounded-lg bg-yellow-50 p-4 text-yellow-600">
             マッチ情報が見つかりません
@@ -262,7 +263,7 @@ export default function MessageDetailPage() {
   const isBlocked = match.status === 'blocked';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
