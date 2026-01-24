@@ -1,4 +1,5 @@
 "use client";
+import { SmallCardList } from '@/app/components/matching/SmallCardList';
 import { ParentApprovalModal } from '@/app/components/matching/ParentApprovalModal';
 
 import { useState, useEffect } from 'react';
@@ -11,9 +12,13 @@ import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
 import { TargetProfileCard } from '@/app/components/matching/TargetProfileCard';
+import { ProfileCard } from '@/app/components/matching/ProfileCard';
 import { MatchedTargetCard } from '@/app/components/matching/MatchedTargetCard';
 import { TheirTargetPeopleList } from '@/app/components/matching/TheirTargetPeopleList';
 import { getGenderLabel, calculateAge, getRoleLabel } from '@/app/components/matching/matchingUtils';
+import { NoTargetRegisteredCard } from '@/app/components/matching/NoTargetRegisteredCard';
+import { NoMatchingCard } from '@/app/components/matching/NoMatchingCard';
+import { TestModeBanners } from '@/app/components/matching/TestModeBanners';
 
 interface Match {
   userId: string;
@@ -67,14 +72,24 @@ interface SearchingTarget {
 function renderTitle(userRole: string | null) {
   return (
     <div className="mb-8">
-      <h1 className="text-3xl font-bold text-gray-900">
-        {userRole === 'child' ? '親を探す' : '子を探す'}
-      </h1>
-      <p className="mt-2 text-gray-600">
-        {userRole === 'child'
-          ? 'プロフィール情報に基づいて、あなたに合った親を表示しています'
-          : 'プロフィール情報に基づいて、あなたに合った子を表示しています'}
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {userRole === 'child' ? '親を探す' : '子を探す'}
+          </h1>
+          <p className="mt-2 text-gray-600">
+            {userRole === 'child'
+              ? 'プロフィール情報に基づいて、あなたに合った親を表示しています'
+              : 'プロフィール情報に基づいて、あなたに合った子を表示しています'}
+          </p>
+        </div>
+        <Link
+          href="/dashboard"
+          className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
+        >
+          ダッシュボードに戻る
+        </Link>
+      </div>
     </div>
   );
 }
@@ -84,138 +99,31 @@ function renderFindingMatch() {
   return (
     <div className="flex items-center justify-center py-12">
       <div className="text-center">
-        <div className="mb-4 text-4xl">🔍</div>
+        <div className="mb-4 flex justify-center">
+          <span
+            className="inline-block animate-spin rounded-full border-4 border-gray-300 h-12 w-12 align-[-0.125em]"
+            style={{ borderTopColor: '#3b82f6' }} // Tailwind blue-500
+          ></span>
+        </div>
         <p className="text-gray-600">マッチングを検索中...</p>
       </div>
     </div>
   );
 }
 
-// 「探している子ども/親を登録してください」カードを返す関数
-function renderNoTargetRegisteredCard(userRole: string | null) {
-  return (
-    <div className="rounded-lg bg-white p-12 text-center shadow">
-      <div className="mb-4 text-6xl">📝</div>
-      <h2 className="mb-2 text-xl font-semibold text-gray-900">
-        {userRole === 'parent' ? '探している子どもを登録してください' : '探している親を登録してください'}
-      </h2>
-      <p className="mb-6 text-gray-600">
-        {userRole === 'parent' 
-          ? '探している子どもの情報を登録すると、マッチングが表示されます'
-          : '探している親の情報を登録すると、マッチングが表示されます'
-        }
-      </p>
-      <Link
-        href="/dashboard/profile"
-        className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
-      >
-        プロフィールを編集
-      </Link>
-    </div>
-  );
-}
 
 
-  // 「マッチングが見つかりませんでした」カードを返す関数
-  function renderNoMatchingCard(userRole: string | null) {
-    return (
-      <div className="rounded-lg bg-white p-12 text-center shadow">
-        <div className="mb-4 text-6xl">😔</div>
-        <h2 className="mb-2 text-xl font-semibold text-gray-900">
-          マッチングが見つかりませんでした
-        </h2>
-        <p className="mb-6 text-gray-600">
-          プロフィールを充実させると、マッチングの精度が向上します
-        </p>
-        <Link
-          href="/dashboard/profile"
-          className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
-        >
-          プロフィールを編集
-        </Link>
-      </div>
-    );
-  }
-
-// 大きいほうのカード（登録している探している子ども/親ごとに表示）
-function renderTargetCards(
-  searchingTargets: SearchingTarget[],
-  matches: Match[],
-  renderTargetProfile: (target: SearchingTarget) => React.ReactNode,
-  renderMatchedTargetCards: (matchedTargets: Match[], target: SearchingTarget) => React.ReactNode
-) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-8 w-full max-w-5xl mx-auto">
-        {searchingTargets.map((target) => {
-          const matchedTargets = matches;
-          return (
-            // 大きいほうのカード
-            <div key={target.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
-              <div className="flex flex-col gap-0 lg:flex-row">
-                {renderTargetProfile(target)}
-                {/* 小さいほうのカード */}
-                <div className="flex-1 p-5 lg:p-6">
-                  {matchedTargets.length === 0 ? (
-                    <div className="flex h-full min-h-[120px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-gray-600">
-                      マッチング相手がまだ見つかっていません
-                    </div>
-                  ) : (
-                    renderMatchedTargetCards(matchedTargets, target)
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function MatchingPage() {
-  // --- ここからヘルパー関数をreturnより前に配置 ---
-  function renderTestModeBanners() {
-    return (
-      <>
-        {testModeBypassVerification && (
-          <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">✅</span>
-              <span className="font-semibold">テストモード: マイナンバー認証がスキップされています</span>
-            </div>
-          </div>
-        )}
-        {testModeBypassSubscription && (
-          <div className="mb-6 rounded-lg border-2 border-purple-400 bg-purple-50 p-4 text-purple-700">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">✅</span>
-              <span className="font-semibold">テストモード: サブスクリプションがスキップされています</span>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  }
-
-  // TargetProfileCardに置換
-
-  // MatchedTargetCardに置換
-  // --- ここまで ---
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const notifyError = useErrorNotification(setError, { log: true });
-  const [creating, setCreating] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [searchingTargets, setSearchingTargets] = useState<SearchingTarget[]>([]);
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
-  // 親の同意モーダル表示状態
-  const [showParentApprovalModal, setShowParentApprovalModal] = useState(false);
-  // 申請対象ユーザーIDとスコアを一時保存
-  const [pendingMatchInfo, setPendingMatchInfo] = useState<{userId: string, score: number} | null>(null);
   const router = useRouter();
   const supabase = createClient();
   useEffect(() => {
@@ -244,6 +152,7 @@ export default function MatchingPage() {
     }
   };
 
+  // マッチング候補の読み込み（画面全体）
   const loadMatches = async () => {
     setLoading(true);
     setError('');
@@ -261,201 +170,48 @@ export default function MatchingPage() {
       setLoading(false);
     }
   };
-  // マッチングアクションボタン生成関数
-  function createMatchingActionButton(params: {
-    userRole: string | null;
-    match: Match;
-    childScore: number;
-    creating: string | null;
-    handleCreateMatch: (userId: string, score: number) => void;
-    calculateAge: (birthDate: string) => number;
-  }) {
-    const { userRole, match, childScore, creating, handleCreateMatch, calculateAge } = params;
-    const isParent = userRole === 'parent';
-    const childBirthDate = match.profile?.birth_date;
-    const isChild = match.role === 'child';
-    let isUnder18 = false;
-    if (isChild && childBirthDate) {
-      const age = calculateAge(childBirthDate);
-      isUnder18 = age < 18;
-    }
-    // 申請ボタン押下時の処理
-    const handleRequestClick = () => {
-      // 自分が18歳未満かつrole=childなら親の同意モーダル表示
-      const myAge = profile?.birth_date ? calculateAge(profile.birth_date) : null;
-      const myRole = profile?.users?.role;
-      if (myRole === 'child' && myAge !== null && myAge < 18) {
-        setPendingMatchInfo({ userId: match.userId, score: childScore });
-        setShowParentApprovalModal(true);
-      } else {
-        handleCreateMatch(match.userId, childScore);
-      }
-    };
-
-    // 既存マッチのステータスに応じた表示
-    if (match.existingMatchStatus === 'accepted' || match.existingMatchStatus === 'blocked') {
-      return (
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/messages/${match.existingMatchId}`}
-            className="w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition bg-role-primary bg-role-primary-hover"
-          >
-            メッセージへ
-          </Link>
-        </div>
-      );
-    }
-    // マッチが成立しているが、相手が18歳未満で未承認の場合の表示
-    if (isParent && isChild && isUnder18) {
-      return (
-        <div className="w-full rounded-lg bg-green-100 px-3 py-2 text-green-800 text-sm font-semibold text-center border border-green-300">
-          承認申請待ち（18歳未満のため）
-        </div>
-      );
-    }
-    // 承認待ちの場合の表示
-    if (match.existingMatchStatus === 'pending') {
-      return (
-        <button
-          disabled
-          className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
-        >
-          承認待ち
-        </button>
-      );
-    } 
-    return (
-      <button
-        onClick={handleRequestClick}
-        disabled={creating === match.userId}
-        className="w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition bg-role-primary bg-role-primary-hover"
-      >
-        {creating === match.userId ? '処理中...' : 'マッチング申請'}
-      </button>
-    );
-  }
-
-  const handleCreateMatch = async (targetUserId: string, similarityScore: number) => {
-    setCreating(targetUserId);
-
-    try {
-      const res = await apiRequest('/api/matching/create', {
-        method: 'POST',
-        body: {
-          targetUserId,
-          similarityScore,
-        }
-      });
-      if (!res.ok) throw new Error(res.error || 'マッチング申請に失敗しました');
-
-      // Success - redirect to messages
-      router.push('/messages');
-    } catch (err: any) {
-      notifyError(err);
-    } finally {
-      setCreating(null);
-    }
-  };
 
 
-  // 相手が探している子ども/親情報を表示する関数
-  // TheirTargetPeopleListに置換
-  // 親子ロールに応じてラッパーにクラスを付与
   const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   return (
     <div className={`min-h-screen bg-gray-100 ${roleClass}`}> 
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
-        {renderTestModeBanners()}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>{renderTitle(userRole)}</div>
-            <Link
-              href="/dashboard"
-              className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
-            >
-              ダッシュボードに戻る
-            </Link>
-          </div>
-        </div>
+        <TestModeBanners bypassVerification={testModeBypassVerification} bypassSubscription={testModeBypassSubscription} />
+        {renderTitle(userRole)}
         <ErrorAlert message={error} onClose={() => setError('')} />
         {loading ? (
         // 検索中表示
           renderFindingMatch()
         ) : matches.length === 0 ? (
-          renderNoMatchingCard(userRole)
+          <NoMatchingCard userRole={userRole} />
+        // 探している相手が未登録の場合
+        ) : searchingTargets.length === 0 ? (
+          <NoTargetRegisteredCard userRole={userRole} />
         // 探している相手が登録されている場合
-        ) : searchingTargets.length > 0 ? (
-          // 大きいほうのカード
-          renderTargetCards(
-            searchingTargets,
-            matches,
-            (target) => (
-              <div className="flex flex-col items-center justify-center p-6 min-w-[220px] h-full">
-                {target.photo_url && (
-                  <img
-                    src={target.photo_url}
-                    alt="プロフィール写真"
-                    className="w-24 h-24 rounded-lg object-cover mb-2 border border-gray-200"
-                  />
-                )}
-                <div className="font-bold text-lg text-gray-900 mb-1">{target.last_name_kanji}{target.first_name_kanji}</div>
-                <div className="text-sm text-gray-600 mb-1">性別: {getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent')}</div>
-                <div className="text-sm text-gray-600">生年月日: {target.birth_date}</div>
-                <div className="text-sm text-gray-600">出身地: {target.birthplace_prefecture} {target.birthplace_municipality}</div>
-              </div>
-            ),
-            // 小さいほうのカード
-            (matchedTargets, target) => matchedTargets.map((match) => {
-              // targetScoresから該当ターゲットのスコア合計を取得
-              const scoreObj = Array.isArray(match.targetScores)
-                ? match.targetScores.find((ts) => ts.target.id === target.id)
-                : undefined;
-              const childScore = scoreObj
-                ? (scoreObj.birthdayScore + scoreObj.nameScore + scoreObj.birthplaceScore + scoreObj.oppositeScore) / 100
-                : 0;
-              // アクションボタンを生成
-              const actionButton = createMatchingActionButton({
-                userRole,
-                match,
-                childScore,
-                creating,
-                handleCreateMatch,
-                calculateAge,
-              });
-              return (
-                <MatchedTargetCard
-                  key={match.userId}
-                  match={match}
-                  target={target}
-                  userRole={userRole ?? ''}
-                  childScore={childScore}
-                  creating={creating}
-                  handleCreateMatch={handleCreateMatch}
-                  renderTheirTargetPeople={(m) => <TheirTargetPeopleList theirTargetPeople={m.theirTargetPeople || []} role={m.role} />}
-                >
-                  {actionButton}
-                </MatchedTargetCard>
-              );
-            })
-          )
         ) : (
-          renderNoTargetRegisteredCard(userRole)
+          <div className="space-y-4">
+            <div className="space-y-8 w-full max-w-5xl mx-auto">
+              {searchingTargets.map((target) => {
+                return (
+                  <div key={target.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
+                    <div className="flex flex-col gap-0 lg:flex-row">
+                      <ProfileCard target={target} userRole={userRole} />
+                      <div className="flex-1 p-5 lg:p-6">
+                        <SmallCardList
+                          matchedTargets={matches}
+                          target={target}
+                          userRole={userRole}
+                          calculateAge={calculateAge}
+                          profile={profile}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
-        {/* 親の同意モーダル */}
-        <ParentApprovalModal
-          open={showParentApprovalModal}
-          onApprove={() => {
-            setShowParentApprovalModal(false);
-            if (pendingMatchInfo) {
-              handleCreateMatch(pendingMatchInfo.userId, pendingMatchInfo.score);
-              setPendingMatchInfo(null);
-            }
-          }}
-          onCancel={() => {
-            setShowParentApprovalModal(false);
-            setPendingMatchInfo(null);
-          }}
-        />
       </main>
     </div>
   );
