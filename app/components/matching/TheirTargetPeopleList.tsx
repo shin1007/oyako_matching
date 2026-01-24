@@ -15,7 +15,7 @@ interface TheirTargetPeopleListProps {
 export function TheirTargetPeopleList({ theirTargetPeople, role }: TheirTargetPeopleListProps) {
   if (!theirTargetPeople || theirTargetPeople.length === 0) return null;
   return (
-    <div className="mt-4 pt-4 border-t border-gray-200">
+    <div >
       <p className="text-xs font-semibold text-gray-900 mb-2">
         この方が探している{role === 'parent' ? '子ども' : '親'}:
       </p>

@@ -1,6 +1,8 @@
 "use client";
-import { SmallCardList } from '@/app/components/matching/SmallCardList';
-import { ParentApprovalModal } from '@/app/components/matching/ParentApprovalModal';
+import { UserProfileCard } from '@/components/ui/UserProfileCard';
+import { toProfileBaseFromRow } from '@/types/profile';
+import { MatchingSimilarityCard } from '@/app/components/matching/MatchingSimilarityCard';
+import { TheirTargetPeopleList } from '@/app/components/matching/TheirTargetPeopleList';
 
 import { useState, useEffect } from 'react';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
@@ -9,13 +11,8 @@ import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
-import { TargetProfileCard } from '@/app/components/matching/TargetProfileCard';
 import { ProfileCard } from '@/app/components/matching/ProfileCard';
-import { MatchedTargetCard } from '@/app/components/matching/MatchedTargetCard';
-import { TheirTargetPeopleList } from '@/app/components/matching/TheirTargetPeopleList';
-import { getGenderLabel, calculateAge, getRoleLabel } from '@/app/components/matching/matchingUtils';
+import { calculateAge} from '@/app/components/matching/matchingUtils';
 import { NoTargetRegisteredCard } from '@/app/components/matching/NoTargetRegisteredCard';
 import { NoMatchingCard } from '@/app/components/matching/NoMatchingCard';
 import { TestModeBanners } from '@/app/components/matching/TestModeBanners';
@@ -124,6 +121,8 @@ export default function MatchingPage() {
   const [searchingTargets, setSearchingTargets] = useState<SearchingTarget[]>([]);
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
+  const [creatingMap, setCreatingMap] = useState<{ [targetId: string]: string | null }>({});
+  const [pendingMatchInfoMap, setPendingMatchInfoMap] = useState<{ [targetId: string]: { userId: string, score: number } | null }>({});
   const router = useRouter();
   const supabase = createClient();
   useEffect(() => {
@@ -192,18 +191,53 @@ export default function MatchingPage() {
           <div className="space-y-4">
             <div className="space-y-8 w-full max-w-5xl mx-auto">
               {searchingTargets.map((target) => {
+                // このtargetに対するマッチ一覧を抽出（例: match.targetId === target.id など、必要に応じてフィルタ）
+                // 現状は全matchesを表示しているが、targetごとに分ける場合はここでfilterする
+                const targetMatches = matches; // 必要に応じて: matches.filter(m => m.targetId === target.id)
                 return (
                   <div key={target.id} className="rounded-xl bg-white shadow-lg hover:shadow-2xl transition">
                     <div className="flex flex-col gap-0 lg:flex-row">
+                      {/* こちらが探している相手 */}
                       <ProfileCard target={target} userRole={userRole} />
                       <div className="flex-1 p-5 lg:p-6">
-                        <SmallCardList
-                          matchedTargets={matches}
-                          target={target}
-                          userRole={userRole}
-                          calculateAge={calculateAge}
-                          profile={profile}
-                        />
+                        {/* マッチングした相手一覧 */}
+                        {targetMatches.length === 0 ? (
+                          <div className="flex h-full min-h-[80px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-gray-600">
+                            この相手に対するマッチングはまだ見つかっていません
+                          </div>
+                        ) : (
+                          targetMatches.map((match) => {
+                            const creating = creatingMap[target.id] || null;
+                            const pendingMatchInfo = pendingMatchInfoMap[target.id] || null;
+                            const setCreating = (val: string | null) => setCreatingMap(prev => ({ ...prev, [target.id]: val }));
+                            const setPendingMatchInfo = (val: { userId: string, score: number } | null) => setPendingMatchInfoMap(prev => ({ ...prev, [target.id]: val }));
+                            return (
+                              <div key={match.userId} className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition lg:flex-row lg:items-center lg:justify-between mb-4">
+                                <div className="flex-1 flex gap-4">
+                                  <UserProfileCard
+                                    profile={toProfileBaseFromRow(match.profile)}
+                                    className="flex-1"
+                                  />
+                                  <TheirTargetPeopleList theirTargetPeople={match.theirTargetPeople || []} role={match.role} />
+                                </div>
+                                <div className="w-full lg:w-48">
+                                  <MatchingSimilarityCard
+                                    label={''}
+                                    userRole={userRole}
+                                    match={match}
+                                    target={target}
+                                    creating={creating}
+                                    setCreating={setCreating}
+                                    calculateAge={calculateAge}
+                                    profile={profile}
+                                    setPendingMatchInfo={setPendingMatchInfo}
+                                    pendingMatchInfo={pendingMatchInfo}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   </div>

@@ -64,55 +64,6 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex-1 flex gap-4">
-        {userRole === 'child' ? (
-          <div className="flex-1 flex flex-col gap-2">
-            <UserProfileCard
-              profile={{
-                id: match.profile?.id,
-                userId: match.profile?.user_id,
-                role: match.role,
-                lastNameKanji: match.profile?.last_name_kanji ?? '',
-                firstNameKanji: match.profile?.first_name_kanji ?? '',
-                lastNameHiragana: match.profile?.last_name_hiragana ?? '',
-                firstNameHiragana: match.profile?.first_name_hiragana ?? '',
-                birthDate: match.profile?.birth_date ?? '',
-                birthplacePrefecture: match.profile?.birthplace_prefecture ?? '',
-                birthplaceMunicipality: match.profile?.birthplace_municipality ?? '',
-                gender: getGenderLabel(match.profile?.gender, match.role),
-                profileImageUrl: match.profile?.profile_image_url ?? '',
-                bio: match.profile?.bio ?? '',
-                forumDisplayName: match.profile?.forum_display_name ?? '',
-              }}
-              className="flex-1"
-            />
-            {renderTheirTargetPeople(match)}
-          </div>
-        ) : (
-          <>
-            <UserProfileCard
-              profile={{
-                id: match.profile?.id,
-                userId: match.profile?.user_id,
-                role: match.role,
-                lastNameKanji: match.profile?.last_name_kanji ?? '',
-                firstNameKanji: match.profile?.first_name_kanji ?? '',
-                lastNameHiragana: match.profile?.last_name_hiragana ?? '',
-                firstNameHiragana: match.profile?.first_name_hiragana ?? '',
-                birthDate: match.profile?.birth_date ?? '',
-                birthplacePrefecture: match.profile?.birthplace_prefecture ?? '',
-                birthplaceMunicipality: match.profile?.birthplace_municipality ?? '',
-                gender: getGenderLabel(match.profile?.gender, match.role),
-                profileImageUrl: match.profile?.profile_image_url ?? '',
-                bio: match.profile?.bio ?? '',
-                forumDisplayName: match.profile?.forum_display_name ?? '',
-              }}
-              className="flex-1"
-            />
-            {renderTheirTargetPeople(match)}
-          </>
-        )}
-      </div>
       <div className="w-full lg:w-48">
         <MatchingSimilarityCard
           score={childScore}

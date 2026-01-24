@@ -1,4 +1,5 @@
 import React from 'react';
+import { getGenderLabel } from '@/app/components/matching/matchingUtils';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ProfileBase } from '@/types/profile';
 
@@ -52,7 +53,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
       </h2>
       {/* プロフィール詳細 */}
       <div className="text-sm text-gray-700 mt-1 space-y-1">
-        {profile.gender && <div>性別: {profile.gender}</div>}
+        {profile.gender && <div>性別: {getGenderLabel(profile.gender, profile.role)}</div>}
         {profile.birthDate && <div>生年月日: {profile.birthDate}</div>}
         {(profile.birthplacePrefecture || profile.birthplaceMunicipality) && (
           <div>出身地: {profile.birthplacePrefecture || ''}{profile.birthplaceMunicipality ? ' ' + profile.birthplaceMunicipality : ''}</div>

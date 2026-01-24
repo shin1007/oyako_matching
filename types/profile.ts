@@ -1,3 +1,44 @@
+// 任意のスネークケースRow（profilesテーブルRowやmatch.profile）→ProfileBase
+export function toProfileBaseFromRow(row: any): ProfileBase {
+  return {
+    id: row.id || '',
+    userId: row.user_id || '',
+    role: row.role || (row.parent_gender ? 'parent' : 'child'),
+    lastNameKanji: row.last_name_kanji || '',
+    firstNameKanji: row.first_name_kanji || '',
+    lastNameHiragana: row.last_name_hiragana || '',
+    firstNameHiragana: row.first_name_hiragana || '',
+    birthDate: row.birth_date || '',
+    birthplacePrefecture: row.birthplace_prefecture || '',
+    birthplaceMunicipality: row.birthplace_municipality || '',
+    gender: row.gender || '',
+    profileImageUrl: row.profile_image_url || row.profileImageUrl || '',
+    bio: row.bio || '',
+    forumDisplayName: row.forum_display_name || '',
+    photoUrl: row.photo_url || '',
+  };
+}
+
+// match.other_user_* 形式→ProfileBase
+export function toProfileBaseFromOtherUser(match: any): ProfileBase {
+  return {
+    id: match.other_user_id || '',
+    userId: match.other_user_id || '',
+    role: match.other_user_role || '',
+    lastNameKanji: match.other_user_last_name_kanji || '',
+    firstNameKanji: match.other_user_first_name_kanji || '',
+    lastNameHiragana: match.other_user_last_name_hiragana || '',
+    firstNameHiragana: match.other_user_first_name_hiragana || '',
+    birthDate: match.other_user_birth_date || '',
+    birthplacePrefecture: match.other_user_birthplace_prefecture || '',
+    birthplaceMunicipality: match.other_user_birthplace_municipality || '',
+    gender: match.other_user_gender || '',
+    profileImageUrl: match.other_user_image || '',
+    bio: match.other_user_bio || '',
+    forumDisplayName: match.other_user_forum_display_name || '',
+    photoUrl: match.other_user_photo_url || '',
+  };
+}
 // プロフィール関連の汎用型定義
 // 他のコンポーネント・画面で共通利用するための型
 

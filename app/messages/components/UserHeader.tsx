@@ -1,30 +1,12 @@
 import React from 'react';
 import { UserProfileCard } from '@/components/ui/UserProfileCard';
 import { TargetPersonCard } from '@/components/ui/TargetPersonCard';
-import { ProfileBase, TargetPerson } from '@/types/profile';
+import { TargetPerson, toProfileBaseFromOtherUser } from '@/types/profile';
 
 interface UserHeaderProps {
   match: any;
 }
 
-function toProfileBaseFromMatch(match: any): ProfileBase {
-  return {
-    id: match.other_user_id || '',
-    userId: match.other_user_id || '',
-    role: match.other_user_role || '',
-    lastNameKanji: match.other_user_last_name_kanji || '',
-    firstNameKanji: match.other_user_first_name_kanji || '',
-    lastNameHiragana: match.other_user_last_name_hiragana || '',
-    firstNameHiragana: match.other_user_first_name_hiragana || '',
-    birthDate: match.other_user_birth_date || '',
-    birthplacePrefecture: match.other_user_birthplace_prefecture || '',
-    birthplaceMunicipality: match.other_user_birthplace_municipality || '',
-    gender: match.other_user_gender || '',
-    profileImageUrl: match.other_user_image || '',
-    bio: match.other_user_bio || '',
-    forumDisplayName: match.other_user_forum_display_name || '',
-  };
-}
 
 function toTargetPersonFromChild(child: any): TargetPerson {
   return {
@@ -41,7 +23,7 @@ function toTargetPersonFromChild(child: any): TargetPerson {
 export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
   <div className="rounded-lg bg-white p-4 shadow">
     <UserProfileCard
-      profile={toProfileBaseFromMatch(match)}
+      profile={toProfileBaseFromOtherUser(match)}
       status={match.status}
       badgeLabel={`登録済み${match.other_user_role === 'parent' ? '親' : '子'}ユーザー`}
       className="mb-4"
