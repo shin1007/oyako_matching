@@ -20,7 +20,7 @@ export function TargetProfileCard({ target, userRole }: TargetProfileCardProps) 
         birthDate: target.birth_date || '',
         birthplacePrefecture: target.birthplace_prefecture || '',
         birthplaceMunicipality: target.birthplace_municipality || '',
-        gender: target.gender || '',
+        gender: getGenderLabel(target.gender, userRole === 'parent' ? 'child' : 'parent'),
         profileImageUrl: target.photo_url || '',
         bio: target.bio || '',
         forumDisplayName: target.forum_display_name || '',
