@@ -12,13 +12,17 @@ function toProfileBaseFromMatch(match: any): ProfileBase {
     id: match.other_user_id || '',
     userId: match.other_user_id || '',
     role: match.other_user_role || '',
-    nameKanji: match.other_user_name || '',
+    lastNameKanji: match.other_user_last_name_kanji || '',
+    firstNameKanji: match.other_user_first_name_kanji || '',
+    lastNameHiragana: match.other_user_last_name_hiragana || '',
+    firstNameHiragana: match.other_user_first_name_hiragana || '',
     birthDate: match.other_user_birth_date || '',
     birthplacePrefecture: match.other_user_birthplace_prefecture || '',
     birthplaceMunicipality: match.other_user_birthplace_municipality || '',
     gender: match.other_user_gender || '',
     profileImageUrl: match.other_user_image || '',
     bio: match.other_user_bio || '',
+    forumDisplayName: match.other_user_forum_display_name || '',
   };
 }
 

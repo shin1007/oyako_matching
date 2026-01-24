@@ -23,13 +23,16 @@ export function TheirTargetPeopleList({ theirTargetPeople, role }: TheirTargetPe
         {theirTargetPeople.map((searchingPerson) => (
           <TargetPersonCard
             key={searchingPerson.id}
-            photoUrl={searchingPerson.photo_url}
-            name={`${searchingPerson.last_name_kanji || ''}${searchingPerson.first_name_kanji || ''}`}
-            birthplace={
-              searchingPerson.birthplace_prefecture || searchingPerson.birthplace_municipality
-                ? `${searchingPerson.birthplace_prefecture || ''}${searchingPerson.birthplace_municipality ? ' ' + searchingPerson.birthplace_municipality : ''}`
-                : undefined
-            }
+            person={{
+              id: searchingPerson.id,
+              nameKanji: `${searchingPerson.last_name_kanji || ''}${searchingPerson.first_name_kanji || ''}`,
+              nameHiragana: '',
+              birthDate: '',
+              birthplacePrefecture: searchingPerson.birthplace_prefecture || '',
+              birthplaceMunicipality: searchingPerson.birthplace_municipality || '',
+              gender: '',
+              photoUrl: searchingPerson.photo_url || '',
+            }}
             className="h-16"
           />
         ))}

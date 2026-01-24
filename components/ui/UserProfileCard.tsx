@@ -24,7 +24,11 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
     {profile.profileImageUrl ? (
       <img
         src={profile.profileImageUrl}
-        alt={profile.nameKanji || profile.nameHiragana || ''}
+        alt={
+          (profile.lastNameKanji || '') + (profile.firstNameKanji || '') ||
+          (profile.lastNameHiragana || '') + (profile.firstNameHiragana || '') ||
+          ''
+        }
         className="h-16 w-16 rounded-full object-cover border border-gray-200"
       />
     ) : (
@@ -41,7 +45,11 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         )}
         {status === 'blocked' && <span className="align-middle"><StatusBadge status="blocked" /></span>}
       </div>
-      <h2 className="text-xl font-bold text-gray-900 truncate">{profile.nameKanji || profile.nameHiragana || ''}</h2>
+      <h2 className="text-xl font-bold text-gray-900 truncate">
+        {(profile.lastNameKanji || '') + (profile.firstNameKanji || '') ||
+         (profile.lastNameHiragana || '') + (profile.firstNameHiragana || '') ||
+         ''}
+      </h2>
       {/* プロフィール詳細 */}
       <div className="text-sm text-gray-700 mt-1 space-y-1">
         {profile.gender && <div>性別: {profile.gender}</div>}

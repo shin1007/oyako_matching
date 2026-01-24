@@ -68,20 +68,22 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
         {userRole === 'child' ? (
           <div className="flex-1 flex flex-col gap-2">
             <UserProfileCard
-              imageUrl={match.profile?.profile_image_url}
-              name={`${match.profile?.last_name_kanji ?? ''}${match.profile?.first_name_kanji ?? ''}`}
-              role={match.role}
-              status={match.existingMatchStatus}
-              badgeLabel={`登録済み${getRoleLabel(match.role || '')}ユーザー`}
-              genderLabel={getGenderLabel(match.profile?.gender, match.role)}
-              age={match.profile?.birth_date ? calculateAge(match.profile.birth_date) : undefined}
-              bio={match.profile?.bio}
-              birthDate={match.profile?.birth_date ? new Date(match.profile.birth_date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : undefined}
-              birthplace={
-                match.profile?.birthplace_prefecture || match.profile?.birthplace_municipality
-                  ? `${match.profile?.birthplace_prefecture || ''}${match.profile?.birthplace_municipality ? ' ' + match.profile.birthplace_municipality : ''}`
-                  : undefined
-              }
+              profile={{
+                id: match.profile?.id,
+                userId: match.profile?.user_id,
+                role: match.role,
+                lastNameKanji: match.profile?.last_name_kanji ?? '',
+                firstNameKanji: match.profile?.first_name_kanji ?? '',
+                lastNameHiragana: match.profile?.last_name_hiragana ?? '',
+                firstNameHiragana: match.profile?.first_name_hiragana ?? '',
+                birthDate: match.profile?.birth_date ?? '',
+                birthplacePrefecture: match.profile?.birthplace_prefecture ?? '',
+                birthplaceMunicipality: match.profile?.birthplace_municipality ?? '',
+                gender: match.profile?.gender ?? '',
+                profileImageUrl: match.profile?.profile_image_url ?? '',
+                bio: match.profile?.bio ?? '',
+                forumDisplayName: match.profile?.forum_display_name ?? '',
+              }}
               className="flex-1"
             />
             {renderTheirTargetPeople(match)}
@@ -89,20 +91,22 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
         ) : (
           <>
             <UserProfileCard
-              imageUrl={match.profile?.profile_image_url}
-              name={`${match.profile?.last_name_kanji ?? ''}${match.profile?.first_name_kanji ?? ''}`}
-              role={match.role}
-              status={match.existingMatchStatus}
-              badgeLabel={`登録済み${getRoleLabel(match.role || '')}ユーザー`}
-              genderLabel={getGenderLabel(match.profile?.gender, match.role)}
-              age={match.profile?.birth_date ? calculateAge(match.profile.birth_date) : undefined}
-              bio={match.profile?.bio}
-              birthDate={match.profile?.birth_date ? new Date(match.profile.birth_date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : undefined}
-              birthplace={
-                match.profile?.birthplace_prefecture || match.profile?.birthplace_municipality
-                  ? `${match.profile?.birthplace_prefecture || ''}${match.profile?.birthplace_municipality ? ' ' + match.profile.birthplace_municipality : ''}`
-                  : undefined
-              }
+              profile={{
+                id: match.profile?.id,
+                userId: match.profile?.user_id,
+                role: match.role,
+                lastNameKanji: match.profile?.last_name_kanji ?? '',
+                firstNameKanji: match.profile?.first_name_kanji ?? '',
+                lastNameHiragana: match.profile?.last_name_hiragana ?? '',
+                firstNameHiragana: match.profile?.first_name_hiragana ?? '',
+                birthDate: match.profile?.birth_date ?? '',
+                birthplacePrefecture: match.profile?.birthplace_prefecture ?? '',
+                birthplaceMunicipality: match.profile?.birthplace_municipality ?? '',
+                gender: match.profile?.gender ?? '',
+                profileImageUrl: match.profile?.profile_image_url ?? '',
+                bio: match.profile?.bio ?? '',
+                forumDisplayName: match.profile?.forum_display_name ?? '',
+              }}
               className="flex-1"
             />
             {renderTheirTargetPeople(match)}
