@@ -1,5 +1,5 @@
+"use client";
 import { apiRequest } from '@/lib/api/request';
-'use client';
 import { DeleteProfileDialog } from './components/DeleteProfileDialog';
 import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';

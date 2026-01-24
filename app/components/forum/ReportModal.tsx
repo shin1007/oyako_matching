@@ -1,5 +1,6 @@
-import { apiRequest } from '@/lib/api/request';
+
 'use client';
+import { apiRequest } from '@/lib/api/request';
 
 import { useState } from 'react';
 import type { ReportReason, ReportContentType } from '@/types/database';

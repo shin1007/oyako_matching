@@ -41,7 +41,7 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     reader.onload = () => {
       setSelectedImage(reader.result as string);
       setShowCropper(true);
-    };
+    "use client";
     reader.readAsDataURL(file);
     setSelectedImageFile(file);
   };
@@ -201,3 +201,4 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     </div>
   );
 };
+}

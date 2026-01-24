@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import imageCompression from 'browser-image-compression';
