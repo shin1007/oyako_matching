@@ -104,18 +104,7 @@ export default function ProfilePage() {
 
       setUserId(user.id);
 
-      // Load user role
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      if (userData?.role) {
-        setUserRole(userData.role as 'parent' | 'child'); // グローバルテーマにも反映
-      }
-
-      // Load profile
+      // Load profile（roleも含む）
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -123,6 +112,7 @@ export default function ProfilePage() {
         .single();
 
       if (data) {
+        setUserRole(data.role as 'parent' | 'child');
         setLastNameKanji((data as any).last_name_kanji || '');
         setLastNameHiragana((data as any).last_name_hiragana || '');
         setFirstNameKanji((data as any).first_name_kanji || '');
@@ -285,7 +275,8 @@ export default function ProfilePage() {
           gender: parentGender || null,
           forum_display_name: forumDisplayName || null,
           profile_image_url: uploadedImageUrl,
-        }, { onConflict: 'user_id' });
+            role: userRole || null,
+          }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 

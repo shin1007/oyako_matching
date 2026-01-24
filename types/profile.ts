@@ -3,7 +3,7 @@ export function toProfileBaseFromRow(row: any): ProfileBase {
   return {
     id: row.id || '',
     userId: row.user_id || '',
-    role: row.role || (row.parent_gender ? 'parent' : 'child'),
+    role: row.role || '',
     lastNameKanji: row.last_name_kanji || '',
     firstNameKanji: row.first_name_kanji || '',
     lastNameHiragana: row.last_name_hiragana || '',
@@ -82,7 +82,7 @@ export function toProfileBase(row: Database['public']['Tables']['profiles']['Row
   return {
     id: row.id,
     userId: row.user_id,
-    role: row.parent_gender ? 'parent' : 'child',
+    role: row.role || '',
     lastNameKanji: row.last_name_kanji || '',
     firstNameKanji: row.first_name_kanji || '',
     lastNameHiragana: row.last_name_hiragana || '',
