@@ -1,55 +1,61 @@
 import React from 'react';
+import { UserProfileCard } from '@/components/ui/UserProfileCard';
+import { TargetPersonCard } from '@/components/ui/TargetPersonCard';
+import { ProfileBase, TargetPerson } from '@/types/profile';
 
 interface UserHeaderProps {
   match: any;
 }
 
+function toProfileBaseFromMatch(match: any): ProfileBase {
+  return {
+    id: match.other_user_id || '',
+    userId: match.other_user_id || '',
+    role: match.other_user_role || '',
+    lastNameKanji: match.other_user_last_name_kanji || '',
+    firstNameKanji: match.other_user_first_name_kanji || '',
+    lastNameHiragana: match.other_user_last_name_hiragana || '',
+    firstNameHiragana: match.other_user_first_name_hiragana || '',
+    birthDate: match.other_user_birth_date || '',
+    birthplacePrefecture: match.other_user_birthplace_prefecture || '',
+    birthplaceMunicipality: match.other_user_birthplace_municipality || '',
+    gender: match.other_user_gender || '',
+    profileImageUrl: match.other_user_image || '',
+    bio: match.other_user_bio || '',
+    forumDisplayName: match.other_user_forum_display_name || '',
+  };
+}
+
+function toTargetPersonFromChild(child: any): TargetPerson {
+  return {
+    id: child.id || '',
+    nameKanji: `${child.last_name_kanji || ''}${child.first_name_kanji || ''}`,
+    birthDate: child.birth_date || '',
+    birthplacePrefecture: child.birthplace_prefecture || '',
+    birthplaceMunicipality: child.birthplace_municipality || '',
+    gender: child.gender || '',
+    photoUrl: child.photo_url || '',
+  };
+}
+
 export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
   <div className="rounded-lg bg-white p-4 shadow">
-    <div className="flex items-center gap-4 mb-4">
-      <div className="flex gap-2">
-        {match.other_user_image ? (
-          <img
-            src={match.other_user_image}
-            alt={match.other_user_name}
-            className="h-12 w-12 rounded-full object-cover border border-gray-200"
-          />
-        ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl">
-            {match.other_user_role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
-          </div>
-        )}
-      </div>
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {match.other_user_name}
-        </h1>
-        <p className="text-sm text-gray-900">
-          {match.other_user_role === 'parent' ? '親' : '子'}
-        </p>
-        {match.status === 'blocked' && (
-          <span className="inline-block mt-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">ブロック中</span>
-        )}
-      </div>
-    </div>
+    <UserProfileCard
+      profile={toProfileBaseFromMatch(match)}
+      status={match.status}
+      badgeLabel={`登録済み${match.other_user_role === 'parent' ? '親' : '子'}ユーザー`}
+      className="mb-4"
+    />
     {/* 探している子どもの情報 */}
     {match.target_people && match.target_people.length > 0 && (
       <div className="border-t pt-4">
         <p className="text-xs font-semibold text-gray-900 mb-2">この方が探している{match.other_user_role === 'parent' ? '子ども' : '親'}:</p>
         <div className="flex flex-wrap gap-2">
           {match.target_people.map((child: any) => (
-            <div key={child.id} className="flex items-center gap-2 bg-blue-50 rounded p-2">
-              {child.photo_url && (
-                <img
-                  src={child.photo_url}
-                  alt={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
-                  className="h-10 w-10 rounded object-cover border border-gray-200"
-                />
-              )}
-              <p className="text-sm font-semibold text-gray-900">
-                {child.last_name_kanji || ''}{child.first_name_kanji || ''}
-              </p>
-            </div>
+            <TargetPersonCard
+              key={child.id}
+              person={toTargetPersonFromChild(child)}
+            />
           ))}
         </div>
       </div>

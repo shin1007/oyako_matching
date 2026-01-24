@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -43,18 +44,14 @@ export default function VerificationPage() {
       if (!user) throw new Error('ログインが必要です');
 
       // Call API to initiate xID verification
-      const response = await fetch('/api/auth/verify/initiate', {
+      const res = await apiRequest('/api/auth/verify/initiate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           userId: user.id,
           callbackUrl: `${window.location.origin}/api/auth/verify/callback`,
-        }),
+        },
       });
-
-      if (!response.ok) {
+      if (!res.ok) {
         throw new Error('認証の開始に失敗しました');
       }
 

@@ -1,7 +1,10 @@
+
 'use client';
+import { apiRequest } from '@/lib/api/request';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { NavigationBar } from '@/components/ui/NavigationBar';
 import { useRouter } from 'next/navigation';
 
 interface HeaderNavProps {
@@ -27,11 +30,10 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications/summary');
-      if (response.ok) {
-        const data = await response.json();
-        setPendingCount(data.pending_matches_count || 0);
-        setTotalNotifications(data.total_notifications || 0);
+      const res = await apiRequest('/api/notifications/summary');
+      if (res.ok) {
+        setPendingCount(res.data.pending_matches_count || 0);
+        setTotalNotifications(res.data.total_notifications || 0);
       }
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
@@ -44,18 +46,14 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
     try {
       setSigningOut(true);
       console.log('[HeaderNav] Attempting to sign out...');
-      const response = await fetch('/api/auth/signout', { method: 'POST' });
-      console.log('[HeaderNav] SignOut response:', response.status);
-      
-      if (response.ok) {
+      const res = await apiRequest('/api/auth/signout', { method: 'POST' });
+      console.log('[HeaderNav] SignOut response:', res.status);
+      if (res.ok) {
         console.log('[HeaderNav] SignOut successful, refreshing page and redirecting to home');
-        // Refresh to clear server-side session data
         router.refresh();
-        // Redirect to home
         router.push('/');
       } else {
-        const data = await response.json();
-        console.error('[HeaderNav] SignOut failed:', data.error);
+        console.error('[HeaderNav] SignOut failed:', res.error);
         alert('ログアウトに失敗しました。もう一度お試しください。');
       }
     } catch (err) {
@@ -67,37 +65,27 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
   };
 
   return (
-    <nav className="flex items-center gap-3 text-sm text-slate-700">
+    <>
+      <NavigationBar
+        user={user}
+        displayName={displayName ?? ''}
+        links={user ? [
+          {
+            href: '/messages',
+            label: 'メッセージ',
+            icon: <span>💬</span>,
+            badge: totalNotifications,
+          },
+        ] : []}
+      />
       {user ? (
-        <>
-          <Link
-            href="/dashboard"
-            className="font-medium text-slate-800 hover:text-slate-600 hover:underline"
-          >
-            {displayName}
-          </Link>
-          
-          {/* Notifications - Messages Link with Badge */}
-          <Link
-            href="/messages"
-            className="relative rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100"
-          >
-            💬 メッセージ
-            {totalNotifications > 0 && (
-              <span className="absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full">
-                {totalNotifications > 9 ? '9+' : totalNotifications}
-              </span>
-            )}
-          </Link>
-
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {signingOut ? 'ログアウト中...' : 'ログアウト'}
-          </button>
-        </>
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {signingOut ? 'ログアウト中...' : 'ログアウト'}
+        </button>
       ) : (
         <Link
           href="/auth/login"
@@ -106,6 +94,6 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
           ログイン
         </Link>
       )}
-    </nav>
+    </>
   );
 }

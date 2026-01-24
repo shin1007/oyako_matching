@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -88,10 +89,9 @@ export default function NewPostPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('/api/forum/categories');
-      if (!response.ok) throw new Error('Failed to load categories');
-      const data = await response.json();
-      setCategories(data.categories || []);
+      const res = await apiRequest('/api/forum/categories');
+      if (!res.ok) throw new Error(res.error || 'Failed to load categories');
+      setCategories(res.data?.categories || []);
     } catch (err: any) {
       console.error('Error loading categories:', err);
     }
@@ -104,27 +104,20 @@ export default function NewPostPage() {
     setRetryAfter(null);
 
     try {
-      const response = await fetch('/api/forum/posts', {
+      const res = await apiRequest('/api/forum/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           title,
           content,
           category_id: categoryId || null,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 429 && data.retryAfter) {
-          setRetryAfter(new Date(data.retryAfter));
+      if (!res.ok) {
+        if (res.status === 429 && res.data?.retryAfter) {
+          setRetryAfter(new Date(res.data.retryAfter));
         }
-        throw new Error(data.error || '投稿に失敗しました');
+        throw new Error(res.error || '投稿に失敗しました');
       }
-
-      const data = await response.json();
       // 投稿作成後は適切なフォーラムにリダイレクト
       const forumPath = userRole === 'parent' ? '/forum/parent' : '/forum/child';
       router.push(forumPath);

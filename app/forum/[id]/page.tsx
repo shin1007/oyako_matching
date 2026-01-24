@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import ReportModal from '@/app/components/forum/ReportModal';
@@ -155,10 +156,9 @@ export default function PostDetailPage() {
     setError('');
 
     try {
-      const response = await fetch(`/api/forum/posts/${params.id}`);
-      if (!response.ok) throw new Error('Failed to load post');
-      
-      const data = await response.json();
+      const res = await apiRequest(`/api/forum/posts/${params.id}`);
+      if (!res.ok) throw new Error(res.error || 'Failed to load post');
+      const data = res.data;
       
       // 現在のユーザーのロールを取得
       const { data: { user } } = await supabase.auth.getUser();
@@ -199,27 +199,20 @@ export default function PostDetailPage() {
     setRetryAfter(null);
 
     try {
-      const response = await fetch('/api/forum/comments', {
+      const res = await apiRequest('/api/forum/comments', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           post_id: params.id,
           content: newComment,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 429 && data.retryAfter) {
-          setRetryAfter(new Date(data.retryAfter));
         }
-        throw new Error(data.error || 'コメントの投稿に失敗しました');
+      });
+      if (!res.ok) {
+        if (res.status === 429 && res.data?.retryAfter) {
+          setRetryAfter(new Date(res.data.retryAfter));
+        }
+        throw new Error(res.error || 'コメントの投稿に失敗しました');
       }
-
-      const data = await response.json();
-      setComments([...comments, data.comment]);
+      setComments([...comments, res.data.comment]);
       setNewComment('');
     } catch (err: any) {
       setError(err.message);
@@ -249,24 +242,17 @@ export default function PostDetailPage() {
     setError('');
 
     try {
-      const response = await fetch(`/api/forum/posts/${post.id}`, {
+      const res = await apiRequest(`/api/forum/posts/${post.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           title: editPostTitle,
           content: editPostContent,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '投稿の更新に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || '投稿の更新に失敗しました');
       }
-
-      const data = await response.json();
-      setPost(data.post);
+      setPost(res.data.post);
       setEditingPostId(null);
       setEditPostTitle('');
       setEditPostContent('');
@@ -284,13 +270,11 @@ export default function PostDetailPage() {
     setError('');
 
     try {
-      const response = await fetch(`/api/forum/posts/${post.id}`, {
+      const res = await apiRequest(`/api/forum/posts/${post.id}`, {
         method: 'DELETE',
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '投稿の削除に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || '投稿の削除に失敗しました');
       }
 
       // ユーザーのロールに応じてリダイレクト先を分岐
@@ -334,23 +318,16 @@ export default function PostDetailPage() {
     setError('');
 
     try {
-      const response = await fetch(`/api/forum/comments/${commentId}`, {
+      const res = await apiRequest(`/api/forum/comments/${commentId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           content: editCommentContent,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'コメントの更新に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || 'コメントの更新に失敗しました');
       }
-
-      const data = await response.json();
-      setComments(comments.map(c => c.id === commentId ? data.comment : c));
+      setComments(comments.map(c => c.id === commentId ? res.data.comment : c));
       setEditingCommentId(null);
       setEditCommentContent('');
     } catch (err: any) {
@@ -365,15 +342,12 @@ export default function PostDetailPage() {
     setError('');
 
     try {
-      const response = await fetch(`/api/forum/comments/${commentId}`, {
+      const res = await apiRequest(`/api/forum/comments/${commentId}`, {
         method: 'DELETE',
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'コメントの削除に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || 'コメントの削除に失敗しました');
       }
-
       setComments(comments.filter(c => c.id !== commentId));
       setShowDeleteCommentDialog(null);
     } catch (err: any) {

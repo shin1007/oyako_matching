@@ -1,9 +1,17 @@
+
 'use client';
 
+import { getGenderLabel } from '../components/matching/matchingUtils';
+
 import { useState, useEffect } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { TargetPeopleList } from '@/components/ui/TargetPeopleList';
 
 interface Match {
   id: string;
@@ -26,12 +34,18 @@ interface MatchWithProfile extends Match {
     created_at: string;
     is_own: boolean;
   } | null;
+  target_people?: any[]; // ターゲット情報（型は適宜修正してください）
+  other_user_birth_date?: string | null;
+  other_user_birthplace_prefecture?: string | null;
+  other_user_birthplace_municipality?: string | null;
+  other_user_gender?: string | null;
 }
 
 export default function MessagesPage() {
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -65,15 +79,14 @@ export default function MessagesPage() {
 
   const checkTestMode = async () => {
     try {
-      const response = await fetch('/api/test-mode/status');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[MessagesPage] Test mode status:', data);
-        setTestModeBypassVerification(data.bypassVerification);
-        setTestModeBypassSubscription(data.bypassSubscription);
+      const res = await apiRequest('/api/test-mode/status');
+      if (res.ok) {
+        console.log('[MessagesPage] Test mode status:', res.data);
+        setTestModeBypassVerification(res.data.bypassVerification);
+        setTestModeBypassSubscription(res.data.bypassSubscription);
       }
     } catch (err) {
-      console.error('[MessagesPage] Failed to check test mode:', err);
+      notifyError(err);
     }
   };
 
@@ -83,30 +96,19 @@ export default function MessagesPage() {
 
     try {
       // APIを通じてマッチ情報を取得（管理者権限で他ユーザー情報も取得）
-      const response = await fetch('/api/messages/matches', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの読み込みに失敗しました');
-      }
-
-      const data = await response.json();
-      console.log('[MessagesPage] Loaded matches:', data.matches);
-      if (data.matches && data.matches.length > 0) {
+      const res = await apiRequest('/api/messages/matches', { method: 'GET' });
+      if (!res.ok) throw new Error(res.error || 'マッチングの読み込みに失敗しました');
+      console.log('[MessagesPage] Loaded matches:', res.data.matches);
+      if (res.data.matches && res.data.matches.length > 0) {
         console.log('[MessagesPage] First match details:', {
-          other_user_image: data.matches[0].other_user_image,
-          target_person_photos: data.matches[0].target_person_photos,
-          other_user_name: data.matches[0].other_user_name
+          other_user_image: res.data.matches[0].other_user_image,
+          target_person_photos: res.data.matches[0].target_person_photos,
+          other_user_name: res.data.matches[0].other_user_name
         });
       }
-      setMatches(data.matches);
+      setMatches(res.data.matches);
     } catch (err: any) {
-      setError(err.message || 'マッチングの読み込みに失敗しました');
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ export default function MessagesPage() {
 
       await loadMatches();
     } catch (err: any) {
-      alert(err.message || 'マッチングの承認に失敗しました');
+      notifyError(err);
     }
   };
 
@@ -138,27 +140,16 @@ export default function MessagesPage() {
 
       await loadMatches();
     } catch (err: any) {
-      alert(err.message || 'マッチングの拒否に失敗しました');
+      notifyError(err);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">保留中</span>;
-      case 'accepted':
-        return <span className="rounded-full bg-parent-100 px-3 py-1 text-xs font-medium text-parent-800">承認済み</span>;
-      case 'rejected':
-        return <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">拒否済み</span>;
-      case 'blocked':
-        return <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800">ブロック済み</span>;
-      default:
-        return null;
-    }
-  };
+  // getStatusBadgeはStatusBadgeコンポーネントで代替
 
+  // 親子ロールに応じてラッパーにクラスを付与
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
       <main className="container mx-auto px-4 py-8">
         {testModeBypassVerification && (
           <div className="mb-6 rounded-lg border-2 border-blue-400 bg-blue-50 p-4 text-blue-700">
@@ -188,18 +179,14 @@ export default function MessagesPage() {
             </div>
             <Link
               href="/matching"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
             >
               マッチング一覧に戻る
             </Link>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} onClose={() => setError('')} />
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -219,7 +206,7 @@ export default function MessagesPage() {
             </p>
             <Link
               href="/matching"
-              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+              className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
             >
               マッチングを探す
             </Link>
@@ -255,6 +242,20 @@ export default function MessagesPage() {
                           </span>
                         )}
                       </div>
+                      {/* プロフィール詳細表示 */}
+                      <div className="text-sm text-gray-700 mt-1 space-y-1">
+                        {match.other_user_birth_date && (
+                          <div>生年月日: {match.other_user_birth_date}</div>
+                        )}
+                        {(match.other_user_birthplace_prefecture || match.other_user_birthplace_municipality) && (
+                          <div>
+                            出身地: {match.other_user_birthplace_prefecture || ''}{match.other_user_birthplace_municipality ? ' ' + match.other_user_birthplace_municipality : ''}
+                          </div>
+                        )}
+                        {match.other_user_gender && (
+                          <div>性別: {getGenderLabel(match.other_user_gender, match.other_user_role)}</div>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500">
                         類似度: {(match.similarity_score * 100).toFixed(0)}%
                       </p>
@@ -278,10 +279,17 @@ export default function MessagesPage() {
                             })
                           : new Date(match.created_at).toLocaleDateString('ja-JP')}
                       </p>
+                      {/* ターゲット情報表示を追加 */}
+                      {Array.isArray(match.target_people) && match.target_people.length > 0 && (
+                        <TargetPeopleList targetPeople={match.target_people} role={match.other_user_role} />
+                      )}
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    {getStatusBadge(match.status)}
+                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-role-bg text-role-primary">
+                      登録済み{match.other_user_role === 'parent' ? '親' : '子'}ユーザー
+                    </span>
+                    <StatusBadge status={match.status} />
                   </div>
                 </div>
 
@@ -289,7 +297,7 @@ export default function MessagesPage() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => handleAccept(match.id)}
-                      className={`flex-1 rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+                      className="flex-1 rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover"
                     >
                       承認
                     </button>
@@ -314,7 +322,7 @@ export default function MessagesPage() {
                   <div className="mt-4">
                     <Link
                       href={`/messages/${match.id}`}
-                      className={`block w-full rounded-lg px-4 py-2 text-center text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+                      className="block w-full rounded-lg px-4 py-2 text-center text-white bg-role-primary bg-role-primary-hover"
                     >
                       メッセージを見る
                     </Link>

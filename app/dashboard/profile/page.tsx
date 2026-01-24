@@ -1,4 +1,5 @@
-'use client';
+"use client";
+import { apiRequest } from '@/lib/api/request';
 import { DeleteProfileDialog } from './components/DeleteProfileDialog';
 import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';
@@ -6,6 +7,7 @@ import { useRoleTheme } from '@/contexts/RoleThemeContext';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { ScoreExplanation } from '../../components/matching/ScoreExplanation';
 import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
 import ImageUpload from '@/app/components/ImageUpload';
 import { TargetPhotoManager } from './components/TargetPhotoManager';
@@ -37,6 +39,7 @@ interface SearchingChild {
 }
 
 export default function ProfilePage() {
+  // ScoreExplanationは内部でモーダル状態を持つので状態管理不要
   const { userRole, setUserRole } = useRoleTheme();
   // 親のプロフィール
   const [lastNameKanji, setLastNameKanji] = useState('');
@@ -462,17 +465,9 @@ export default function ProfilePage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/delete-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'アカウントの削除に失敗しました');
+      const res = await apiRequest('/api/auth/delete-account', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(res.error || 'アカウントの削除に失敗しました');
       }
 
       // Ensure session is signed out on client side
@@ -525,14 +520,7 @@ export default function ProfilePage() {
                   <p className="leading-relaxed mb-2">
                     入力した情報をもとに、親子双方の情報を比較し<strong className={userRole === 'child' ? 'text-child-700' : 'text-parent-700'}>マッチングスコア</strong>を自動計算します。
                   </p>
-                  <a
-                    href="/docs/MATCHING_ALGORITHM.md"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-block mt-2 px-4 py-2 text-white rounded-lg transition-colors ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-                  >
-                    マッチングアルゴリズムの詳細を見る
-                  </a>
+                  <ScoreExplanation userRole={userRole === "parent" || userRole === "child" ? userRole : "parent"} />
                 </div>
               </div>
 
@@ -551,36 +539,60 @@ export default function ProfilePage() {
 
               {/* プロフィール画像 */}
               <ProfileImageUpload
-                profileImageUrl={profileImageUrl}
+                profile={{
+                  id: userId,
+                  userId: userId,
+                  role: userRole || '',
+                  lastNameKanji,
+                  firstNameKanji,
+                  lastNameHiragana,
+                  firstNameHiragana,
+                  birthDate,
+                  birthplacePrefecture,
+                  birthplaceMunicipality,
+                  gender: parentGender,
+                  profileImageUrl,
+                  bio,
+                  forumDisplayName,
+                }}
                 setProfileImageUrl={setProfileImageUrl}
                 selectedImageFile={selectedImageFile}
                 setSelectedImageFile={setSelectedImageFile}
                 loading={loading}
-                userRole={userRole}
               />
 
               <ProfileBasicForm
-                lastNameKanji={lastNameKanji}
-                setLastNameKanji={setLastNameKanji}
-                firstNameKanji={firstNameKanji}
-                setFirstNameKanji={setFirstNameKanji}
-                lastNameHiragana={lastNameHiragana}
-                setLastNameHiragana={setLastNameHiragana}
-                firstNameHiragana={firstNameHiragana}
-                setFirstNameHiragana={setFirstNameHiragana}
-                birthDate={birthDate}
-                setBirthDate={setBirthDate}
-                birthplacePrefecture={birthplacePrefecture}
-                setBirthplacePrefecture={setBirthplacePrefecture}
-                birthplaceMunicipality={birthplaceMunicipality}
-                setBirthplaceMunicipality={setBirthplaceMunicipality}
-                parentGender={parentGender}
-                setParentGender={setParentGender}
-                forumDisplayName={forumDisplayName}
-                setForumDisplayName={setForumDisplayName}
-                bio={bio}
-                setBio={setBio}
-                userRole={userRole}
+                profile={{
+                  id: userId,
+                  userId: userId,
+                  role: userRole || '',
+                  lastNameKanji,
+                  firstNameKanji,
+                  lastNameHiragana,
+                  firstNameHiragana,
+                  birthDate,
+                  birthplacePrefecture,
+                  birthplaceMunicipality,
+                  gender: parentGender,
+                  profileImageUrl,
+                  bio,
+                  forumDisplayName,
+                }}
+                setProfile={profile => {
+                  setLastNameKanji(profile.lastNameKanji || '');
+                  setFirstNameKanji(profile.firstNameKanji || '');
+                  setLastNameHiragana(profile.lastNameHiragana || '');
+                  setFirstNameHiragana(profile.firstNameHiragana || '');
+                  setBirthDate(profile.birthDate || '');
+                  setBirthplacePrefecture(profile.birthplacePrefecture || '');
+                  setBirthplaceMunicipality(profile.birthplaceMunicipality || '');
+                  setBio(profile.bio || '');
+                  setForumDisplayName(profile.forumDisplayName || '');
+                  setProfileImageUrl(profile.profileImageUrl || null);
+                  setParentGender(profile.gender as any || '');
+                }}
+                loading={loading}
+                userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
               />
 
               <div className="border-t border-gray-200 pt-6">
@@ -592,7 +604,7 @@ export default function ProfilePage() {
                   photos={searchingChildren[0]?.photos || []}
                   setPhotos={photos => updateSearchingChildPhotos(0, photos)}
                   loading={loading}
-                  userRole={userRole}
+                  userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
                 />
               </div>
 

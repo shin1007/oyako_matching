@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter, useParams } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { linkifyText } from '@/lib/utils/linkify';
@@ -54,6 +57,7 @@ export default function MessageDetailPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
@@ -132,28 +136,17 @@ export default function MessageDetailPage() {
 
     try {
       // マッチ情報を取得（最新50件を降順で取得）
-      const matchResponse = await fetch(`/api/messages/${matchId}?limit=50&sort=desc`, {
-        method: 'GET',
-      });
-
-      if (!matchResponse.ok) {
-        const data = await matchResponse.json();
-        throw new Error(data.error || 'マッチ情報の取得に失敗しました');
-      }
-
-      const matchData = await matchResponse.json();
-      setMatch(matchData.match);
-      
+      const matchRes = await apiRequest(`/api/messages/${matchId}?limit=50&sort=desc`, { method: 'GET' });
+      if (!matchRes.ok) throw new Error(matchRes.error || 'マッチ情報の取得に失敗しました');
+      setMatch(matchRes.data.match);
       // 降順で取得したメッセージを昇順に並び替えて表示
-      const sortedMessages = sortMessagesByDate(matchData.messages || []);
+      const sortedMessages = sortMessagesByDate(matchRes.data.messages || []);
       setMessages(sortedMessages);
-      setPagination(matchData.pagination);
-
+      setPagination(matchRes.data.pagination);
       // 未読メッセージを既読にする
       await markMessagesAsRead();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'マッチ情報の取得に失敗しました';
-      setError(errorMessage);
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -161,9 +154,7 @@ export default function MessageDetailPage() {
 
   const markMessagesAsRead = async () => {
     try {
-      await fetch(`/api/messages/${matchId}/read`, {
-        method: 'POST',
-      });
+      await apiRequest(`/api/messages/${matchId}/read`, { method: 'POST' });
     } catch (err) {
       console.error('Failed to mark messages as read:', err);
     }
@@ -176,29 +167,17 @@ export default function MessageDetailPage() {
 
     try {
       const newOffset = pagination.offset + pagination.limit;
-      const response = await fetch(
+      const res = await apiRequest(
         `/api/messages/${matchId}?limit=${pagination.limit}&offset=${newOffset}&sort=desc`,
-        {
-          method: 'GET',
-        }
+        { method: 'GET' }
       );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '古いメッセージの取得に失敗しました');
-      }
-
-      const data = await response.json();
-      
+      if (!res.ok) throw new Error(res.error || '古いメッセージの取得に失敗しました');
       // 降順で取得したメッセージを昇順に並び替えて既存のメッセージの前に追加
-      const sortedOlderMessages = sortMessagesByDate(data.messages || []);
-      
+      const sortedOlderMessages = sortMessagesByDate(res.data.messages || []);
       setMessages((prev) => [...sortedOlderMessages, ...prev]);
-      setPagination(data.pagination);
+      setPagination(res.data.pagination);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : '古いメッセージの取得に失敗しました';
-      console.error('Failed to load more messages:', err);
-      alert(errorMessage);
+      notifyError(err);
     } finally {
       setLoadingMore(false);
     }
@@ -212,19 +191,15 @@ export default function MessageDetailPage() {
     setSending(true);
 
     try {
-      const response = await fetch(`/api/messages/${matchId}/send`, {
+      const res = await apiRequest(`/api/messages/${matchId}/send`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           content: newMessage.trim(),
-        }),
+        }
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'メッセージの送信に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || 'メッセージの送信に失敗しました');
       }
 
       const data = await response.json();
@@ -232,16 +207,16 @@ export default function MessageDetailPage() {
       setNewMessage('');
       scrollToBottom();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'メッセージの送信に失敗しました';
-      alert(errorMessage);
+      notifyError(err);
     } finally {
       setSending(false);
     }
   };
 
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={`min-h-screen bg-gray-50 flex items-center justify-center ${roleClass}`}>
         <div className="text-center">
           <div className="mb-4 text-4xl">💬</div>
           <p className="text-gray-900">読み込み中...</p>
@@ -252,14 +227,12 @@ export default function MessageDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
         <main className="container mx-auto px-4 py-8">
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
-            {error}
-          </div>
+          <ErrorAlert message={error} onClose={() => setError('')} />
           <Link
             href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+            className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -270,14 +243,14 @@ export default function MessageDetailPage() {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
         <main className="container mx-auto px-4 py-8">
           <div className="mb-6 rounded-lg bg-yellow-50 p-4 text-yellow-600">
             マッチ情報が見つかりません
           </div>
           <Link
             href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+            className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -286,63 +259,36 @@ export default function MessageDetailPage() {
     );
   }
 
-  // ブロック状態の場合のUI（警告＋メッセージ一覧のみ表示、入力欄は非表示）
-  if (match.status === 'blocked') {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <Link
-              href="/messages"
-                className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
-              >
-              メッセージ一覧に戻る
-              </Link>
-            </div>
-          </div>
-          <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
-            <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
-            <div className="text-sm">このユーザーとのメッセージ送信はできません。必要に応じて設定画面からブロック解除してください。</div>
-          </div>
-          {/* メッセージ一覧のみ表示 */}
-          <div className="bg-white rounded-lg shadow mb-4" style={{ minHeight: '300px' }}>
-            <div className="h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <MessageList
-                  messages={messages}
-                  currentUserId={currentUserId}
-                  userRole={userRole}
-                  linkifyText={linkifyText}
-                />
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // ブロック状態でもプロフィールは表示し、メッセージ送信欄のみ非表示
+  const isBlocked = match.status === 'blocked';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 ${roleClass}`}>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <Link
-              href="/messages"
-                className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+                href="/messages"
+                className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
               >
-              メッセージ一覧に戻る
+                メッセージ一覧に戻る
               </Link>
             </div>
           </div>
         </div>
-          {/* 親ユーザー向け注意喚起ボックス */}
-         {userRole === 'parent' && <ParentWarningBox />}
- 
+        {/* プロフィール情報（UserHeader） */}
+        <UserHeader match={match} />
+        {/* 親ユーザー向け注意喚起ボックス */}
+        {userRole === 'parent' && <ParentWarningBox />}
+        {/* ブロック警告表示 */}
+        {isBlocked && (
+          <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
+            <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
+            <div className="text-sm">このユーザーとのメッセージ送信はできません。必要に応じて設定画面からブロック解除してください。</div>
+          </div>
+        )}
         {/* Messages Container */}
         <div className="bg-white rounded-lg shadow mb-4" style={{ height: 'calc(100vh - 340px)', minHeight: '400px' }}>
           <div className="h-full flex flex-col">
@@ -353,11 +299,7 @@ export default function MessageDetailPage() {
                   <button
                     onClick={loadMoreMessages}
                     disabled={loadingMore}
-                    className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed ${
-                      userRole === 'child' 
-                        ? 'bg-child-600 hover:bg-child-700' 
-                        : 'bg-parent-600 hover:bg-parent-700'
-                    }`}
+                    className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed bg-role-primary bg-role-primary-hover"
                   >
                     {loadingMore ? '読み込み中...' : '古いメッセージを読み込む'}
                   </button>
@@ -371,18 +313,20 @@ export default function MessageDetailPage() {
               />
               <div ref={messagesEndRef} />
             </div>
-            {/* Message Input */}
-            <div className="border-t border-gray-200 p-4">
-              <MessageInputForm
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                sending={sending}
-                onSend={handleSendMessage}
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Shift + Enter で改行、Enter で送信
-              </p>
-            </div>
+            {/* Message Input（ブロック時は非表示） */}
+            {!isBlocked && (
+              <div className="border-t border-gray-200 p-4">
+                <MessageInputForm
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  sending={sending}
+                  onSend={handleSendMessage}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Shift + Enter で改行、Enter で送信
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -2,9 +2,13 @@
 import { ParentApprovalModal } from '@/app/components/matching/ParentApprovalModal';
 
 import { useState, useEffect } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
 import { TargetProfileCard } from '@/app/components/matching/TargetProfileCard';
 import { MatchedTargetCard } from '@/app/components/matching/MatchedTargetCard';
@@ -102,7 +106,7 @@ function renderNoTargetRegisteredCard(userRole: string | null) {
       </p>
       <Link
         href="/dashboard/profile"
-        className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+        className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
       >
         プロフィールを編集
       </Link>
@@ -124,7 +128,7 @@ function renderNoTargetRegisteredCard(userRole: string | null) {
         </p>
         <Link
           href="/dashboard/profile"
-          className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
         >
           プロフィールを編集
         </Link>
@@ -199,6 +203,7 @@ export default function MatchingPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [creating, setCreating] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -226,15 +231,14 @@ export default function MatchingPage() {
 
   const checkTestMode = async () => {
     try {
-      const response = await fetch('/api/test-mode/status');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[MatchingPage] Test mode status:', data);
-        setTestModeBypassVerification(data.bypassVerification);
-        setTestModeBypassSubscription(data.bypassSubscription);
+      const res = await apiRequest('/api/test-mode/status');
+      if (res.ok) {
+        console.log('[MatchingPage] Test mode status:', res.data);
+        setTestModeBypassVerification(res.data.bypassVerification);
+        setTestModeBypassSubscription(res.data.bypassSubscription);
       }
     } catch (err) {
-      console.error('[MatchingPage] Failed to check test mode:', err);
+      notifyError(err);
     }
   };
 
@@ -243,18 +247,14 @@ export default function MatchingPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/matching/search');
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの検索に失敗しました');
-      }
-      const data = await response.json();
-      setMatches(data.candidates || []);
-      setUserRole(data.userRole);
-      setProfile(data.profile || null);
-      setSearchingTargets(data.myTargetPeople || []);
+      const res = await apiRequest('/api/matching/search');
+      if (!res.ok) throw new Error(res.error || 'マッチングの検索に失敗しました');
+      setMatches(res.data.candidates || []);
+      setUserRole(res.data.userRole);
+      setProfile(res.data.profile || null);
+      setSearchingTargets(res.data.myTargetPeople || []);
     } catch (err: any) {
-      setError(err.message);
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -293,14 +293,16 @@ export default function MatchingPage() {
     // 既存マッチのステータスに応じた表示
     if (match.existingMatchStatus === 'accepted' || match.existingMatchStatus === 'blocked') {
       return (
-        <Link
-          href={`/messages/${match.existingMatchId}`}
-          className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-        >
-          メッセージへ
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/messages/${match.existingMatchId}`}
+            className="w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition bg-role-primary bg-role-primary-hover"
+          >
+            メッセージへ
+          </Link>
+        </div>
       );
-    } 
+    }
     // マッチが成立しているが、相手が18歳未満で未承認の場合の表示
     if (isParent && isChild && isUnder18) {
       return (
@@ -324,7 +326,7 @@ export default function MatchingPage() {
       <button
         onClick={handleRequestClick}
         disabled={creating === match.userId}
-        className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+        className="w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition bg-role-primary bg-role-primary-hover"
       >
         {creating === match.userId ? '処理中...' : 'マッチング申請'}
       </button>
@@ -335,26 +337,19 @@ export default function MatchingPage() {
     setCreating(targetUserId);
 
     try {
-      const response = await fetch('/api/matching/create', {
+      const res = await apiRequest('/api/matching/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           targetUserId,
           similarityScore,
-        }),
+        }
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの作成に失敗しました');
-      }
+      if (!res.ok) throw new Error(res.error || 'マッチング申請に失敗しました');
 
       // Success - redirect to messages
       router.push('/messages');
     } catch (err: any) {
-      alert(err.message);
+      notifyError(err);
     } finally {
       setCreating(null);
     }
@@ -363,8 +358,10 @@ export default function MatchingPage() {
 
   // 相手が探している子ども/親情報を表示する関数
   // TheirTargetPeopleListに置換
+  // 親子ロールに応じてラッパーにクラスを付与
+  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen bg-gray-100 ${roleClass}`}> 
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
         {renderTestModeBanners()}
         <div className="mb-8">
@@ -372,15 +369,13 @@ export default function MatchingPage() {
             <div>{renderTitle(userRole)}</div>
             <Link
               href="/dashboard"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
             >
               ダッシュボードに戻る
             </Link>
           </div>
         </div>
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>
-        )}
+        <ErrorAlert message={error} onClose={() => setError('')} />
         {loading ? (
           renderFindingMatch()
         ) : matches.length === 0 ? (

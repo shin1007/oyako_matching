@@ -1,6 +1,8 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isValidEmail } from '@/lib/validation/validators';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -19,11 +21,7 @@ export default function PasskeyLoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Email validation function
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   // Check browser support on mount
   useEffect(() => {
@@ -55,42 +53,31 @@ export default function PasskeyLoginPage() {
       }
 
       // Get authentication challenge from server
-      const challengeResponse = await fetch(
-        '/api/auth/passkey/login-challenge',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email || undefined }),
-        }
-      );
-
-      if (!challengeResponse.ok) {
-        const data = await challengeResponse.json();
+      const challengeRes = await apiRequest('/api/auth/passkey/login-challenge', {
+        method: 'POST',
+        body: { email: email || undefined },
+      });
+      if (!challengeRes.ok) {
         // User-friendly error messages
-        if (data.error?.includes('not found') || data.error?.includes('No passkeys')) {
+        if (challengeRes.error?.includes('not found') || challengeRes.error?.includes('No passkeys')) {
           throw new Error('このメールアドレスに登録されたパスキーが見つかりません。');
         }
-        throw new Error(data.error || 'ログインの準備に失敗しました');
+        throw new Error(challengeRes.error || 'ログインの準備に失敗しました');
       }
-
-      const { options } = await challengeResponse.json();
+      const { options } = challengeRes.data;
 
       // Start authentication with WebAuthn
       const credential = await authenticateWithPasskey(options);
 
       // Verify authentication with server
-      const verifyResponse = await fetch('/api/auth/passkey/login-verify', {
+      const verifyRes = await apiRequest('/api/auth/passkey/login-verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential }),
+        body: { credential },
       });
-
-      if (!verifyResponse.ok) {
-        const data = await verifyResponse.json();
-        throw new Error(data.error || 'ログインに失敗しました');
+      if (!verifyRes.ok) {
+        throw new Error(verifyRes.error || 'ログインに失敗しました');
       }
-
-      const { user: userData } = await verifyResponse.json();
+      const { user: userData } = verifyRes.data;
 
       // Passkey authentication was successful
       // However, we still need to create a Supabase session

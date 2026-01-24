@@ -1,6 +1,8 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isValidEmail } from '@/lib/validation/validators';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -61,11 +63,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Email validation function
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,16 +97,15 @@ export default function LoginPage() {
         }
 
         // 監査ログ記録（API経由）
-        await fetch('/api/log-audit', {
+        await apiRequest('/api/log-audit', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             user_id: data.user.id,
             event_type: 'login',
             target_table: 'users',
             target_id: data.user.id,
             description: '通常ログイン成功'
-          })
+          }
         });
 
         router.push('/dashboard');
@@ -153,15 +150,14 @@ export default function LoginPage() {
       }
 
       // 監査ログ記録（API経由）
-      await fetch('/api/log-audit', {
+      await apiRequest('/api/log-audit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           event_type: 'login_failed',
           target_table: 'users',
           description: `ログイン失敗: ${failReason}`,
           // user_id, target_idは不明（ログイン失敗時）
-        })
+        }
       });
 
       setError(errorMessage);

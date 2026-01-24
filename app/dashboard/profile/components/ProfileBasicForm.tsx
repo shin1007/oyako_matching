@@ -1,46 +1,52 @@
 import React from 'react';
+import { ProfileBase } from '@/types/profile';
 
-type ParentGender = '' | 'male' | 'female' | 'other' | 'prefer_not_to_say';
 interface ProfileBasicFormProps {
-  lastNameKanji: string;
-  setLastNameKanji: (v: string) => void;
-  lastNameHiragana: string;
-  setLastNameHiragana: (v: string) => void;
-  firstNameKanji: string;
-  setFirstNameKanji: (v: string) => void;
-  firstNameHiragana: string;
-  setFirstNameHiragana: (v: string) => void;
-  birthDate: string;
-  setBirthDate: (v: string) => void;
-  birthplacePrefecture: string;
-  setBirthplacePrefecture: (v: string) => void;
-  birthplaceMunicipality: string;
-  setBirthplaceMunicipality: (v: string) => void;
-  bio: string;
-  setBio: (v: string) => void;
-  parentGender: ParentGender;
-  setParentGender: (v: ParentGender) => void;
-  forumDisplayName: string;
-  setForumDisplayName: (v: string) => void;
-  userRole: 'parent' | 'child' | null;
+  profile: ProfileBase;
+  setProfile: (profile: ProfileBase) => void;
   loading?: boolean;
+  userRole?: string;
 }
 
 import { PREFECTURES } from '@/lib/constants/prefectures';
+import { isHiragana } from '@/lib/validation/hiragana';
+import { katakanaToHiragana } from '@/lib/validation/kana';
 export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
-  lastNameKanji, setLastNameKanji,
-  lastNameHiragana, setLastNameHiragana,
-  firstNameKanji, setFirstNameKanji,
-  firstNameHiragana, setFirstNameHiragana,
-  birthDate, setBirthDate,
-  birthplacePrefecture, setBirthplacePrefecture,
-  birthplaceMunicipality, setBirthplaceMunicipality,
-  bio, setBio,
-  parentGender, setParentGender,
-  forumDisplayName, setForumDisplayName,
-  userRole, loading
-}) => (
-  <>
+  profile,
+  setProfile,
+  loading,
+  userRole
+}) => {
+  // ひらがなバリデーション用エラー
+  const [hiraganaError, setHiraganaError] = React.useState<{ last: string; first: string }>({ last: '', first: '' });
+
+  const handleLastNameKanjiChange = (v: string) => setProfile({ ...profile, lastNameKanji: v });
+  const handleFirstNameKanjiChange = (v: string) => setProfile({ ...profile, firstNameKanji: v });
+  const handleLastNameHiraganaChange = (v: string) => {
+    const hira = katakanaToHiragana(v);
+    setProfile({ ...profile, lastNameHiragana: hira });
+    if (hira && !isHiragana(hira)) {
+      setHiraganaError(e => ({ ...e, last: 'ひらがなのみで入力してください' }));
+    } else {
+      setHiraganaError(e => ({ ...e, last: '' }));
+    }
+  };
+  const handleFirstNameHiraganaChange = (v: string) => {
+    const hira = katakanaToHiragana(v);
+    setProfile({ ...profile, firstNameHiragana: hira });
+    if (hira && !isHiragana(hira)) {
+      setHiraganaError(e => ({ ...e, first: 'ひらがなのみで入力してください' }));
+    } else {
+      setHiraganaError(e => ({ ...e, first: '' }));
+    }
+  };
+  const handleBirthDateChange = (v: string) => setProfile({ ...profile, birthDate: v });
+  const handleBirthplacePrefectureChange = (v: string) => setProfile({ ...profile, birthplacePrefecture: v, birthplaceMunicipality: '' });
+  const handleBirthplaceMunicipalityChange = (v: string) => setProfile({ ...profile, birthplaceMunicipality: v });
+  const handleBioChange = (v: string) => setProfile({ ...profile, bio: v });
+  const handleRoleChange = (v: 'parent' | 'child' | string) => setProfile({ ...profile, role: v });
+  return (
+    <>
     <div className="border-t border-gray-200 pt-4 mt-4">
       <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
       <div className="space-y-4">
@@ -52,8 +58,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
             <input
               id="lastNameKanji"
               type="text"
-              value={lastNameKanji}
-              onChange={e => setLastNameKanji(e.target.value)}
+              value={profile.lastNameKanji || ''}
+              onChange={e => handleLastNameKanjiChange(e.target.value)}
               required
               className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
               placeholder="例: 山田"
@@ -66,8 +72,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
             <input
               id="firstNameKanji"
               type="text"
-              value={firstNameKanji}
-              onChange={e => setFirstNameKanji(e.target.value)}
+              value={profile.firstNameKanji || ''}
+              onChange={e => handleFirstNameKanjiChange(e.target.value)}
               required
               className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
               placeholder="例: 太郎"
@@ -83,11 +89,14 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
             <input
               id="lastNameHiragana"
               type="text"
-              value={lastNameHiragana}
-              onChange={e => setLastNameHiragana(e.target.value)}
+              value={profile.lastNameHiragana || ''}
+              onChange={e => handleLastNameHiraganaChange(e.target.value)}
               className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
               placeholder="例: やまだ"
             />
+            {hiraganaError.last && (
+              <p className="mt-1 text-xs text-red-600">{hiraganaError.last}</p>
+            )}
           </div>
           <div>
             <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
@@ -97,11 +106,14 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
             <input
               id="firstNameHiragana"
               type="text"
-              value={firstNameHiragana}
-              onChange={e => setFirstNameHiragana(e.target.value)}
+              value={profile.firstNameHiragana || ''}
+              onChange={e => handleFirstNameHiraganaChange(e.target.value)}
               className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
               placeholder="例: たろう"
             />
+            {hiraganaError.first && (
+              <p className="mt-1 text-xs text-red-600">{hiraganaError.first}</p>
+            )}
           </div>
         </div>
         <p className="mt-1 text-xs text-gray-500">
@@ -118,8 +130,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
       <input
         id="birthDate"
         type="date"
-        value={birthDate}
-        onChange={e => setBirthDate(e.target.value)}
+        value={profile.birthDate || ''}
+        onChange={e => handleBirthDateChange(e.target.value)}
         required
         className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
       />
@@ -140,11 +152,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
           </label>
           <select
             id="birthplacePrefecture"
-            value={birthplacePrefecture}
-            onChange={e => {
-              setBirthplacePrefecture(e.target.value);
-              setBirthplaceMunicipality('');
-            }}
+            value={profile.birthplacePrefecture || ''}
+            onChange={e => handleBirthplacePrefectureChange(e.target.value)}
             className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
           >
             <option value="">選択してください</option>
@@ -160,8 +169,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
           <input
             id="birthplaceMunicipality"
             type="text"
-            value={birthplaceMunicipality}
-            onChange={e => setBirthplaceMunicipality(e.target.value)}
+            value={profile.birthplaceMunicipality || ''}
+            onChange={e => handleBirthplaceMunicipalityChange(e.target.value)}
             className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
             placeholder="例: 渋谷区、北区"
           />
@@ -179,8 +188,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
       </label>
       <select
         id="parentGender"
-        value={parentGender}
-        onChange={e => setParentGender(e.target.value as ParentGender)}
+        value={profile.role}
+        onChange={e => handleRoleChange(e.target.value as 'parent' | 'child' | string)}
         className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
       >
         <option value="">未選択</option>
@@ -201,8 +210,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
       <input
         id="forumDisplayName"
         type="text"
-        value={forumDisplayName}
-        onChange={e => setForumDisplayName(e.target.value)}
+        value={profile.forumDisplayName || ''}
+        onChange={e => setProfile({ ...profile, forumDisplayName: e.target.value })}
         className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
         placeholder="例: ゆうこママ、たろうパパ"
       />
@@ -217,12 +226,13 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
       </label>
       <textarea
         id="bio"
-        value={bio}
-        onChange={e => setBio(e.target.value)}
+        value={profile.bio || ''}
+        onChange={e => handleBioChange(e.target.value)}
         rows={4}
         className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
         placeholder="簡単な自己紹介を記入してください"
       />
     </div>
-  </>
-);
+    </>
+  );
+};

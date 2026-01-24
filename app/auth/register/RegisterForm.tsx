@@ -1,6 +1,8 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isValidEmail, isStrongPassword, isPasswordMatch } from '@/lib/validation/validators';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -20,11 +22,7 @@ export default function RegisterForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Email validation function
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   useEffect(() => {
     const roleParam = searchParams.get('role');
@@ -51,17 +49,13 @@ export default function RegisterForm() {
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (!isPasswordMatch(password, confirmPassword)) {
       setError('パスワードが一致しません');
       setLoading(false);
       return;
     }
 
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-
-    if (!(password.length >= 8 && hasUpper && hasLower && hasNumber)) {
+    if (!isStrongPassword(password)) {
       setError('8文字以上で、大文字・小文字・数字をすべて含めてください');
       setLoading(false);
       return;
@@ -163,16 +157,15 @@ export default function RegisterForm() {
 
       if (data.user) {
         // 監査ログ記録（API経由）
-        await fetch('/api/log-audit', {
+        await apiRequest('/api/log-audit', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             user_id: data.user.id,
             event_type: 'register',
             target_table: 'users',
             target_id: data.user.id,
             description: '新規ユーザー登録'
-          })
+          }
         });
 
         // Attempt to sign in after successful sign-up

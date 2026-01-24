@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,40 +46,25 @@ export default function PasskeyRegister({
       }
 
       // Get registration challenge from server
-      const challengeResponse = await fetch(
-        '/api/auth/passkey/register-challenge',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      if (!challengeResponse.ok) {
-        const data = await challengeResponse.json();
-        throw new Error(data.error || '登録の準備に失敗しました');
+      const challengeRes = await apiRequest('/api/auth/passkey/register-challenge', { method: 'POST' });
+      if (!challengeRes.ok) {
+        throw new Error(challengeRes.error || '登録の準備に失敗しました');
       }
-
-      const { options } = await challengeResponse.json();
+      const { options } = challengeRes.data;
 
       // Start registration with WebAuthn
       const credential = await registerPasskey(options);
 
       // Verify registration with server
-      const verifyResponse = await fetch(
-        '/api/auth/passkey/register-verify',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            credential,
-            deviceName: deviceName || 'パスキー',
-          }),
-        }
-      );
-
-      if (!verifyResponse.ok) {
-        const data = await verifyResponse.json();
-        throw new Error(data.error || 'パスキーの登録に失敗しました');
+      const verifyRes = await apiRequest('/api/auth/passkey/register-verify', {
+        method: 'POST',
+        body: {
+          credential,
+          deviceName: deviceName || 'パスキー',
+        },
+      });
+      if (!verifyRes.ok) {
+        throw new Error(verifyRes.error || 'パスキーの登録に失敗しました');
       }
 
       // Success!

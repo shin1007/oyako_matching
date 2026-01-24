@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 interface MatchProfile {
   birth_date?: string;
@@ -185,9 +186,7 @@ export default function ParentFeaturePanel({ isVerified, isSubscriptionActive, s
           <div className="mt-4 space-y-2 text-sm">
             <p>
               <span className="text-green-800">状態:</span>{' '}
-              <span className={`font-semibold ${subscription.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
-                {subscription.status === 'active' ? 'アクティブ' : subscription.status}
-              </span>
+              <StatusBadge status={subscription.status === 'active' ? 'accepted' : subscription.status} />
             </p>
             <p>
               <span className="text-green-800">次回請求日:</span>{' '}

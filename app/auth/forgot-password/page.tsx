@@ -1,6 +1,8 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState } from 'react';
+import { isValidEmail } from '@/lib/validation/validators';
 import Link from 'next/link';
 
 export default function ForgotPasswordPage() {
@@ -10,10 +12,7 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
 
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,20 +28,15 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/reset-password/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'リクエストに失敗しました');
-        return;
-      }
+        const res = await apiRequest('/api/auth/reset-password/request', {
+          method: 'POST',
+          body: { email },
+        });
+        if (!res.ok) {
+          setError(res.error || 'パスワードリセットに失敗しました');
+          setLoading(false);
+          return;
+        }
 
       setSuccess(true);
       setSubmittedEmail(email);
