@@ -1,4 +1,4 @@
-
+"use client";
 import React, { useRef, useState } from 'react';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -41,7 +41,7 @@ export const ProfileImageUpload = ({
     reader.onload = () => {
       setSelectedImage(reader.result as string);
       setShowCropper(true);
-    "use client";
+    };
     reader.readAsDataURL(file);
     setSelectedImageFile(file);
   };
@@ -205,4 +205,3 @@ export const ProfileImageUpload = ({
     </div>
   );
 };
-}
