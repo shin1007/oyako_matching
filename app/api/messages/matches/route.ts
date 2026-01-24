@@ -57,7 +57,27 @@ export async function GET(request: NextRequest) {
     const otherUserIds = matchesData.map((m: any) => 
       m.parent_id === user.id ? m.child_id : m.parent_id
     );
+      // デバッグ: otherUserIds
+      console.log('[Messages API] otherUserIds:', otherUserIds);
 
+      // 相手ユーザーのプロフィール情報を一括取得
+      const { data: profilesData, error: profilesError } = await admin
+        .from('profiles')
+        .select('user_id, birth_date, birthplace_prefecture, birthplace_municipality, gender')
+        .in('user_id', otherUserIds);
+      if (profilesError) throw profilesError;
+      // デバッグ: profilesData
+      console.log('[Messages API] profilesData:', profilesData);
+
+      // user_idでマッピング
+      const profilesMap = new Map<string, any>();
+      if (profilesData) {
+        profilesData.forEach((profile: any) => {
+          profilesMap.set(profile.user_id, profile);
+        });
+      }
+      // デバッグ: profilesMap
+      console.log('[Messages API] profilesMap:', Array.from(profilesMap.entries()));
     // acceptedステータスのマッチIDのみを抽出
     const acceptedMatchIds = matchesData
       .filter((m: any) => m.status === 'accepted')
@@ -151,6 +171,8 @@ export async function GET(request: NextRequest) {
     // データを整形
     const matchesWithProfiles = matchesData.map((match: any) => {
       const otherUserId = match.parent_id === user.id ? match.child_id : match.parent_id;
+        // デバッグ: otherUserIdごとのプロフィール
+        console.log('[Messages API] otherUserId:', otherUserId, profilesMap.get(otherUserId));
       const is_requester = match.parent_id === user.id;
 
       // 相手ユーザーの情報を取得
@@ -158,16 +180,36 @@ export async function GET(request: NextRequest) {
       let otherUserRole = 'unknown';
       let otherUserImage = null;
 
+        // プロフィール情報
+        let otherUserBirthDate = null;
+        let otherUserBirthplacePrefecture = null;
+        let otherUserBirthplaceMunicipality = null;
+        let otherUserGender = null;
+
       if (match.parent_id === user.id) {
         // 相手は子
         otherUserName = (match.child_last_name_kanji || '') + (match.child_first_name_kanji || '') || '名前なし';
         otherUserRole = match.child_role || 'unknown';
         otherUserImage = match.child_profile_image_url || null;
+          const profile = profilesMap.get(match.child_id);
+          if (profile) {
+            otherUserBirthDate = profile.birth_date;
+            otherUserBirthplacePrefecture = profile.birthplace_prefecture;
+            otherUserBirthplaceMunicipality = profile.birthplace_municipality;
+            otherUserGender = profile.gender;
+          }
       } else {
         // 相手は親
         otherUserName = (match.parent_last_name_kanji || '') + (match.parent_first_name_kanji || '') || '名前なし';
         otherUserRole = match.parent_role || 'unknown';
         otherUserImage = match.parent_profile_image_url || null;
+          const profile = profilesMap.get(match.parent_id);
+          if (profile) {
+            otherUserBirthDate = profile.birth_date;
+            otherUserBirthplacePrefecture = profile.birthplace_prefecture;
+            otherUserBirthplaceMunicipality = profile.birthplace_municipality;
+            otherUserGender = profile.gender;
+          }
       }
 
       // 未読数と最終メッセージを取得
@@ -222,6 +264,10 @@ export async function GET(request: NextRequest) {
         other_user_name: otherUserName,
         other_user_role: otherUserRole,
         other_user_image: otherUserImage,
+          other_user_birth_date: otherUserBirthDate,
+          other_user_birthplace_prefecture: otherUserBirthplacePrefecture,
+          other_user_birthplace_municipality: otherUserBirthplaceMunicipality,
+          other_user_gender: otherUserGender,
         target_people: targetPeople,
         target_person_photos: searchingChildPhotos,
         is_requester,
@@ -239,6 +285,8 @@ export async function GET(request: NextRequest) {
         total_pages: Math.ceil((totalCount || 0) / limit)
       }
     }, { status: 200 });
+      // デバッグ: matchesWithProfiles
+      console.log('[Messages API] matchesWithProfiles:', matchesWithProfiles);
   } catch (error: any) {
     console.error('Failed to fetch matches:', error);
     return NextResponse.json(

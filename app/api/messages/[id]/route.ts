@@ -84,7 +84,7 @@ export async function GET(
 
     const { data: profile } = await admin
       .from('profiles')
-      .select('last_name_kanji, first_name_kanji, profile_image_url')
+      .select('last_name_kanji, first_name_kanji, profile_image_url, birth_date, birthplace_prefecture, birthplace_municipality, gender')
       .eq('user_id', otherUserId)
       .single();
 
@@ -147,6 +147,10 @@ export async function GET(
           other_user_name: (profile?.last_name_kanji || '') + (profile?.first_name_kanji || '') || '名前なし',
           other_user_role: userData?.role || 'unknown',
           other_user_image: profile?.profile_image_url || null,
+          other_user_birth_date: profile?.birth_date || null,
+          other_user_birthplace_prefecture: profile?.birthplace_prefecture || null,
+          other_user_birthplace_municipality: profile?.birthplace_municipality || null,
+          other_user_gender: profile?.gender || null,
           target_people: searchingChildrenWithPhotos,
         },
         messages: messages || [],

@@ -32,6 +32,10 @@ interface MatchWithProfile extends Match {
     is_own: boolean;
   } | null;
   target_people?: any[]; // ターゲット情報（型は適宜修正してください）
+  other_user_birth_date?: string | null;
+  other_user_birthplace_prefecture?: string | null;
+  other_user_birthplace_municipality?: string | null;
+  other_user_gender?: string | null;
 }
 
 export default function MessagesPage() {
@@ -233,6 +237,20 @@ export default function MessagesPage() {
                           <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full flex-shrink-0">
                             {match.unread_count > 9 ? '9+' : match.unread_count}
                           </span>
+                        )}
+                      </div>
+                      {/* プロフィール詳細表示 */}
+                      <div className="text-sm text-gray-700 mt-1 space-y-1">
+                        {match.other_user_birth_date && (
+                          <div>生年月日: {match.other_user_birth_date}</div>
+                        )}
+                        {(match.other_user_birthplace_prefecture || match.other_user_birthplace_municipality) && (
+                          <div>
+                            出身地: {match.other_user_birthplace_prefecture || ''}{match.other_user_birthplace_municipality ? ' ' + match.other_user_birthplace_municipality : ''}
+                          </div>
+                        )}
+                        {match.other_user_gender && (
+                          <div>性別: {match.other_user_gender}</div>
                         )}
                       </div>
                       <p className="text-sm text-gray-500">

@@ -53,19 +53,14 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         {status === 'blocked' && <span className="align-middle"><StatusBadge status="blocked" /></span>}
       </div>
       <h2 className="text-xl font-bold text-gray-900 truncate">{name}</h2>
-      {(genderLabel || age) && (
-        <p className="text-sm text-gray-900 mt-1">
-          {genderLabel}
-          {age && ` • ${age}歳`}
-        </p>
-      )}
+      {/* プロフィール詳細（重複排除） */}
+      <div className="text-sm text-gray-700 mt-1 space-y-1">
+        {genderLabel && <div>性別: {genderLabel}</div>}
+        {birthDate && <div>生年月日: {birthDate}</div>}
+        {birthplace && <div>出身地: {birthplace}</div>}
+        {age && <div>年齢: {age}歳</div>}
+      </div>
       {bio && <p className="mt-2 text-sm text-gray-900 line-clamp-2">{bio}</p>}
-      {birthDate && (
-        <p className="text-xs text-gray-500 mt-1">生年月日: {birthDate}</p>
-      )}
-      {birthplace && (
-        <p className="text-xs text-gray-500 mt-1">出身地: {birthplace}</p>
-      )}
     </div>
   </div>
 );
