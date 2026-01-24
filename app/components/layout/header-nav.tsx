@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,11 +29,10 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications/summary');
-      if (response.ok) {
-        const data = await response.json();
-        setPendingCount(data.pending_matches_count || 0);
-        setTotalNotifications(data.total_notifications || 0);
+      const res = await apiRequest('/api/notifications/summary');
+      if (res.ok) {
+        setPendingCount(res.data.pending_matches_count || 0);
+        setTotalNotifications(res.data.total_notifications || 0);
       }
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
@@ -45,18 +45,14 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
     try {
       setSigningOut(true);
       console.log('[HeaderNav] Attempting to sign out...');
-      const response = await fetch('/api/auth/signout', { method: 'POST' });
-      console.log('[HeaderNav] SignOut response:', response.status);
-      
-      if (response.ok) {
+      const res = await apiRequest('/api/auth/signout', { method: 'POST' });
+      console.log('[HeaderNav] SignOut response:', res.status);
+      if (res.ok) {
         console.log('[HeaderNav] SignOut successful, refreshing page and redirecting to home');
-        // Refresh to clear server-side session data
         router.refresh();
-        // Redirect to home
         router.push('/');
       } else {
-        const data = await response.json();
-        console.error('[HeaderNav] SignOut failed:', data.error);
+        console.error('[HeaderNav] SignOut failed:', res.error);
         alert('ログアウトに失敗しました。もう一度お試しください。');
       }
     } catch (err) {

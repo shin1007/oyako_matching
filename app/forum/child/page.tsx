@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { apiRequest } from '@/lib/api/request';
 import Link from 'next/link';
 
 interface Category {
@@ -74,10 +75,9 @@ export default function ChildForumPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('/api/forum/categories?userType=child');
-      if (!response.ok) throw new Error('Failed to load categories');
-      const data = await response.json();
-      setCategories(data.categories || []);
+      const res = await apiRequest('/api/forum/categories?userType=child');
+      if (!res.ok) throw new Error(res.error || 'Failed to load categories');
+      setCategories(res.data?.categories || []);
     } catch (err: any) {
       console.error('Error loading categories:', err);
     }
@@ -91,10 +91,9 @@ export default function ChildForumPage() {
       const url = selectedCategory
         ? `/api/forum/posts?userType=child&category_id=${selectedCategory}`
         : '/api/forum/posts?userType=child';
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to load posts');
-      const data = await response.json();
-      setPosts(data.posts || []);
+      const res = await apiRequest(url);
+      if (!res.ok) throw new Error(res.error || 'Failed to load posts');
+      setPosts(res.data?.posts || []);
     } catch (err: any) {
       setError(err.message);
     } finally {

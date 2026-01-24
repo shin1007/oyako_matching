@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,10 +18,9 @@ export function PendingNotification({ userRole }: PendingNotificationProps) {
 
   const fetchPendingCount = async () => {
     try {
-      const response = await fetch('/api/notifications/pending-matches');
-      if (response.ok) {
-        const data = await response.json();
-        setPendingCount(data.pending_count || 0);
+      const res = await apiRequest('/api/notifications/pending-matches');
+      if (res.ok) {
+        setPendingCount(res.data.pending_count || 0);
       }
     } catch (err) {
       console.error('Failed to fetch pending count:', err);

@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -56,20 +57,14 @@ function ResetPasswordConfirmContent() {
     }
 
     try {
-      const response = await fetch('/api/auth/reset-password/confirm', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'パスワードリセットに失敗しました');
-        return;
-      }
+        const res = await apiRequest('/api/auth/reset-password/confirm', {
+          method: 'POST',
+          body: { code, password },
+        });
+        if (!res.ok) {
+          setError(res.error || 'パスワードリセットに失敗しました');
+          return;
+        }
 
       setSuccess(true);
       // 3秒後にログインページにリダイレクト

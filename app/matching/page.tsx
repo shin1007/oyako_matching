@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -230,12 +231,11 @@ export default function MatchingPage() {
 
   const checkTestMode = async () => {
     try {
-      const response = await fetch('/api/test-mode/status');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[MatchingPage] Test mode status:', data);
-        setTestModeBypassVerification(data.bypassVerification);
-        setTestModeBypassSubscription(data.bypassSubscription);
+      const res = await apiRequest('/api/test-mode/status');
+      if (res.ok) {
+        console.log('[MatchingPage] Test mode status:', res.data);
+        setTestModeBypassVerification(res.data.bypassVerification);
+        setTestModeBypassSubscription(res.data.bypassSubscription);
       }
     } catch (err) {
       notifyError(err);
@@ -247,16 +247,12 @@ export default function MatchingPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/matching/search');
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの検索に失敗しました');
-      }
-      const data = await response.json();
-      setMatches(data.candidates || []);
-      setUserRole(data.userRole);
-      setProfile(data.profile || null);
-      setSearchingTargets(data.myTargetPeople || []);
+      const res = await apiRequest('/api/matching/search');
+      if (!res.ok) throw new Error(res.error || 'マッチングの検索に失敗しました');
+      setMatches(res.data.candidates || []);
+      setUserRole(res.data.userRole);
+      setProfile(res.data.profile || null);
+      setSearchingTargets(res.data.myTargetPeople || []);
     } catch (err: any) {
       notifyError(err);
     } finally {
@@ -341,21 +337,14 @@ export default function MatchingPage() {
     setCreating(targetUserId);
 
     try {
-      const response = await fetch('/api/matching/create', {
+      const res = await apiRequest('/api/matching/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           targetUserId,
           similarityScore,
-        }),
+        }
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの作成に失敗しました');
-      }
+      if (!res.ok) throw new Error(res.error || 'マッチング申請に失敗しました');
 
       // Success - redirect to messages
       router.push('/messages');

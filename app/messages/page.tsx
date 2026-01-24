@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -30,6 +31,7 @@ interface MatchWithProfile extends Match {
     created_at: string;
     is_own: boolean;
   } | null;
+  target_people?: any[]; // ターゲット情報（型は適宜修正してください）
 }
 
 export default function MessagesPage() {
@@ -70,12 +72,11 @@ export default function MessagesPage() {
 
   const checkTestMode = async () => {
     try {
-      const response = await fetch('/api/test-mode/status');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[MessagesPage] Test mode status:', data);
-        setTestModeBypassVerification(data.bypassVerification);
-        setTestModeBypassSubscription(data.bypassSubscription);
+      const res = await apiRequest('/api/test-mode/status');
+      if (res.ok) {
+        console.log('[MessagesPage] Test mode status:', res.data);
+        setTestModeBypassVerification(res.data.bypassVerification);
+        setTestModeBypassSubscription(res.data.bypassSubscription);
       }
     } catch (err) {
       notifyError(err);
@@ -88,28 +89,17 @@ export default function MessagesPage() {
 
     try {
       // APIを通じてマッチ情報を取得（管理者権限で他ユーザー情報も取得）
-      const response = await fetch('/api/messages/matches', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'マッチングの読み込みに失敗しました');
-      }
-
-      const data = await response.json();
-      console.log('[MessagesPage] Loaded matches:', data.matches);
-      if (data.matches && data.matches.length > 0) {
+      const res = await apiRequest('/api/messages/matches', { method: 'GET' });
+      if (!res.ok) throw new Error(res.error || 'マッチングの読み込みに失敗しました');
+      console.log('[MessagesPage] Loaded matches:', res.data.matches);
+      if (res.data.matches && res.data.matches.length > 0) {
         console.log('[MessagesPage] First match details:', {
-          other_user_image: data.matches[0].other_user_image,
-          target_person_photos: data.matches[0].target_person_photos,
-          other_user_name: data.matches[0].other_user_name
+          other_user_image: res.data.matches[0].other_user_image,
+          target_person_photos: res.data.matches[0].target_person_photos,
+          other_user_name: res.data.matches[0].other_user_name
         });
       }
-      setMatches(data.matches);
+      setMatches(res.data.matches);
     } catch (err: any) {
       notifyError(err);
     } finally {

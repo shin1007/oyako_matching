@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -71,21 +72,15 @@ export default function ChangePasswordForm() {
     }
 
     try {
-      const response = await fetch('/api/auth/change-password', {
+      const res = await apiRequest('/api/auth/change-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           currentPassword,
           newPassword,
-        }),
+        },
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'パスワード変更に失敗しました');
+      if (!res.ok) {
+        setError(res.error || 'パスワード変更に失敗しました');
         return;
       }
 

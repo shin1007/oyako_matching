@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState } from 'react';
@@ -73,20 +74,16 @@ export default function ReportModal({
     setError('');
 
     try {
-      const response = await fetch('/api/forum/reports', {
+      const res = await apiRequest('/api/forum/reports', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           reported_content_type: contentType,
           reported_content_id: contentId,
           report_reason: selectedReason,
           report_details: details || null,
-        }),
+        },
       });
-
-      const data = await response.json();
+      const data = res.data;
 
       if (!response.ok) {
         throw new Error(data.error || '通報の送信に失敗しました');

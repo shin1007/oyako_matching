@@ -4,6 +4,7 @@ import { UserProfileCard } from '@/components/ui/UserProfileCard';
 import { MatchingSimilarityCard } from './MatchingSimilarityCard';
 import Link from 'next/link';
 import { useState } from 'react';
+import { apiRequest } from '@/lib/api/request';
 
 
 
@@ -31,10 +32,9 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
   const handleBlock = async () => {
     setBlockLoading(true);
     try {
-      const res = await fetch('/api/matching/block', {
+      const res = await apiRequest('/api/matching/block', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: match.userId }),
+        body: { targetUserId: match.userId },
       });
       if (!res.ok) throw new Error('ブロックに失敗しました');
       setBlocked(true);
@@ -49,10 +49,9 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
   const handleUnblock = async () => {
     setBlockLoading(true);
     try {
-      const res = await fetch('/api/matching/unblock', {
+      const res = await apiRequest('/api/matching/unblock', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: match.userId }),
+        body: { targetUserId: match.userId },
       });
       if (!res.ok) throw new Error('ブロック解除に失敗しました');
       setBlocked(false);

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter, useParams } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { linkifyText } from '@/lib/utils/linkify';
@@ -135,23 +136,13 @@ export default function MessageDetailPage() {
 
     try {
       // マッチ情報を取得（最新50件を降順で取得）
-      const matchResponse = await fetch(`/api/messages/${matchId}?limit=50&sort=desc`, {
-        method: 'GET',
-      });
-
-      if (!matchResponse.ok) {
-        const data = await matchResponse.json();
-        throw new Error(data.error || 'マッチ情報の取得に失敗しました');
-      }
-
-      const matchData = await matchResponse.json();
-      setMatch(matchData.match);
-      
+      const matchRes = await apiRequest(`/api/messages/${matchId}?limit=50&sort=desc`, { method: 'GET' });
+      if (!matchRes.ok) throw new Error(matchRes.error || 'マッチ情報の取得に失敗しました');
+      setMatch(matchRes.data.match);
       // 降順で取得したメッセージを昇順に並び替えて表示
-      const sortedMessages = sortMessagesByDate(matchData.messages || []);
+      const sortedMessages = sortMessagesByDate(matchRes.data.messages || []);
       setMessages(sortedMessages);
-      setPagination(matchData.pagination);
-
+      setPagination(matchRes.data.pagination);
       // 未読メッセージを既読にする
       await markMessagesAsRead();
     } catch (err: unknown) {
@@ -163,9 +154,7 @@ export default function MessageDetailPage() {
 
   const markMessagesAsRead = async () => {
     try {
-      await fetch(`/api/messages/${matchId}/read`, {
-        method: 'POST',
-      });
+      await apiRequest(`/api/messages/${matchId}/read`, { method: 'POST' });
     } catch (err) {
       console.error('Failed to mark messages as read:', err);
     }
@@ -178,25 +167,15 @@ export default function MessageDetailPage() {
 
     try {
       const newOffset = pagination.offset + pagination.limit;
-      const response = await fetch(
+      const res = await apiRequest(
         `/api/messages/${matchId}?limit=${pagination.limit}&offset=${newOffset}&sort=desc`,
-        {
-          method: 'GET',
-        }
+        { method: 'GET' }
       );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '古いメッセージの取得に失敗しました');
-      }
-
-      const data = await response.json();
-      
+      if (!res.ok) throw new Error(res.error || '古いメッセージの取得に失敗しました');
       // 降順で取得したメッセージを昇順に並び替えて既存のメッセージの前に追加
-      const sortedOlderMessages = sortMessagesByDate(data.messages || []);
-      
+      const sortedOlderMessages = sortMessagesByDate(res.data.messages || []);
       setMessages((prev) => [...sortedOlderMessages, ...prev]);
-      setPagination(data.pagination);
+      setPagination(res.data.pagination);
     } catch (err: unknown) {
       notifyError(err);
     } finally {
@@ -212,19 +191,15 @@ export default function MessageDetailPage() {
     setSending(true);
 
     try {
-      const response = await fetch(`/api/messages/${matchId}/send`, {
+      const res = await apiRequest(`/api/messages/${matchId}/send`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           content: newMessage.trim(),
-        }),
+        }
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'メッセージの送信に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || 'メッセージの送信に失敗しました');
       }
 
       const data = await response.json();

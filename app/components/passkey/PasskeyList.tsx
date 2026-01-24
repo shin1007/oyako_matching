@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,12 +19,11 @@ export default function PasskeyList() {
 
   const loadPasskeys = async () => {
     try {
-      const response = await fetch('/api/auth/passkey/list');
-      if (!response.ok) {
+      const res = await apiRequest('/api/auth/passkey/list');
+      if (!res.ok) {
         throw new Error('パスキーの取得に失敗しました');
       }
-      const data = await response.json();
-      setPasskeys(data.passkeys);
+      setPasskeys(res.data.passkeys);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'パスキーの取得に失敗しました'
@@ -48,13 +48,11 @@ export default function PasskeyList() {
 
     setDeleting(passkeyId);
     try {
-      const response = await fetch(`/api/auth/passkey/${passkeyId}`, {
+      const res = await apiRequest(`/api/auth/passkey/${passkeyId}`, {
         method: 'DELETE',
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'パスキーの削除に失敗しました');
+      if (!res.ok) {
+        throw new Error(res.error || 'パスキーの削除に失敗しました');
       }
 
       // Reload the list

@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 
 import { useState } from 'react';
@@ -27,20 +28,15 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/reset-password/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'リクエストに失敗しました');
-        return;
-      }
+        const res = await apiRequest('/api/auth/reset-password/request', {
+          method: 'POST',
+          body: { email },
+        });
+        if (!res.ok) {
+          setError(res.error || 'パスワードリセットに失敗しました');
+          setLoading(false);
+          return;
+        }
 
       setSuccess(true);
       setSubmittedEmail(email);

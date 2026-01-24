@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api/request';
 'use client';
 import { DeleteProfileDialog } from './components/DeleteProfileDialog';
 import { ProfileImageUpload } from './components/ProfileImageUpload';
@@ -462,17 +463,9 @@ export default function ProfilePage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/delete-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'アカウントの削除に失敗しました');
+      const res = await apiRequest('/api/auth/delete-account', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(res.error || 'アカウントの削除に失敗しました');
       }
 
       // Ensure session is signed out on client side

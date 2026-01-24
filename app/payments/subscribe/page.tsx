@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
+import { apiRequest } from '@/lib/api/request';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -76,25 +77,16 @@ export default function SubscribePage() {
       if (!user) throw new Error('ログインが必要です');
 
       // Create checkout session
-      const response = await fetch('/api/stripe/create-checkout', {
+      const res = await apiRequest('/api/stripe/create-checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           userId: user.id,
           email: user.email,
-        }),
+        }
       });
-
-      if (!response.ok) {
-        throw new Error('決済セッションの作成に失敗しました');
-      }
-
-      const data = await response.json();
-      
+      if (!res.ok) throw new Error('決済セッションの作成に失敗しました');
       // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      window.location.href = res.data.url;
     } catch (err: any) {
       notifyError(err);
     } finally {
