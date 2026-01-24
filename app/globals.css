@@ -1,3 +1,4 @@
+@import "tailwindcss";
 /* 親/子どもテーマ切り替え用クラス */
 .role-parent {
   --role-primary: var(--color-parent-600);
@@ -31,13 +32,13 @@ h2, p {
   color: #b91c1c; /* 濃い赤: text-red-700 */
   font-weight: 600;
 }
-@import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
+@theme
 inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

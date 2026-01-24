@@ -17,19 +17,13 @@ export const TargetPersonCard: React.FC<TargetPersonCardProps> = ({
     {person.photoUrl && (
       <img
         src={person.photoUrl}
-        alt={
-          (person.lastNameKanji || '') + (person.firstNameKanji || '') ||
-          (person.lastNameHiragana || '') + (person.firstNameHiragana || '') ||
-          ''
-        }
+        alt={person.nameKanji || person.nameHiragana || ''}
         className="h-10 w-10 rounded object-cover border border-gray-200"
       />
     )}
     <div>
       <p className="text-sm font-semibold text-gray-900">
-        {(person.lastNameKanji || '') + (person.firstNameKanji || '') ||
-         (person.lastNameHiragana || '') + (person.firstNameHiragana || '') ||
-         ''}
+        {person.nameKanji || person.nameHiragana || ''}
       </p>
       {(person.birthplacePrefecture || person.birthplaceMunicipality) && (
         <p className="text-xs text-gray-900">出身地: {person.birthplacePrefecture || ''}{person.birthplaceMunicipality ? ' ' + person.birthplaceMunicipality : ''}</p>
