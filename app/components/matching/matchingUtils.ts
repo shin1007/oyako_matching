@@ -14,7 +14,7 @@ export function getGenderLabel(gender?: string, role?: string) {
   if (role === 'parent') {
     return mapParent[gender as keyof typeof mapParent] ?? '性別未設定';
   }
-  return mapChild[gender as keyof typeof mapChild] ?? mapParent[gender as keyof mapParent] ?? '性別未設定';
+  return mapChild[gender as keyof typeof mapChild] ?? mapParent[gender as keyof typeof mapParent] ?? '性別未設定';
 }
 
 export function calculateAge(birthDate: string) {
