@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -34,6 +36,7 @@ export default function MessagesPage() {
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [testModeBypassVerification, setTestModeBypassVerification] = useState(false);
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -75,7 +78,7 @@ export default function MessagesPage() {
         setTestModeBypassSubscription(data.bypassSubscription);
       }
     } catch (err) {
-      console.error('[MessagesPage] Failed to check test mode:', err);
+      notifyError(err);
     }
   };
 
@@ -108,7 +111,7 @@ export default function MessagesPage() {
       }
       setMatches(data.matches);
     } catch (err: any) {
-      setError(err.message || 'マッチングの読み込みに失敗しました');
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -125,7 +128,7 @@ export default function MessagesPage() {
 
       await loadMatches();
     } catch (err: any) {
-      alert(err.message || 'マッチングの承認に失敗しました');
+      notifyError(err);
     }
   };
 
@@ -140,7 +143,7 @@ export default function MessagesPage() {
 
       await loadMatches();
     } catch (err: any) {
-      alert(err.message || 'マッチングの拒否に失敗しました');
+      notifyError(err);
     }
   };
 
@@ -184,11 +187,7 @@ export default function MessagesPage() {
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} onClose={() => setError('')} />
 
         {loading ? (
           <div className="flex items-center justify-center py-12">

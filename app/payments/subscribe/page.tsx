@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -9,6 +11,7 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -58,7 +61,7 @@ export default function SubscribePage() {
         return;
       }
     } catch (err: any) {
-      console.error(err);
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -93,7 +96,7 @@ export default function SubscribePage() {
       // Redirect to Stripe Checkout
       window.location.href = data.url;
     } catch (err: any) {
-      setError(err.message || 'サブスクリプションの開始に失敗しました');
+      notifyError(err);
     } finally {
       setProcessing(false);
     }
@@ -141,11 +144,7 @@ export default function SubscribePage() {
           </p>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-center text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} onClose={() => setError('')} className="text-center" />
 
         <div className="rounded-2xl border-2 border-role-border bg-white p-8 shadow-xl">
           <div className="mb-6 text-center">

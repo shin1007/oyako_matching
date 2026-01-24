@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -54,6 +56,7 @@ export default function MessageDetailPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
@@ -152,8 +155,7 @@ export default function MessageDetailPage() {
       // 未読メッセージを既読にする
       await markMessagesAsRead();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'マッチ情報の取得に失敗しました';
-      setError(errorMessage);
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -196,9 +198,7 @@ export default function MessageDetailPage() {
       setMessages((prev) => [...sortedOlderMessages, ...prev]);
       setPagination(data.pagination);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : '古いメッセージの取得に失敗しました';
-      console.error('Failed to load more messages:', err);
-      alert(errorMessage);
+      notifyError(err);
     } finally {
       setLoadingMore(false);
     }
@@ -232,8 +232,7 @@ export default function MessageDetailPage() {
       setNewMessage('');
       scrollToBottom();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'メッセージの送信に失敗しました';
-      alert(errorMessage);
+      notifyError(err);
     } finally {
       setSending(false);
     }
@@ -254,9 +253,7 @@ export default function MessageDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <main className="container mx-auto px-4 py-8">
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">
-            {error}
-          </div>
+          <ErrorAlert message={error} onClose={() => setError('')} />
           <Link
             href="/messages"
             className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"

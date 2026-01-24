@@ -2,6 +2,8 @@
 import { ParentApprovalModal } from '@/app/components/matching/ParentApprovalModal';
 
 import { useState, useEffect } from 'react';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -200,6 +202,7 @@ export default function MatchingPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notifyError = useErrorNotification(setError, { log: true });
   const [creating, setCreating] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -235,7 +238,7 @@ export default function MatchingPage() {
         setTestModeBypassSubscription(data.bypassSubscription);
       }
     } catch (err) {
-      console.error('[MatchingPage] Failed to check test mode:', err);
+      notifyError(err);
     }
   };
 
@@ -255,7 +258,7 @@ export default function MatchingPage() {
       setProfile(data.profile || null);
       setSearchingTargets(data.myTargetPeople || []);
     } catch (err: any) {
-      setError(err.message);
+      notifyError(err);
     } finally {
       setLoading(false);
     }
@@ -357,7 +360,7 @@ export default function MatchingPage() {
       // Success - redirect to messages
       router.push('/messages');
     } catch (err: any) {
-      alert(err.message);
+      notifyError(err);
     } finally {
       setCreating(null);
     }
@@ -381,9 +384,7 @@ export default function MatchingPage() {
             </Link>
           </div>
         </div>
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>
-        )}
+        <ErrorAlert message={error} onClose={() => setError('')} />
         {loading ? (
           renderFindingMatch()
         ) : matches.length === 0 ? (
