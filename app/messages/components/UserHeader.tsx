@@ -23,7 +23,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
       </div>
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${match.other_user_role === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
+          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${match.userRole === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
             登録済み{match.other_user_role === 'parent' ? '親' : '子'}ユーザー
           </span>
           {match.status === 'blocked' && (

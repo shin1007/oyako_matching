@@ -269,7 +269,7 @@ export default function MessagesPage() {
                     </div>
                   </div>                  
                   <div className="flex-shrink-0">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${match.other_user_role === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
                       登録済み{match.other_user_role === 'parent' ? '親' : '子'}ユーザー
                     </span>
                     <StatusBadge status={match.status} />
