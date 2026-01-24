@@ -1,4 +1,4 @@
--- Migration: Add support for multiple searching children
+-- Migration: Add support for multiple target people
 -- Created: 2026-01-16
 
 -- Create target_people table
@@ -64,7 +64,7 @@ BEGIN
        OR target_person_name_hiragana IS NOT NULL 
        OR target_person_name_kanji IS NOT NULL;
     
-    RAISE NOTICE 'Successfully migrated existing searching child data';
+    RAISE NOTICE 'Successfully migrated existing target person data';
   ELSE
     RAISE NOTICE 'Old columns not found in profiles table, skipping data migration';
   END IF;
@@ -75,7 +75,7 @@ CREATE OR REPLACE FUNCTION check_target_people_limit()
 RETURNS TRIGGER AS $$
 BEGIN
   IF (SELECT COUNT(*) FROM public.target_people WHERE user_id = NEW.user_id) >= 5 THEN
-    RAISE EXCEPTION 'Cannot add more than 5 searching children per user';
+    RAISE EXCEPTION 'Cannot add more than 5 target people per user';
   END IF;
   RETURN NEW;
 END;

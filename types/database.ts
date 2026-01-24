@@ -620,7 +620,7 @@ export type Database = {
         }
         Relationships: []
       }
-      target_people_photos: {
+      target-people-photos: {
         Row: {
           age_at_capture: number | null
           captured_at: string | null

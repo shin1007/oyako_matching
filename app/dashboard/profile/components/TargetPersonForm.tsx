@@ -203,6 +203,7 @@ export const TargetPersonForm: React.FC<TargetPersonFormProps> = ({
               photos={child.photos || []}
               setPhotos={photos => updateSearchingChildPhotos(index, photos)}
               loading={loading}
+              userRole={userRole === 'parent' ? 'parent' : 'child'}
             />
           </div>
         </div>

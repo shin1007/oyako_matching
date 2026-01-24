@@ -12,7 +12,7 @@
 
 ### データベーススキーマ
 
-#### `target_people_photos` テーブル
+#### `target-people-photos` テーブル
 
 探している子ども・親の写真情報を保存するテーブルです。
 
@@ -35,7 +35,7 @@
 
 #### Supabase Storage
 
-**バケット名:** `searching-children-photos`
+**バケット名:** `target-people-photos`
 
 **設定:**
 - 公開バケット（画像URLで直接アクセス可能）
@@ -142,10 +142,10 @@ supabase migration up
 
 ```sql
 -- テーブルの削除
-DROP TABLE IF EXISTS public.target_people_photos CASCADE;
+DROP TABLE IF EXISTS public.target-people-photos CASCADE;
 
 -- ストレージバケットの削除
-DELETE FROM storage.buckets WHERE id = 'searching-children-photos';
+DELETE FROM storage.buckets WHERE id = 'target-people-photos';
 
 -- 関数とトリガーの削除
 DROP FUNCTION IF EXISTS check_target_people_photos_limit() CASCADE;
@@ -206,7 +206,7 @@ DROP FUNCTION IF EXISTS update_target_people_photos_updated_at() CASCADE;
 
 ### データベースエラー
 
-**エラーメッセージ:** `Could not find the table 'public.target_people_photos'`
+**エラーメッセージ:** `Could not find the table 'public.target-people-photos'`
 
 **解決方法:**
 マイグレーションが実行されていない可能性があります。以下のコマンドでマイグレーションを実行してください:

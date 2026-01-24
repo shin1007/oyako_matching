@@ -86,7 +86,7 @@ supabase db push
 - データベースから削除された写真のファイルはStorageに残ります
 - 必要に応じて、以下のクエリで削除対象のURLを確認できます:
   ```sql
-  SELECT photo_url FROM public.target_people_photos 
+  SELECT photo_url FROM public.target-people-photos 
   WHERE display_order > 0 
   ORDER BY target_person_id, display_order;
   ```
@@ -118,8 +118,8 @@ supabase db push
 CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (SELECT COUNT(*) FROM public.target_people_photos WHERE target_person_id = NEW.target_person_id) >= 5 THEN
-    RAISE EXCEPTION 'Cannot add more than 5 photos per searching child';
+  IF (SELECT COUNT(*) FROM public.target-people-photos WHERE target_person_id = NEW.target_person_id) >= 5 THEN
+    RAISE EXCEPTION 'Cannot add more than 5 photos per target person';
   END IF;
   RETURN NEW;
 END;

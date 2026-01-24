@@ -85,7 +85,7 @@ export default function SearchingChildPhotoUpload({
         const fileName = `${userId}/searching-child-${Date.now()}-${i}.${fileExt}`;
 
         const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('searching-children-photos')
+          .from('target-people-photos')
           .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false,
@@ -95,7 +95,7 @@ export default function SearchingChildPhotoUpload({
 
         // 公開URLを取得
         const { data: { publicUrl } } = supabase.storage
-          .from('searching-children-photos')
+          .from('target-people-photos')
           .getPublicUrl(fileName);
 
         // 新しい写真を配列に追加
@@ -131,17 +131,17 @@ export default function SearchingChildPhotoUpload({
     try {
       // Storageから削除
       if (photo.photoUrl) {
-        const urlParts = photo.photoUrl.split('/searching-children-photos/');
+        const urlParts = photo.photoUrl.split('/target-people-photos/');
         if (urlParts.length > 1) {
           const path = urlParts[1];
-          await supabase.storage.from('searching-children-photos').remove([path]);
+          await supabase.storage.from('target-people-photos').remove([path]);
         }
       }
 
       // データベースから削除（保存済みの場合）
       if (photo.id && searchingChildId) {
         await supabase
-          .from('target_people_photos')
+          .from('target-people-photos')
           .delete()
           .eq('id', photo.id);
       }

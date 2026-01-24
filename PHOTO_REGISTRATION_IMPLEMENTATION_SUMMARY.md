@@ -8,12 +8,12 @@
 
 ### 1. データベース
 
-**新規テーブル: `target_people_photos`**
+**新規テーブル: `target-people-photos`**
 - 写真URL、撮影日時、年齢情報を保存
 - 1つの子ども・親につき1枚のみ（2026-01-19にサーバー負荷軽減のため5枚から変更）
 - RLSポリシーで保護
 
-**新規ストレージバケット: `searching-children-photos`**
+**新規ストレージバケット: `target-people-photos`**
 - 公開バケット（画像表示が簡単）
 - アップロード・更新・削除はRLSで保護
 - 最大5MB、JPEG/PNG/WebP対応

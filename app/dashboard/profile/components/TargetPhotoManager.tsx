@@ -37,10 +37,18 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
       return;
     }
     setUploading(true);
+    console.log('[TargetPhotoManager] アップロード開始', { files, photos });
     try {
+      // 認証ユーザーID取得
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('ユーザー認証情報の取得に失敗しました。再ログインしてください。');
+      }
+      const userId = user.id;
       const newPhotos: Photo[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        console.log(`[TargetPhotoManager] ファイル検証:`, file);
         if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
           throw new Error('JPEG、PNG、またはWebP形式の画像を選択してください。');
         }
@@ -55,17 +63,25 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
         };
         const compressedFile = await imageCompression(file, options);
         const fileExt = compressedFile.name.split('.').pop() || 'jpg';
-        const fileName = `profile-upload-${Date.now()}-${i}.${fileExt}`;
+        // ファイル名の先頭にuserIdを付与
+        const fileName = `${userId}/profile-upload-${Date.now()}-${i}.${fileExt}`;
+        console.log('[TargetPhotoManager] Storageアップロード開始', fileName);
+        // Storageはハイフン区切り
         const { error: uploadError } = await supabase.storage
-          .from('searching-children-photos')
+          .from('target-people-photos')
           .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false,
           });
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('[TargetPhotoManager] Storageアップロード失敗', uploadError);
+          throw uploadError;
+        }
+        // Storageの公開URL取得もハイフン区切り
         const { data: { publicUrl } } = supabase.storage
-          .from('searching-children-photos')
+          .from('target-people-photos')
           .getPublicUrl(fileName);
+        console.log('[TargetPhotoManager] Storageアップロード成功', publicUrl);
         newPhotos.push({
           photoUrl: publicUrl,
           capturedAt: '',
@@ -76,11 +92,14 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
       }
       setPhotos([...photos, ...newPhotos]);
       setErrorMessage('');
+      console.log('[TargetPhotoManager] アップロード完了', newPhotos);
     } catch (error: any) {
       setErrorMessage(error.message || 'アップロードに失敗しました。もう一度お試しください。');
+      console.error('[TargetPhotoManager] アップロードエラー', error);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      console.log('[TargetPhotoManager] アップロード処理終了');
     }
   };
 
@@ -88,10 +107,11 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
     const photo = photos[index];
     try {
       if (photo.photoUrl) {
-        const urlParts = photo.photoUrl.split('/searching-children-photos/');
+        // Storageはハイフン区切り
+        const urlParts = photo.photoUrl.split('/target-people-photos/');
         if (urlParts.length > 1) {
           const path = urlParts[1];
-          await supabase.storage.from('searching-children-photos').remove([path]);
+          await supabase.storage.from('target-people-photos').remove([path]);
         }
       }
       const newPhotos = photos.filter((_, i) => i !== index);
@@ -125,11 +145,18 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
                 className="hidden"
                 disabled={uploading}
               />
-              <span className={`inline-block rounded-lg px-3 py-1.5 text-xs text-white transition-colors ${
-                uploading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'
-              }`}>
+              <span
+                className={`inline-block rounded-lg px-4 py-2 text-white text-sm font-bold transition-colors ${
+                  uploading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : userRole === 'child'
+                      ? 'bg-child-600 hover:bg-child-700'
+                      : userRole === 'parent'
+                        ? 'bg-parent-600 hover:bg-parent-700'
+                        : 'bg-gray-400'
+                }`}
+                
+              >
                 {uploading ? 'アップロード中...' : '+ 写真を追加'}
               </span>
             </label>

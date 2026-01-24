@@ -114,7 +114,7 @@ async function getTargetPeopleInfo(
   const peopleWithPhotos = await Promise.all(
     targetPeople.map(async (person: any) => {
       const { data: photosData } = await admin
-        .from('target_people_photos')
+        .from('target-people-photos')
         .select('photo_url')
         .eq('target_person_id', person.id)
         .order('display_order', { ascending: true })

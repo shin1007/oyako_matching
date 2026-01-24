@@ -51,7 +51,7 @@ CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
   IF (SELECT COUNT(*) FROM public.target_people_photos WHERE target_person_id = NEW.target_person_id) >= 1 THEN
-    RAISE EXCEPTION 'Cannot add more than 1 photo per searching child';
+    RAISE EXCEPTION 'Cannot add more than 1 photo per target person';
   END IF;
   RETURN NEW;
 END;

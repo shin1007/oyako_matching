@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
     if (searchingChildren && searchingChildren.length > 0) {
       const childIds = searchingChildren.map((c: any) => c.id);
       const { data: photosData } = await admin
-        .from('target_people_photos')
+        .from('target-people-photos')
         .select('target_person_id, photo_url')
         .in('target_person_id', childIds)
         .order('display_order', { ascending: true });

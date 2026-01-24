@@ -139,7 +139,7 @@ export default function ProfilePage() {
         hasSavedRef.current = true;
       }
 
-      // Load searching children
+      // Load target people
       const { data: childrenData, error: childrenError } = await supabase
         .from('target_people')
         .select('*')
@@ -289,13 +289,13 @@ export default function ProfilePage() {
 
       if (profileError) throw profileError;
 
-      // Delete all existing searching children
+      // Delete all existing target people
       await supabase
         .from('target_people')
         .delete()
         .eq('user_id', user.id);
 
-      // Insert new searching children (only non-empty ones)
+      // Insert new target people (only non-empty ones)
       const childrenToInsert = searchingChildren
         .filter(child => 
           child.lastNameKanji || child.firstNameKanji ||
@@ -598,39 +598,39 @@ export default function ProfilePage() {
               <div className="border-t border-gray-200 pt-6">
                 <TargetPersonInfoHeader userRole={userRole} />
 
-
-                {/* 写真管理（1人目のみ） */}
-                <TargetPhotoManager
-                  photos={searchingChildren[0]?.photos || []}
-                  setPhotos={photos => updateSearchingChildPhotos(0, photos)}
+                <TargetPersonForm
+                  searchingChildren={searchingChildren}
+                  updateSearchingChild={updateSearchingChild}
+                  updateSearchingChildPhotos={updateSearchingChildPhotos}
+                  removeSearchingChild={removeSearchingChild}
+                  addSearchingChild={addSearchingChild}
+                  userRole={userRole}
                   loading={loading}
-                  userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
                 />
+
+
               </div>
 
               <div className="flex gap-3">
                 <button
                   type="submit"
                   disabled={saving}
-                  className={`flex-1 rounded-lg ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} px-4 py-3 text-white disabled:opacity-50`}
+                  className={`flex-1 rounded-lg px-4 py-3 text-white disabled:opacity-50 ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
                 >
                   {saving ? '保存中...' : 'プロフィールを保存'}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    // 選択した画像をクリア（保存しない場合は破棄）
                     setSelectedImageFile(null);
-                    // 一時アップロードを削除
                     deleteTempImage();
-                    // プロフィール画像を元の状態に戻す
                     loadProfile();
                     setError('');
                     setSuccess('');
                     hasSavedRef.current = true;
                   }}
                   disabled={saving}
-                  className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  className={`flex-1 rounded-lg px-4 py-3 disabled:opacity-50 ${userRole === 'child' ? 'bg-child-100 text-child-700 hover:bg-child-200' : 'bg-parent-100 text-parent-700 hover:bg-parent-200'}`}
                 >
                   キャンセル
                 </button>

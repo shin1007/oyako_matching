@@ -4,7 +4,7 @@
 -- 撮影日時と年齢情報も保存し、将来的にCloudflare Pagesの機能を利用して
 -- 現在の写真を生成できるようにします。
 
--- ===== target_people_photos テーブルの作成 =====
+-- ===== target-people-photos テーブルの作成 =====
 
 CREATE TABLE IF NOT EXISTS public.target_people_photos (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -55,7 +55,7 @@ CREATE OR REPLACE FUNCTION check_target_people_photos_limit()
 RETURNS TRIGGER AS $$
 BEGIN
   IF (SELECT COUNT(*) FROM public.target_people_photos WHERE target_person_id = NEW.target_person_id) >= 5 THEN
-    RAISE EXCEPTION 'Cannot add more than 5 photos per searching child';
+    RAISE EXCEPTION 'Cannot add more than 5 photos per target person';
   END IF;
   RETURN NEW;
 END;
@@ -72,8 +72,8 @@ EXECUTE FUNCTION check_target_people_photos_limit();
 -- 探している子ども・親の写真用バケットを作成
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
-  'searching-children-photos',
-  'searching-children-photos',
+  'target-people-photos',
+  'target-people-photos',
   true, -- 公開バケット（URLで直接アクセス可能、RLSで制御）
   5242880, -- 5MB (5 * 1024 * 1024 bytes)
   ARRAY['image/jpeg', 'image/png', 'image/webp']
@@ -90,31 +90,31 @@ ON CONFLICT (id) DO UPDATE SET
 ALTER TABLE public.target_people_photos ENABLE ROW LEVEL SECURITY;
 
 -- ポリシー: 認証済みユーザーは全ての写真を閲覧可能（マッチング機能で必要）
-DROP POLICY IF EXISTS "Users can view their own searching children photos" ON public.target_people_photos;
-DROP POLICY IF EXISTS "Authenticated users can view all searching children photos" ON public.target_people_photos;
-CREATE POLICY "Authenticated users can view all searching children photos"
+DROP POLICY IF EXISTS "Users can view their own target people photos" ON public.target_people_photos;
+DROP POLICY IF EXISTS "Authenticated users can view all target people photos" ON public.target_people_photos;
+CREATE POLICY "Authenticated users can view all target people photos"
 ON public.target_people_photos FOR SELECT
 TO authenticated
 USING (true);
 
 -- ポリシー: 自分の写真のみ挿入可能
-DROP POLICY IF EXISTS "Users can insert their own searching children photos" ON public.target_people_photos;
-CREATE POLICY "Users can insert their own searching children photos"
+DROP POLICY IF EXISTS "Users can insert their own target people photos" ON public.target_people_photos;
+CREATE POLICY "Users can insert their own target people photos"
 ON public.target_people_photos FOR INSERT
 TO authenticated
 WITH CHECK (user_id = auth.uid());
 
 -- ポリシー: 自分の写真のみ更新可能
-DROP POLICY IF EXISTS "Users can update their own searching children photos" ON public.target_people_photos;
-CREATE POLICY "Users can update their own searching children photos"
+DROP POLICY IF EXISTS "Users can update their own target people photos" ON public.target_people_photos;
+CREATE POLICY "Users can update their own target people photos"
 ON public.target_people_photos FOR UPDATE
 TO authenticated
 USING (user_id = auth.uid())
 WITH CHECK (user_id = auth.uid());
 
 -- ポリシー: 自分の写真のみ削除可能
-DROP POLICY IF EXISTS "Users can delete their own searching children photos" ON public.target_people_photos;
-CREATE POLICY "Users can delete their own searching children photos"
+DROP POLICY IF EXISTS "Users can delete their own target people photos" ON public.target_people_photos;
+CREATE POLICY "Users can delete their own target people photos"
 ON public.target_people_photos FOR DELETE
 TO authenticated
 USING (user_id = auth.uid());
@@ -122,42 +122,42 @@ USING (user_id = auth.uid());
 -- ===== Storage RLSポリシー =====
 
 -- ポリシー: 自分の写真のみアップロード可能
-DROP POLICY IF EXISTS "Users can upload their own searching children photos" ON storage.objects;
-CREATE POLICY "Users can upload their own searching children photos"
+DROP POLICY IF EXISTS "Users can upload their own target people photos" ON storage.objects;
+CREATE POLICY "Users can upload their own target people photos"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
-  bucket_id = 'searching-children-photos' AND
+  bucket_id = 'target-people-photos' AND
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
 -- ポリシー: 自分の写真のみ更新可能
-DROP POLICY IF EXISTS "Users can update their own searching children photos" ON storage.objects;
-CREATE POLICY "Users can update their own searching children photos"
+DROP POLICY IF EXISTS "Users can update their own target people photos" ON storage.objects;
+CREATE POLICY "Users can update their own target people photos"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (
-  bucket_id = 'searching-children-photos' AND
+  bucket_id = 'target-people-photos' AND
   (storage.foldername(name))[1] = auth.uid()::text
 )
 WITH CHECK (
-  bucket_id = 'searching-children-photos' AND
+  bucket_id = 'target-people-photos' AND
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
 -- ポリシー: 自分の写真のみ削除可能
-DROP POLICY IF EXISTS "Users can delete their own searching children photos" ON storage.objects;
-CREATE POLICY "Users can delete their own searching children photos"
+DROP POLICY IF EXISTS "Users can delete their own target people photos" ON storage.objects;
+CREATE POLICY "Users can delete their own target people photos"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (
-  bucket_id = 'searching-children-photos' AND
+  bucket_id = 'target-people-photos' AND
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
 -- ポリシー: すべてのユーザーが写真を閲覧可能（公開バケット・マッチング機能で必要）
-DROP POLICY IF EXISTS "Anyone can view searching children photos" ON storage.objects;
-CREATE POLICY "Anyone can view searching children photos"
+DROP POLICY IF EXISTS "Anyone can view target people photos" ON storage.objects;
+CREATE POLICY "Anyone can view target people photos"
 ON storage.objects FOR SELECT
 TO public
-USING (bucket_id = 'searching-children-photos');
+USING (bucket_id = 'target-people-photos');

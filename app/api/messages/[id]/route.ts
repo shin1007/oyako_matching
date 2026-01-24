@@ -100,7 +100,7 @@ export async function GET(
       searchingChildrenWithPhotos = await Promise.all(
         searchingChildren.map(async (child: any) => {
           const { data: photos } = await admin
-            .from('target_people_photos')
+            .from('target-people-photos')
             .select('photo_url')
             .eq('target_person_id', child.id)
             .order('display_order', { ascending: true })
