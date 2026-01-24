@@ -60,8 +60,8 @@ function HomeContent() {
           </p>
 
           <div className="grid gap-8 md:grid-cols-2">
-            {/* 親向けカード */}
-            <div className="flex flex-col h-full rounded-2xl border-2 border-role-border bg-role-bg p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+            {/* 親向けカード（緑） */}
+            <div className="role-parent flex flex-col h-full rounded-2xl border-2 border-role-border bg-role-bg p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
               <div>
                 <div className="mb-4 text-4xl">👨‍👩‍👧‍👦</div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">離別した親の方へ</h3>
@@ -90,8 +90,8 @@ function HomeContent() {
               </div>
             </div>
 
-            {/* 子ども向けカード */}
-            <div className="flex flex-col h-full rounded-2xl border-2 border-role-border bg-role-bg p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+            {/* 子ども向けカード（オレンジ） */}
+            <div className="role-child flex flex-col h-full rounded-2xl border-2 border-role-border bg-role-bg p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
               <div>
                 <div className="mb-4 text-4xl">👦👧</div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">親を探す子どもの方へ</h3>

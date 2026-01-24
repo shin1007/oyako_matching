@@ -1,5 +1,6 @@
-import { apiRequest } from '@/lib/api/request';
+
 'use client';
+import { apiRequest } from '@/lib/api/request';
 
 import { useState, useEffect } from 'react';
 import { isValidEmail, isStrongPassword, isPasswordMatch } from '@/lib/validation/validators';
