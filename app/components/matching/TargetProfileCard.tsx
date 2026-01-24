@@ -7,6 +7,7 @@ interface TargetProfileCardProps {
 }
 
 export function TargetProfileCard({ target, userRole }: TargetProfileCardProps) {
+  console.log('TargetProfileCard photo_url:', target.photo_url);
   return (
     <UserProfileCard
       profile={{

@@ -16,6 +16,7 @@ export type ProfileBase = {
   profileImageUrl?: string | null;
   bio?: string | null;
   forumDisplayName?: string;
+  photoUrl?: string | null;
 };
 
 export type TargetPerson = {
@@ -64,6 +65,5 @@ export function toTargetPerson(row: Database['public']['Tables']['target_people'
     birthplacePrefecture: row.birthplace_prefecture || undefined,
     birthplaceMunicipality: row.birthplace_municipality || undefined,
     gender: row.gender || undefined,
-    photoUrl: undefined,
   };
 }
