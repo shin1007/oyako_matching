@@ -18,8 +18,14 @@ export function ScoreExplanation({ userRole }: ScoreExplanationProps) {
         ?
       </button>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-4 rounded-t-xl flex items-center justify-between border-b border-blue-600">
               <h3 className="text-xl font-bold">マッチングスコアの計算方法</h3>
               <button onClick={() => setIsOpen(false)} className="text-white hover:text-blue-200 text-2xl font-bold leading-none">×</button>
