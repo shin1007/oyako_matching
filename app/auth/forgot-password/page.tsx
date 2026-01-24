@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isValidEmail } from '@/lib/validation/validators';
 import Link from 'next/link';
 
 export default function ForgotPasswordPage() {
@@ -10,10 +11,7 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
 
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

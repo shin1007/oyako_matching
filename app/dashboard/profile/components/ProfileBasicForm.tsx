@@ -27,6 +27,8 @@ interface ProfileBasicFormProps {
 }
 
 import { PREFECTURES } from '@/lib/constants/prefectures';
+import { isHiragana } from '@/lib/validation/hiragana';
+import { katakanaToHiragana } from '@/lib/validation/kana';
 export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
   lastNameKanji, setLastNameKanji,
   lastNameHiragana, setLastNameHiragana,
@@ -39,8 +41,31 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
   parentGender, setParentGender,
   forumDisplayName, setForumDisplayName,
   userRole, loading
-}) => (
-  <>
+}) => {
+  // ひらがなバリデーション用エラー
+  const [hiraganaError, setHiraganaError] = React.useState<{ last: string; first: string }>({ last: '', first: '' });
+
+  const handleLastNameHiraganaChange = (v: string) => {
+    // カタカナを自動でひらがなに変換
+    const hira = katakanaToHiragana(v);
+    setLastNameHiragana(hira);
+    if (hira && !isHiragana(hira)) {
+      setHiraganaError(e => ({ ...e, last: 'ひらがなのみで入力してください' }));
+    } else {
+      setHiraganaError(e => ({ ...e, last: '' }));
+    }
+  };
+  const handleFirstNameHiraganaChange = (v: string) => {
+    const hira = katakanaToHiragana(v);
+    setFirstNameHiragana(hira);
+    if (hira && !isHiragana(hira)) {
+      setHiraganaError(e => ({ ...e, first: 'ひらがなのみで入力してください' }));
+    } else {
+      setHiraganaError(e => ({ ...e, first: '' }));
+    }
+  };
+  return (
+    <>
     <div className="border-t border-gray-200 pt-4 mt-4">
       <h3 className="text-md font-medium text-gray-900 mb-3">詳細な氏名情報</h3>
       <div className="space-y-4">
@@ -84,10 +109,13 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
               id="lastNameHiragana"
               type="text"
               value={lastNameHiragana}
-              onChange={e => setLastNameHiragana(e.target.value)}
+              onChange={e => handleLastNameHiraganaChange(e.target.value)}
               className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
               placeholder="例: やまだ"
             />
+            {hiraganaError.last && (
+              <p className="mt-1 text-xs text-red-600">{hiraganaError.last}</p>
+            )}
           </div>
           <div>
             <label htmlFor="firstNameHiragana" className="block text-sm font-medium text-gray-700">
@@ -98,10 +126,13 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
               id="firstNameHiragana"
               type="text"
               value={firstNameHiragana}
-              onChange={e => setFirstNameHiragana(e.target.value)}
+              onChange={e => handleFirstNameHiraganaChange(e.target.value)}
               className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1 text-gray-900`}
               placeholder="例: たろう"
             />
+            {hiraganaError.first && (
+              <p className="mt-1 text-xs text-red-600">{hiraganaError.first}</p>
+            )}
           </div>
         </div>
         <p className="mt-1 text-xs text-gray-500">
@@ -224,5 +255,6 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
         placeholder="簡単な自己紹介を記入してください"
       />
     </div>
-  </>
-);
+    </>
+  );
+};

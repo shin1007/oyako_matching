@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isStrongPassword, isPasswordMatch } from '@/lib/validation/validators';
 import { createClient } from '@/lib/supabase/client';
 
 export default function ChangePasswordForm() {
@@ -51,17 +52,13 @@ export default function ChangePasswordForm() {
       return;
     }
 
-    const hasUpper = /[A-Z]/.test(newPassword);
-    const hasLower = /[a-z]/.test(newPassword);
-    const hasNumber = /[0-9]/.test(newPassword);
-
-    if (!(newPassword.length >= 8 && hasUpper && hasLower && hasNumber)) {
+    if (!isStrongPassword(newPassword)) {
       setError('8文字以上で、大文字・小文字・数字をすべて含めてください');
       setLoading(false);
       return;
     }
 
-    if (newPassword !== confirmPassword) {
+    if (!isPasswordMatch(newPassword, confirmPassword)) {
       setError('新しいパスワードが一致しません');
       setLoading(false);
       return;

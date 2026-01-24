@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isValidEmail, isStrongPassword, isPasswordMatch } from '@/lib/validation/validators';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -20,11 +21,7 @@ export default function RegisterForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Email validation function
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   useEffect(() => {
     const roleParam = searchParams.get('role');
@@ -51,17 +48,13 @@ export default function RegisterForm() {
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (!isPasswordMatch(password, confirmPassword)) {
       setError('パスワードが一致しません');
       setLoading(false);
       return;
     }
 
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-
-    if (!(password.length >= 8 && hasUpper && hasLower && hasNumber)) {
+    if (!isStrongPassword(password)) {
       setError('8文字以上で、大文字・小文字・数字をすべて含めてください');
       setLoading(false);
       return;

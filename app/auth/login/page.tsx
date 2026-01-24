@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isValidEmail } from '@/lib/validation/validators';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -61,11 +62,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Email validation function
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

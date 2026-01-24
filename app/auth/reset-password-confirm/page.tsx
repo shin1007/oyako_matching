@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
+import { isStrongPassword, isPasswordMatch } from '@/lib/validation/validators';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -22,12 +23,7 @@ function ResetPasswordConfirmContent() {
     }
   }, [searchParams]);
 
-  const validatePassword = (pwd: string): boolean => {
-    const hasUpper = /[A-Z]/.test(pwd);
-    const hasLower = /[a-z]/.test(pwd);
-    const hasNumber = /[0-9]/.test(pwd);
-    return pwd.length >= 8 && hasUpper && hasLower && hasNumber;
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +37,13 @@ function ResetPasswordConfirmContent() {
       return;
     }
 
-    if (!validatePassword(password)) {
+    if (!isStrongPassword(password)) {
       setError('8文字以上で、大文字・小文字・数字をすべて含めてください');
       setLoading(false);
       return;
     }
 
-    if (password !== passwordConfirm) {
+    if (!isPasswordMatch(password, passwordConfirm)) {
       setError('パスワードが一致しません');
       setLoading(false);
       return;

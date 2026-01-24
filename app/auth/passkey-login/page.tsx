@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isValidEmail } from '@/lib/validation/validators';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -19,11 +20,7 @@ export default function PasskeyLoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Email validation function
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+
 
   // Check browser support on mount
   useEffect(() => {
