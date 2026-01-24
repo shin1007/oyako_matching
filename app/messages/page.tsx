@@ -1,4 +1,7 @@
+
 'use client';
+
+import { getGenderLabel } from '../components/matching/matchingUtils';
 
 import { useState, useEffect } from 'react';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
@@ -250,7 +253,7 @@ export default function MessagesPage() {
                           </div>
                         )}
                         {match.other_user_gender && (
-                          <div>性別: {match.other_user_gender}</div>
+                          <div>性別: {getGenderLabel(match.other_user_gender, match.other_user_role)}</div>
                         )}
                       </div>
                       <p className="text-sm text-gray-500">
