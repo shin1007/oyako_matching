@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { TargetPeopleList } from '@/components/ui/TargetPeopleList';
 
 interface Match {
   id: string;
@@ -266,8 +267,12 @@ export default function MessagesPage() {
                             })
                           : new Date(match.created_at).toLocaleDateString('ja-JP')}
                       </p>
+                      {/* ターゲット情報表示を追加 */}
+                      {Array.isArray(match.target_people) && match.target_people.length > 0 && (
+                        <TargetPeopleList targetPeople={match.target_people} role={match.other_user_role} />
+                      )}
                     </div>
-                  </div>                  
+                  </div>
                   <div className="flex-shrink-0">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
                       登録済み{match.other_user_role === 'parent' ? '親' : '子'}ユーザー

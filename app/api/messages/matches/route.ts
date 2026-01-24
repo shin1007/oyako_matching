@@ -106,20 +106,22 @@ export async function GET(request: NextRequest) {
     // 探している子どもの写真を一括取得
     const { data: searchingChildren } = await admin
       .from('target_people')
-      .select('id, user_id')
+      .select('id, user_id, last_name_kanji, first_name_kanji, birthplace_prefecture, birthplace_municipality')
       .in('user_id', otherUserIds)
       .order('display_order', { ascending: true });
 
     let photosMap = new Map<string, string[]>();
+    let photos: any[] = [];
     if (searchingChildren && searchingChildren.length > 0) {
       const childIds = searchingChildren.map((c: any) => c.id);
-      const { data: photos } = await admin
+      const { data: photosData } = await admin
         .from('target_people_photos')
         .select('target_person_id, photo_url')
         .in('target_person_id', childIds)
         .order('display_order', { ascending: true });
+      photos = photosData || [];
 
-      if (photos) {
+      if (photos.length > 0) {
         // ユーザーIDごとに最初の子どもの最初の写真を保持
         // 最初の子どものIDをマッピング（reduceで効率的に処理）
         const userChildMap = new Map<string, string>();
@@ -185,6 +187,28 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // 子ども情報を取得
+      let targetPeople = [];
+      if (searchingChildren && searchingChildren.length > 0) {
+        // そのユーザーの子ども情報をすべて取得
+        targetPeople = searchingChildren
+          .filter((child: any) => child.user_id === otherUserId)
+          .map((child: any) => {
+            // その子の写真
+            const childPhotos = photos
+              ? photos.filter((p: any) => p.target_person_id === child.id)
+              : [];
+            return {
+              id: child.id,
+              last_name_kanji: child.last_name_kanji,
+              first_name_kanji: child.first_name_kanji,
+              birthplace_prefecture: child.birthplace_prefecture,
+              birthplace_municipality: child.birthplace_municipality,
+              photo_url: childPhotos.length > 0 ? childPhotos[0].photo_url : null,
+            };
+          });
+      }
+
       const searchingChildPhotos = photosMap.get(otherUserId) || [];
 
       return {
@@ -198,6 +222,7 @@ export async function GET(request: NextRequest) {
         other_user_name: otherUserName,
         other_user_role: otherUserRole,
         other_user_image: otherUserImage,
+        target_people: targetPeople,
         target_person_photos: searchingChildPhotos,
         is_requester,
         unread_count,

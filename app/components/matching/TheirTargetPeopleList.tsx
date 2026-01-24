@@ -1,3 +1,5 @@
+import { TargetPersonCard } from '@/components/ui/TargetPersonCard';
+
 interface TheirTargetPeopleListProps {
   theirTargetPeople: Array<{
     id: string;
@@ -19,26 +21,17 @@ export function TheirTargetPeopleList({ theirTargetPeople, role }: TheirTargetPe
       </p>
       <div className="space-y-2">
         {theirTargetPeople.map((searchingPerson) => (
-          <div key={searchingPerson.id} className="flex gap-3 bg-blue-50 rounded p-2">
-            {searchingPerson.photo_url && (
-              <img
-                src={searchingPerson.photo_url}
-                alt={`${searchingPerson.last_name_kanji || ''}${searchingPerson.first_name_kanji || ''}`}
-                className="h-16 w-16 rounded object-cover border border-gray-200 flex-shrink-0"
-              />
-            )}
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900 text-sm">
-                {searchingPerson.last_name_kanji || ''}{searchingPerson.first_name_kanji || ''}
-              </p>
-              {(searchingPerson.birthplace_prefecture || searchingPerson.birthplace_municipality) && (
-                <p className="text-xs text-gray-900">
-                  出身地: {searchingPerson.birthplace_prefecture || ''}
-                  {searchingPerson.birthplace_municipality ? ` ${searchingPerson.birthplace_municipality}` : ''}
-                </p>
-              )}
-            </div>
-          </div>
+          <TargetPersonCard
+            key={searchingPerson.id}
+            photoUrl={searchingPerson.photo_url}
+            name={`${searchingPerson.last_name_kanji || ''}${searchingPerson.first_name_kanji || ''}`}
+            birthplace={
+              searchingPerson.birthplace_prefecture || searchingPerson.birthplace_municipality
+                ? `${searchingPerson.birthplace_prefecture || ''}${searchingPerson.birthplace_municipality ? ' ' + searchingPerson.birthplace_municipality : ''}`
+                : undefined
+            }
+            className="h-16"
+          />
         ))}
       </div>
     </div>
