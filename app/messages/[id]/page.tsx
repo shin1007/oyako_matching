@@ -286,43 +286,8 @@ export default function MessageDetailPage() {
     );
   }
 
-  // ブロック状態の場合のUI（警告＋メッセージ一覧のみ表示、入力欄は非表示）
-  if (match.status === 'blocked') {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <Link
-              href="/messages"
-                className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
-              >
-              メッセージ一覧に戻る
-              </Link>
-            </div>
-          </div>
-          <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
-            <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
-            <div className="text-sm">このユーザーとのメッセージ送信はできません。必要に応じて設定画面からブロック解除してください。</div>
-          </div>
-          {/* メッセージ一覧のみ表示 */}
-          <div className="bg-white rounded-lg shadow mb-4" style={{ minHeight: '300px' }}>
-            <div className="h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <MessageList
-                  messages={messages}
-                  currentUserId={currentUserId}
-                  userRole={userRole}
-                  linkifyText={linkifyText}
-                />
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // ブロック状態でもプロフィールは表示し、メッセージ送信欄のみ非表示
+  const isBlocked = match.status === 'blocked';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -332,17 +297,25 @@ export default function MessageDetailPage() {
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <Link
-              href="/messages"
+                href="/messages"
                 className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
               >
-              メッセージ一覧に戻る
+                メッセージ一覧に戻る
               </Link>
             </div>
           </div>
         </div>
-          {/* 親ユーザー向け注意喚起ボックス */}
-         {userRole === 'parent' && <ParentWarningBox />}
- 
+        {/* プロフィール情報（UserHeader） */}
+        <UserHeader match={match} />
+        {/* 親ユーザー向け注意喚起ボックス */}
+        {userRole === 'parent' && <ParentWarningBox />}
+        {/* ブロック警告表示 */}
+        {isBlocked && (
+          <div className="bg-red-100 border-l-8 border-red-500 rounded-lg p-6 text-red-700 shadow mb-4">
+            <div className="text-2xl mb-2">🚫 このマッチはブロックされています</div>
+            <div className="text-sm">このユーザーとのメッセージ送信はできません。必要に応じて設定画面からブロック解除してください。</div>
+          </div>
+        )}
         {/* Messages Container */}
         <div className="bg-white rounded-lg shadow mb-4" style={{ height: 'calc(100vh - 340px)', minHeight: '400px' }}>
           <div className="h-full flex flex-col">
@@ -371,18 +344,20 @@ export default function MessageDetailPage() {
               />
               <div ref={messagesEndRef} />
             </div>
-            {/* Message Input */}
-            <div className="border-t border-gray-200 p-4">
-              <MessageInputForm
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                sending={sending}
-                onSend={handleSendMessage}
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Shift + Enter で改行、Enter で送信
-              </p>
-            </div>
+            {/* Message Input（ブロック時は非表示） */}
+            {!isBlocked && (
+              <div className="border-t border-gray-200 p-4">
+                <MessageInputForm
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  sending={sending}
+                  onSend={handleSendMessage}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Shift + Enter で改行、Enter で送信
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
