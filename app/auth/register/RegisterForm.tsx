@@ -169,6 +169,15 @@ export default function RegisterForm() {
           }
         });
 
+        // profilesテーブル初期化API呼び出し
+        await apiRequest('/api/auth/register_profile', {
+          method: 'POST',
+          body: {
+            userId: data.user.id,
+            role,
+          }
+        });
+
         // Attempt to sign in after successful sign-up
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,

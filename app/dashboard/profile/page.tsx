@@ -37,7 +37,7 @@ interface SearchingChild {
 export default function ProfilePage() {
   // ScoreExplanationは内部でモーダル状態を持つので状態管理不要
   const { userRole: contextUserRole, setUserRole } = useRoleTheme();
-  const userRole: 'parent' | 'child' | null = contextUserRole === 'parent' || contextUserRole === 'child' ? contextUserRole : null;
+  const userRole: 'parent' | 'child' | null = contextUserRole;
   // 親のプロフィール
   const [lastNameKanji, setLastNameKanji] = useState('');
   const [lastNameHiragana, setLastNameHiragana] = useState('');
@@ -52,7 +52,20 @@ export default function ProfilePage() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
-  // 子ども/親情報
+  const [userId, setUserId] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const tempImagePathRef = useRef<string | null>(null);
+  const hasSavedRef = useRef(false);
+  const router = useRouter();
+  const supabase = createClient();
+
+    // 子ども/親情報
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
     { 
       birthDate: '', 
@@ -68,19 +81,6 @@ export default function ProfilePage() {
     }
   ]);
   // userRole, setUserRoleは上で宣言済み
-  const [userId, setUserId] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const tempImagePathRef = useRef<string | null>(null);
-  const hasSavedRef = useRef(false);
-  const router = useRouter();
-  const supabase = createClient();
-
   useEffect(() => {
     checkAuth();
     loadProfile();
@@ -606,7 +606,7 @@ export default function ProfilePage() {
                   setParentGender(profile.gender as any || '');
                 }}
                 loading={loading}
-                userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
+                userRole={userRole || undefined}
               />
 
               <div className="border-t border-gray-200 pt-6">
@@ -618,7 +618,7 @@ export default function ProfilePage() {
                   updateSearchingChildPhotos={updateSearchingChildPhotos}
                   removeSearchingChild={removeSearchingChild}
                   addSearchingChild={addSearchingChild}
-                  userRole={userRole === 'parent' || userRole === 'child' ? userRole : null}
+                  userRole={userRole}
                   loading={loading}
                 />
 
