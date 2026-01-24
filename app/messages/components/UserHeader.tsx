@@ -1,4 +1,5 @@
 import React from 'react';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 interface UserHeaderProps {
   match: any;
@@ -21,15 +22,17 @@ export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
         )}
       </div>
       <div>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${match.other_user_role === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
+            登録済み{match.other_user_role === 'parent' ? '親' : '子'}ユーザー
+          </span>
+          {match.status === 'blocked' && (
+            <span className="align-middle"><StatusBadge status="blocked" /></span>
+          )}
+        </div>
         <h1 className="text-2xl font-bold text-gray-900">
           {match.other_user_name}
         </h1>
-        <p className="text-sm text-gray-900">
-          {match.other_user_role === 'parent' ? '親' : '子'}
-        </p>
-        {match.status === 'blocked' && (
-          <span className="inline-block mt-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">ブロック中</span>
-        )}
       </div>
     </div>
     {/* 探している子どもの情報 */}

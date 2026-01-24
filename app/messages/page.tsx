@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 interface Match {
   id: string;
@@ -142,20 +143,7 @@ export default function MessagesPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">保留中</span>;
-      case 'accepted':
-        return <span className="rounded-full bg-parent-100 px-3 py-1 text-xs font-medium text-parent-800">承認済み</span>;
-      case 'rejected':
-        return <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">拒否済み</span>;
-      case 'blocked':
-        return <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800">ブロック済み</span>;
-      default:
-        return null;
-    }
-  };
+  // getStatusBadgeはStatusBadgeコンポーネントで代替
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -281,7 +269,7 @@ export default function MessagesPage() {
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    {getStatusBadge(match.status)}
+                    <StatusBadge status={match.status} />
                   </div>
                 </div>
 

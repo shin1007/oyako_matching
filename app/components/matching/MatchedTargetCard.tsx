@@ -1,5 +1,6 @@
 
 import { getGenderLabel, calculateAge, getRoleLabel } from './matchingUtils';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { MatchingSimilarityCard } from './MatchingSimilarityCard';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -77,6 +78,9 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
         <div className="flex-1">
           <span className={`mb-1 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'child' ? 'bg-child-50 text-child-700' : 'bg-parent-50 text-parent-700'}`}>
             登録済み{getRoleLabel(match.role || '')}ユーザー
+            {match.existingMatchStatus === 'blocked' && (
+              <span className="ml-2 align-middle"><StatusBadge status="blocked" /></span>
+            )}
           </span>
           <h4 className="text-lg font-semibold text-gray-900">{match.profile?.last_name_kanji ?? ''}{match.profile?.first_name_kanji ?? ''}</h4>
           <p className="text-sm text-gray-900 mt-1">
@@ -112,14 +116,10 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
         >
           {/* アクションボタンはchildren経由で受け取る */}
           {children}
-          {/* ブロック・ブロック解除ボタン or ブロックされています表示 */}
+          {/* ブロック・ブロック解除ボタン or ブロックされています表示（ボタンのみ残す） */}
           <div className="mt-2">
             {blocked ? (
-              isBlockedByOther ? (
-                <div className="w-full rounded bg-gray-200 px-3 py-2 text-gray-600 text-xs font-semibold text-center cursor-not-allowed">
-                  ブロックされています
-                </div>
-              ) : (
+              isBlockedByOther ? null : (
                 <button
                   className="w-full rounded bg-gray-400 px-3 py-2 text-white text-xs font-semibold hover:bg-gray-500 disabled:opacity-50"
                   onClick={handleUnblock}

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
 import { TargetProfileCard } from '@/app/components/matching/TargetProfileCard';
 import { MatchedTargetCard } from '@/app/components/matching/MatchedTargetCard';
@@ -293,14 +294,16 @@ export default function MatchingPage() {
     // 既存マッチのステータスに応じた表示
     if (match.existingMatchStatus === 'accepted' || match.existingMatchStatus === 'blocked') {
       return (
-        <Link
-          href={`/messages/${match.existingMatchId}`}
-          className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
-        >
-          メッセージへ
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/messages/${match.existingMatchId}`}
+            className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          >
+            メッセージへ
+          </Link>
+        </div>
       );
-    } 
+    }
     // マッチが成立しているが、相手が18歳未満で未承認の場合の表示
     if (isParent && isChild && isUnder18) {
       return (
