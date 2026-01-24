@@ -259,7 +259,7 @@ export default function MessageDetailPage() {
           </div>
           <Link
             href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+            className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -277,7 +277,7 @@ export default function MessageDetailPage() {
           </div>
           <Link
             href="/messages"
-            className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+            className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
           >
             ← メッセージ一覧に戻る
           </Link>
@@ -298,7 +298,7 @@ export default function MessageDetailPage() {
             <div className="flex items-center justify-between">
               <Link
                 href="/messages"
-                className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+                className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
               >
                 メッセージ一覧に戻る
               </Link>
@@ -326,11 +326,7 @@ export default function MessageDetailPage() {
                   <button
                     onClick={loadMoreMessages}
                     disabled={loadingMore}
-                    className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed ${
-                      userRole === 'child' 
-                        ? 'bg-child-600 hover:bg-child-700' 
-                        : 'bg-parent-600 hover:bg-parent-700'
-                    }`}
+                    className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed bg-role-primary bg-role-primary-hover"
                   >
                     {loadingMore ? '読み込み中...' : '古いメッセージを読み込む'}
                   </button>

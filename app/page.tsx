@@ -42,7 +42,7 @@ function HomeContent() {
         {/* Account Deleted Success Message */}
         {showDeletedMessage && (
           <div className="mx-auto max-w-4xl mb-8">
-            <div className="rounded-lg bg-parent-50 p-4 text-sm text-parent-800 border border-parent-200">
+            <div className="rounded-lg bg-role-bg p-4 text-sm text-role-primary border border-role-border">
               ✓ アカウントが正常に削除されました。ご利用ありがとうございました。
             </div>
           </div>
@@ -61,7 +61,7 @@ function HomeContent() {
 
           <div className="grid gap-8 md:grid-cols-2">
             {/* 親向けカード */}
-            <div className="flex flex-col h-full rounded-2xl border-2 border-parent-200 bg-parent-50 p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+            <div className="flex flex-col h-full rounded-2xl border-2 border-role-border bg-role-bg p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
               <div>
                 <div className="mb-4 text-4xl">👨‍👩‍👧‍👦</div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">離別した親の方へ</h3>
@@ -80,7 +80,7 @@ function HomeContent() {
               <div className="mt-auto">
                 <Link
                   href="/auth/register?role=parent"
-                  className="group block rounded-lg bg-parent-600 px-6 py-3 text-white hover:bg-parent-700 font-bold text-lg shadow-md transition-all duration-300 hover:scale-105"
+                  className="group block rounded-lg bg-role-primary px-6 py-3 text-white bg-role-primary-hover font-bold text-lg shadow-md transition-all duration-300 hover:scale-105"
                 >
                   <span className="inline-flex items-center justify-center gap-2">
                     <svg className="w-5 h-5 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -91,7 +91,7 @@ function HomeContent() {
             </div>
 
             {/* 子ども向けカード */}
-            <div className="flex flex-col h-full rounded-2xl border-2 border-child-200 bg-child-50 p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+            <div className="flex flex-col h-full rounded-2xl border-2 border-role-border bg-role-bg p-8 shadow-xl transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
               <div>
                 <div className="mb-4 text-4xl">👦👧</div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">親を探す子どもの方へ</h3>
@@ -106,7 +106,7 @@ function HomeContent() {
               <div className="mt-auto">
                 <Link
                   href="/auth/register?role=child"
-                  className="group block rounded-lg bg-child-600 px-6 py-3 text-white hover:bg-child-700 font-bold text-lg shadow-md transition-all duration-300 hover:scale-105"
+                  className="group block rounded-lg bg-role-primary px-6 py-3 text-white bg-role-primary-hover font-bold text-lg shadow-md transition-all duration-300 hover:scale-105"
                 >
                   <span className="inline-flex items-center justify-center gap-2">
                     <svg className="w-5 h-5 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>

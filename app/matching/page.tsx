@@ -103,7 +103,7 @@ function renderNoTargetRegisteredCard(userRole: string | null) {
       </p>
       <Link
         href="/dashboard/profile"
-        className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+        className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
       >
         プロフィールを編集
       </Link>
@@ -125,7 +125,7 @@ function renderNoTargetRegisteredCard(userRole: string | null) {
         </p>
         <Link
           href="/dashboard/profile"
-          className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+          className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
         >
           プロフィールを編集
         </Link>
@@ -297,7 +297,7 @@ export default function MatchingPage() {
         <div className="flex items-center gap-2">
           <Link
             href={`/messages/${match.existingMatchId}`}
-            className={`w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+            className="w-full block text-center rounded-lg px-3 py-2 text-white text-sm font-semibold transition bg-role-primary bg-role-primary-hover"
           >
             メッセージへ
           </Link>
@@ -327,7 +327,7 @@ export default function MatchingPage() {
       <button
         onClick={handleRequestClick}
         disabled={creating === match.userId}
-        className={`w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+        className="w-full rounded-lg px-3 py-2 text-white text-sm font-semibold disabled:opacity-50 transition bg-role-primary bg-role-primary-hover"
       >
         {creating === match.userId ? '処理中...' : 'マッチング申請'}
       </button>
@@ -375,7 +375,7 @@ export default function MatchingPage() {
             <div>{renderTitle(userRole)}</div>
             <Link
               href="/dashboard"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
             >
               ダッシュボードに戻る
             </Link>

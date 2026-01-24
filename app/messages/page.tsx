@@ -177,7 +177,7 @@ export default function MessagesPage() {
             </div>
             <Link
               href="/matching"
-              className={`inline-block rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'} ml-4`}
+              className="inline-block rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover ml-4"
             >
               マッチング一覧に戻る
             </Link>
@@ -208,7 +208,7 @@ export default function MessagesPage() {
             </p>
             <Link
               href="/matching"
-              className={`inline-block rounded-lg px-6 py-3 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+              className="inline-block rounded-lg px-6 py-3 text-white bg-role-primary bg-role-primary-hover"
             >
               マッチングを探す
             </Link>
@@ -274,7 +274,7 @@ export default function MessagesPage() {
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${userRole === 'parent' ? 'bg-parent-50 text-parent-700' : 'bg-child-50 text-child-700'}`}>
+                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-role-bg text-role-primary">
                       登録済み{match.other_user_role === 'parent' ? '親' : '子'}ユーザー
                     </span>
                     <StatusBadge status={match.status} />
@@ -285,7 +285,7 @@ export default function MessagesPage() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => handleAccept(match.id)}
-                      className={`flex-1 rounded-lg px-4 py-2 text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+                      className="flex-1 rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover"
                     >
                       承認
                     </button>
@@ -310,7 +310,7 @@ export default function MessagesPage() {
                   <div className="mt-4">
                     <Link
                       href={`/messages/${match.id}`}
-                      className={`block w-full rounded-lg px-4 py-2 text-center text-white ${userRole === 'child' ? 'bg-child-600 hover:bg-child-700' : 'bg-parent-600 hover:bg-parent-700'}`}
+                      className="block w-full rounded-lg px-4 py-2 text-center text-white bg-role-primary bg-role-primary-hover"
                     >
                       メッセージを見る
                     </Link>

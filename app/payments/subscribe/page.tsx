@@ -147,12 +147,12 @@ export default function SubscribePage() {
           </div>
         )}
 
-        <div className="rounded-2xl border-2 border-parent-200 bg-white p-8 shadow-xl">
+        <div className="rounded-2xl border-2 border-role-border bg-white p-8 shadow-xl">
           <div className="mb-6 text-center">
             <div className="mb-4 text-6xl">👨‍👩‍👧‍👦</div>
             <h2 className="mb-2 text-3xl font-bold text-gray-900">親プラン</h2>
             <div className="mb-4">
-              <span className="text-5xl font-bold text-parent-600">¥980</span>
+              <span className="text-5xl font-bold text-role-primary">¥980</span>
               <span className="text-gray-900"> / 月</span>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function SubscribePage() {
           <button
             onClick={handleSubscribe}
             disabled={processing}
-            className="w-full rounded-lg bg-parent-600 px-6 py-4 text-lg font-semibold text-white hover:bg-parent-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-role-primary bg-role-primary-hover px-6 py-4 text-lg font-semibold text-white disabled:opacity-50"
           >
             {processing ? '処理中...' : 'サブスクリプションを開始'}
           </button>
