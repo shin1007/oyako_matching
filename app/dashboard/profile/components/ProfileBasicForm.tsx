@@ -188,8 +188,8 @@ export const ProfileBasicForm: React.FC<ProfileBasicFormProps> = ({
       </label>
       <select
         id="parentGender"
-        value={profile.role}
-        onChange={e => handleRoleChange(e.target.value as 'parent' | 'child' | string)}
+        value={profile.gender || ''}
+        onChange={e => setProfile({ ...profile, gender: e.target.value })}
         className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm ${userRole === 'child' ? 'focus:border-child-500 focus:ring-child-500' : 'focus:border-parent-500 focus:ring-parent-500'} focus:outline-none focus:ring-1`}
       >
         <option value="">未選択</option>
