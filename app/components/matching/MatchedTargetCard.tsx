@@ -126,7 +126,7 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
             {blocked ? (
               isBlockedByOther ? null : (
                 <button
-                  className="w-full rounded bg-gray-400 px-3 py-2 text-white text-xs font-semibold hover:bg-gray-500 disabled:opacity-50"
+                  className={`w-full rounded px-3 py-2 text-white text-xs font-semibold hover:opacity-80 disabled:opacity-50 ${userRole === 'child' ? 'bg-child-500' : 'bg-parent-500'}`}
                   onClick={handleUnblock}
                   disabled={blockLoading}
                 >
@@ -135,7 +135,7 @@ export function MatchedTargetCard({ match, target, userRole, childScore, creatin
               )
             ) : (
               <button
-                className="w-full rounded bg-red-500 px-3 py-2 text-white text-xs font-semibold hover:bg-red-600 disabled:opacity-50"
+                className={`w-full rounded px-3 py-2 text-white text-xs font-semibold hover:opacity-80 disabled:opacity-50 ${userRole === 'child' ? 'bg-child-500' : 'bg-parent-500'}`}
                 onClick={handleBlock}
                 disabled={blockLoading}
               >

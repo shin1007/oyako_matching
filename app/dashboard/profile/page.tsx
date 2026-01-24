@@ -547,7 +547,7 @@ export default function ProfilePage() {
                 profile={{
                   id: userId,
                   userId: userId,
-                  role: parentGender || userRole || '',
+                  role: userRole || '',
                   lastNameKanji,
                   firstNameKanji,
                   lastNameHiragana,
@@ -570,7 +570,7 @@ export default function ProfilePage() {
                 profile={{
                   id: userId,
                   userId: userId,
-                  role: parentGender || userRole || '',
+                  role: userRole || '',
                   lastNameKanji,
                   firstNameKanji,
                   lastNameHiragana,

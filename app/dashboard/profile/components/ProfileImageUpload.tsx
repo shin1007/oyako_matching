@@ -138,7 +138,13 @@ export const ProfileImageUpload = ({
             onChange={handleFileSelect}
             className="hidden"
           />
-          <span className="inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors bg-role-primary bg-role-primary-hover">
+          <span
+            className={`inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors ${
+              profile.role === 'child'
+                ? 'bg-child-600 hover:bg-child-500'
+                : 'bg-parent-600 hover:bg-parent-500'
+            }`}
+          >
             {profile.profileImageUrl ? '画像を変更' : '画像をアップロード'}
           </span>
         </label>
@@ -196,7 +202,11 @@ export const ProfileImageUpload = ({
                 type="button"
                 onClick={handleCropComplete}
                 disabled={uploading}
-                className="px-4 py-2 text-white bg-role-primary bg-role-primary-hover rounded-lg disabled:opacity-50"
+                className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 ${
+                  profile.role === 'child'
+                    ? 'bg-child-500 hover:bg-child-600'
+                    : 'bg-parent-500 hover:bg-parent-600'
+                }`}
               >
                 {uploading ? 'アップロード中...' : '切り取りを確定'}
               </button>
