@@ -4,16 +4,18 @@ import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import imageCompression from 'browser-image-compression';
 
+import { ProfileBase } from '@/types/profile';
+
 interface ProfileImageUploadProps {
-  profileImageUrl: string | null;
+  profile: ProfileBase;
   setProfileImageUrl: (v: string | null) => void;
   selectedImageFile: File | null;
   setSelectedImageFile: (f: File | null) => void;
   loading: boolean;
-  userRole?: 'parent' | 'child';
 }
+
 export const ProfileImageUpload = ({
-  profileImageUrl, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading, userRole
+  profile, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading
 }: ProfileImageUploadProps) => {
   const [showCropper, setShowCropper] = useState(false);
   const [crop, setCrop] = useState<Crop>({ unit: '%', x: 10, y: 10, width: 80, height: 80 }); // aspectはReactCropのpropsで指定
@@ -108,14 +110,14 @@ export const ProfileImageUpload = ({
   };
 
   // 親子ロールに応じてラッパーにクラスを付与
-  const roleClass = userRole === 'child' ? 'role-child' : 'role-parent';
+  const roleClass = profile.role === 'child' ? 'role-child' : 'role-parent';
   return (
     <div className={`space-y-4 ${roleClass}`}>  
       {/* 現在の画像またはプレビュー */}
       <div className="flex justify-center">
-        {profileImageUrl ? (
+        {profile.profileImageUrl ? (
           <img
-            src={profileImageUrl}
+            src={profile.profileImageUrl}
             alt="プロフィール画像"
             className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
           />
@@ -137,7 +139,7 @@ export const ProfileImageUpload = ({
             className="hidden"
           />
           <span className="inline-block rounded-lg px-4 py-2 text-sm text-white transition-colors bg-role-primary bg-role-primary-hover">
-            {profileImageUrl ? '画像を変更' : '画像をアップロード'}
+            {profile.profileImageUrl ? '画像を変更' : '画像をアップロード'}
           </span>
         </label>
       </div>

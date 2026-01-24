@@ -1,15 +1,9 @@
 import React from 'react';
 import { TargetPersonCard } from '@/components/ui/TargetPersonCard';
+import { TargetPerson } from '@/types/profile';
 
 interface TargetPeopleListProps {
-  targetPeople: Array<{
-    id: string;
-    last_name_kanji?: string;
-    first_name_kanji?: string;
-    birthplace_prefecture?: string;
-    birthplace_municipality?: string;
-    photo_url?: string | null;
-  }>;
+  targetPeople: TargetPerson[];
   role?: string;
 }
 
@@ -24,13 +18,7 @@ export const TargetPeopleList: React.FC<TargetPeopleListProps> = ({ targetPeople
         {targetPeople.map((person) => (
           <TargetPersonCard
             key={person.id}
-            photoUrl={person.photo_url}
-            name={`${person.last_name_kanji || ''}${person.first_name_kanji || ''}`}
-            birthplace={
-              person.birthplace_prefecture || person.birthplace_municipality
-                ? `${person.birthplace_prefecture || ''}${person.birthplace_municipality ? ' ' + person.birthplace_municipality : ''}`
-                : undefined
-            }
+            person={person}
           />
         ))}
       </div>

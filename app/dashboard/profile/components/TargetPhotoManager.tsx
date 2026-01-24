@@ -17,7 +17,7 @@ interface TargetPhotoManagerProps {
   photos: Photo[];
   setPhotos: (v: Photo[]) => void;
   loading: boolean;
-  userRole?: 'parent' | 'child';
+  userRole?: 'parent' | 'child' | undefined;
 }
 
 

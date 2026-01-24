@@ -544,36 +544,58 @@ export default function ProfilePage() {
 
               {/* プロフィール画像 */}
               <ProfileImageUpload
-                profileImageUrl={profileImageUrl}
+                profile={{
+                  id: userId,
+                  userId: userId,
+                  role: parentGender || userRole || '',
+                  nameKanji: `${lastNameKanji}${firstNameKanji}`,
+                  nameHiragana: `${lastNameHiragana}${firstNameHiragana}`,
+                  birthDate,
+                  birthplacePrefecture,
+                  birthplaceMunicipality,
+                  gender: parentGender,
+                  profileImageUrl,
+                  bio,
+                  forumDisplayName,
+                }}
                 setProfileImageUrl={setProfileImageUrl}
                 selectedImageFile={selectedImageFile}
                 setSelectedImageFile={setSelectedImageFile}
                 loading={loading}
-                userRole={userRole}
               />
 
               <ProfileBasicForm
-                lastNameKanji={lastNameKanji}
-                setLastNameKanji={setLastNameKanji}
-                firstNameKanji={firstNameKanji}
-                setFirstNameKanji={setFirstNameKanji}
-                lastNameHiragana={lastNameHiragana}
-                setLastNameHiragana={setLastNameHiragana}
-                firstNameHiragana={firstNameHiragana}
-                setFirstNameHiragana={setFirstNameHiragana}
-                birthDate={birthDate}
-                setBirthDate={setBirthDate}
-                birthplacePrefecture={birthplacePrefecture}
-                setBirthplacePrefecture={setBirthplacePrefecture}
-                birthplaceMunicipality={birthplaceMunicipality}
-                setBirthplaceMunicipality={setBirthplaceMunicipality}
-                parentGender={parentGender}
-                setParentGender={setParentGender}
-                forumDisplayName={forumDisplayName}
-                setForumDisplayName={setForumDisplayName}
-                bio={bio}
-                setBio={setBio}
-                userRole={userRole}
+                profile={{
+                  id: userId,
+                  userId: userId,
+                  role: parentGender || userRole || '',
+                  lastNameKanji,
+                  firstNameKanji,
+                  lastNameHiragana,
+                  firstNameHiragana,
+                  birthDate,
+                  birthplacePrefecture,
+                  birthplaceMunicipality,
+                  gender: parentGender,
+                  profileImageUrl,
+                  bio,
+                  forumDisplayName,
+                }}
+                setProfile={profile => {
+                  setLastNameKanji(profile.lastNameKanji || '');
+                  setFirstNameKanji(profile.firstNameKanji || '');
+                  setLastNameHiragana(profile.lastNameHiragana || '');
+                  setFirstNameHiragana(profile.firstNameHiragana || '');
+                  setBirthDate(profile.birthDate || '');
+                  setBirthplacePrefecture(profile.birthplacePrefecture || '');
+                  setBirthplaceMunicipality(profile.birthplaceMunicipality || '');
+                  setBio(profile.bio || '');
+                  setForumDisplayName(profile.forumDisplayName || '');
+                  setProfileImageUrl(profile.profileImageUrl || null);
+                  setParentGender(profile.gender as any || '');
+                }}
+                loading={loading}
+                userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
               />
 
               <div className="border-t border-gray-200 pt-6">
@@ -585,7 +607,7 @@ export default function ProfilePage() {
                   photos={searchingChildren[0]?.photos || []}
                   setPhotos={photos => updateSearchingChildPhotos(0, photos)}
                   loading={loading}
-                  userRole={userRole}
+                  userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
                 />
               </div>
 

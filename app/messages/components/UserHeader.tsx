@@ -1,27 +1,45 @@
 import React from 'react';
 import { UserProfileCard } from '@/components/ui/UserProfileCard';
 import { TargetPersonCard } from '@/components/ui/TargetPersonCard';
-
+import { ProfileBase, TargetPerson } from '@/types/profile';
 
 interface UserHeaderProps {
   match: any;
 }
 
+function toProfileBaseFromMatch(match: any): ProfileBase {
+  return {
+    id: match.other_user_id || '',
+    userId: match.other_user_id || '',
+    role: match.other_user_role || '',
+    nameKanji: match.other_user_name || '',
+    birthDate: match.other_user_birth_date || '',
+    birthplacePrefecture: match.other_user_birthplace_prefecture || '',
+    birthplaceMunicipality: match.other_user_birthplace_municipality || '',
+    gender: match.other_user_gender || '',
+    profileImageUrl: match.other_user_image || '',
+    bio: match.other_user_bio || '',
+  };
+}
+
+function toTargetPersonFromChild(child: any): TargetPerson {
+  return {
+    id: child.id || '',
+    nameKanji: `${child.last_name_kanji || ''}${child.first_name_kanji || ''}`,
+    birthDate: child.birth_date || '',
+    birthplacePrefecture: child.birthplace_prefecture || '',
+    birthplaceMunicipality: child.birthplace_municipality || '',
+    gender: child.gender || '',
+    photoUrl: child.photo_url || '',
+  };
+}
+
 export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
   <div className="rounded-lg bg-white p-4 shadow">
     <UserProfileCard
-      imageUrl={match.other_user_image}
-      name={match.other_user_name}
-      role={match.other_user_role}
+      profile={toProfileBaseFromMatch(match)}
       status={match.status}
       badgeLabel={`登録済み${match.other_user_role === 'parent' ? '親' : '子'}ユーザー`}
-      birthDate={match.other_user_birth_date}
-      genderLabel={match.other_user_gender}
-      birthplace={
-        match.other_user_birthplace_prefecture || match.other_user_birthplace_municipality
-          ? `${match.other_user_birthplace_prefecture || ''}${match.other_user_birthplace_municipality ? ' ' + match.other_user_birthplace_municipality : ''}`
-          : undefined
-      }
       className="mb-4"
     />
     {/* 探している子どもの情報 */}
@@ -32,13 +50,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({ match }) => (
           {match.target_people.map((child: any) => (
             <TargetPersonCard
               key={child.id}
-              photoUrl={child.photo_url}
-              name={`${child.last_name_kanji || ''}${child.first_name_kanji || ''}`}
-              birthplace={
-                child.birthplace_prefecture || child.birthplace_municipality
-                  ? `${child.birthplace_prefecture || ''}${child.birthplace_municipality ? ' ' + child.birthplace_municipality : ''}`
-                  : undefined
-              }
+              person={toTargetPersonFromChild(child)}
             />
           ))}
         </div>
