@@ -103,7 +103,7 @@ export function MatchingSimilarityCard({
     }
     const handleRequestClick = () => {
       const myAge = profile?.birth_date ? calculateAge(profile.birth_date) : null;
-      const myRole = profile?.users?.role || profile?.role;
+      const myRole = profile?.role;
       if (myRole === 'child' && myAge !== null && myAge < 18) {
         setPendingMatchInfo({ userId: match.userId, score });
         setShowParentApprovalModal(true);

@@ -471,6 +471,7 @@ export type Database = {
           target_person_name_kanji: string | null
           updated_at: string | null
           user_id: string
+          role: string | null
         }
         Insert: {
           bio?: string | null
@@ -492,6 +493,7 @@ export type Database = {
           target_person_name_kanji?: string | null
           updated_at?: string | null
           user_id: string
+          role?: string | null
         }
         Update: {
           bio?: string | null
@@ -513,6 +515,7 @@ export type Database = {
           target_person_name_kanji?: string | null
           updated_at?: string | null
           user_id?: string
+          role?: string | null
         }
         Relationships: [
           {

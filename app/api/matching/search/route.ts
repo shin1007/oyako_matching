@@ -210,14 +210,13 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
         .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
         .maybeSingle();
 
-      // profilesとusersを結合してroleも取得
+      // profilesテーブルからroleを直接取得
       const { data: userProfile } = await admin
         .from('profiles')
-        .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality, user_id, users(role)')
+        .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality, user_id, role')
         .eq('user_id', candidate.userId)
         .single();
 
-      // roleはuserProfile.users?.roleで取得
       return {
         ...candidate,
         existingMatchId: existingMatch?.id || null,
@@ -226,7 +225,7 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
         currentUserId: user.id,
         profile: userProfile || null,
         theirTargetPeople: await getTargetPeopleInfo(admin, candidate.userId),
-        role: userProfile?.users?.role || null,
+        role: userProfile?.role || null,
       };
     })
   );
@@ -249,7 +248,7 @@ export async function GET(request: NextRequest) {
     // 自分のプロフィール情報（role含む）を取得
     const { data: myProfile } = await admin
       .from('profiles')
-      .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality, user_id, users(role)')
+      .select('last_name_kanji, first_name_kanji, last_name_hiragana, first_name_hiragana, birth_date, bio, profile_image_url, gender, birthplace_prefecture, birthplace_municipality, user_id, role')
       .eq('user_id', user.id)
       .single();
     const matchDetails = await getMatchDetails(admin, user, userData, myTargetPeople);
