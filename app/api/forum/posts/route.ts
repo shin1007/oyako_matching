@@ -58,6 +58,17 @@ export async function GET(request: NextRequest) {
         }
       });
     }
+
+    // 投稿がある場合はデータを返す
+    return NextResponse.json({
+      posts: postsData,
+      pagination: {
+        page,
+        perPage,
+        total: count || 0,
+        totalPages: count ? Math.ceil(count / perPage) : 0
+      }
+    });
   } catch (error: any) {
     console.error('Error fetching posts:', error);
     return NextResponse.json(
