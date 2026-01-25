@@ -1,13 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
+import { rateLimit429 } from '@/lib/rate-limit429';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
+  // レートリミット（IPアドレス単位: 1分10回・1時間50回）
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const supabase = await createClient();
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    ip,
+    'message_send',
+    [
+      { windowSeconds: 60, maxActions: 10 },
+      { windowSeconds: 3600, maxActions: 50 }
+    ]
+  );
+  if (!rateLimitResult.allowed) {
+    return rateLimit429(rateLimitResult.message, rateLimitResult.retryAfter?.toISOString());
+  }
   try {
-    const supabase = await createClient();
-    const { id: matchId } = await params;
+
+    const { id: matchId } = params;
     const { content } = await request.json();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -15,6 +32,9 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // レートリミットアクション記録
+    await recordRateLimitAction(supabase, ip, 'message_send');
 
     if (!content || !content.trim()) {
       return NextResponse.json(

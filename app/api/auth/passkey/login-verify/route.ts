@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPasskeyAuthentication } from '@/lib/webauthn/server';
 import { logAuditEvent } from '@/lib/utils/auditLogger';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
+import { rateLimit429 } from '@/lib/rate-limit429';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/types';
 import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
@@ -11,6 +13,21 @@ import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from
  * Verify passkey authentication and sign in the user
  */
 export async function POST(request: NextRequest) {
+    // レートリミット（IPアドレス単位: 1分5回・1時間20回）
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const supabase = await createClient();
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      ip,
+      'login',
+      [
+        { windowSeconds: 60, maxActions: 5 },
+        { windowSeconds: 3600, maxActions: 20 }
+      ]
+    );
+    if (!rateLimitResult.allowed) {
+      return rateLimit429(rateLimitResult.message, rateLimitResult.retryAfter?.toISOString());
+    }
   // CSRFトークン検証
   const secret = getCsrfSecretFromCookie(request);
   const token = getCsrfTokenFromHeader(request);
@@ -18,7 +35,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
   }
   try {
-    const supabase = await createClient();
     const body = await request.json();
     const { credential } = body;
 
@@ -35,6 +51,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // レートリミットアクション記録
+    await recordRateLimitAction(supabase, ip, 'login');
 
     // Retrieve challenge from cookie
     const challenge = request.cookies.get('passkey_challenge')?.value;

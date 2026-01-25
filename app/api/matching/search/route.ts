@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
+import { rateLimit429 } from '@/lib/rate-limit429';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassVerificationEnabled, isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 
@@ -233,8 +235,22 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
 }
 
 export async function GET(request: NextRequest) {
-  try {
+    // レートリミット（IPアドレス単位: 1分10回・1時間50回）
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const supabase = await createClient();
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      ip,
+      'matching_search',
+      [
+        { windowSeconds: 60, maxActions: 10 },
+        { windowSeconds: 3600, maxActions: 50 }
+      ]
+    );
+    if (!rateLimitResult.allowed) {
+      return rateLimit429(rateLimitResult.message, rateLimitResult.retryAfter?.toISOString());
+    }
+  try {
     const admin = createAdminClient();
     const { user, userData } = await getAuthenticatedUserAndData(supabase, admin);
     if (!user) {
@@ -243,6 +259,9 @@ export async function GET(request: NextRequest) {
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // レートリミットアクション記録
+    await recordRateLimitAction(supabase, ip, 'matching_search');
     const authError = await checkUserAuthorization(admin, user, userData);
     if (authError) return authError;
     const myTargetPeople = await getTargetPeopleInfo(admin, user.id);
@@ -276,7 +295,7 @@ export async function GET(request: NextRequest) {
           child_id: childId,
           similarity_score: candidate.targetScores?.[0]?.totalScore || 0,
           status: 'pre_entry',
-        }, { onConflict: ['parent_id', 'child_id'] });
+        }, { onConflict: 'parent_id,child_id' });
       if (upsertError) {
         console.error('[matches upsert error]', upsertError);
       } else {

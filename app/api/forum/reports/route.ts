@@ -5,8 +5,27 @@ import { createClient } from '@/lib/supabase/server';
 import { writeAuditLog } from '@/lib/audit-log';
 
 import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  // レートリミット（IPアドレス単位: 1分5回・1時間20回）
+  const ipRaw = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip');
+  const ip = typeof ipRaw === 'string' ? ipRaw : '';
+  const supabase = await createClient();
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    ip,
+    'forum_report',
+    [
+      { windowSeconds: 60, maxActions: 5 },
+      { windowSeconds: 3600, maxActions: 20 }
+    ]
+  );
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json({ error: rateLimitResult.message, retryAfter: rateLimitResult.retryAfter?.toISOString() }, { status: 429 });
+  }
+  await recordRateLimitAction(supabase, ip, 'forum_report');
+
   // CSRFトークン検証
   const secret = getCsrfSecretFromCookie(request);
   const token = getCsrfTokenFromHeader(request);
@@ -15,7 +34,7 @@ export async function POST(request: NextRequest) {
       userId: null,
       eventType: 'forum_report_create',
       detail: 'CSRF token invalid',
-      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      ip,
     });
     return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
   }

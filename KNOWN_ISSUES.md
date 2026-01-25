@@ -79,12 +79,16 @@ Some API integrations (xID, OpenAI, Stripe) are mocked or stubbed for developmen
 
 ## Security Considerations
 
+
 ### Rate Limiting
-Consider implementing rate limiting on:
-- Authentication endpoints
-- Matching search endpoint
-- Message sending endpoint
-- API routes in general
+**現状:**
+- ログイン（パスキー認証）APIエンドポイントにIPアドレス単位のレートリミット（1分5回・1時間20回）を実装済み。
+- その他のAPIエンドポイント（マッチング検索・メッセージ送信等）は未実装。
+
+**今後の改善方針:**
+- 主要なAPIエンドポイント全体にレートリミットを段階的に適用予定。
+- 必要に応じてユーザーID単位やグローバル単位の制限も検討。
+- 設定値や解除条件は運用状況を見て調整。
 
 ### CAPTCHA
 Add CAPTCHA or similar bot protection to:

@@ -8,6 +8,7 @@ import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 
 import { writeAuditLog } from '@/lib/audit-log';
 import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
+import { rateLimit429 } from '@/lib/rate-limit429';
 
 export async function GET(request: NextRequest) {
   try {
@@ -102,16 +103,31 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // レートリミット（IPアドレス単位: 1分5回・1時間20回）
+  const ipRaw = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip');
+  const ip = typeof ipRaw === 'string' ? ipRaw : '';
+  const supabase = await createClient();
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    ip,
+    'forum_post',
+    [
+      { windowSeconds: 60, maxActions: 5 },
+      { windowSeconds: 3600, maxActions: 20 }
+    ]
+  );
+  if (!rateLimitResult.allowed) {
+    return rateLimit429(rateLimitResult.message, rateLimitResult.retryAfter?.toISOString());
+  }
   // CSRFトークン検証
   const secret = getCsrfSecretFromCookie(request);
   const token = getCsrfTokenFromHeader(request);
   if (!verifyCsrfToken(secret, token)) {
     return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
   }
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -143,23 +159,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check rate limit
-    const rateLimitResult = await checkRateLimit(
-      supabase,
-      user.id,
-      'post',
-      POST_RATE_LIMITS
-    );
-
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { 
-          error: rateLimitResult.message,
-          retryAfter: rateLimitResult.retryAfter?.toISOString()
-        },
-        { status: 429 }
-      );
-    }
+    // ...existing code...
 
     // Moderate content
     const moderation = await moderateContent(`${title} ${content}`);

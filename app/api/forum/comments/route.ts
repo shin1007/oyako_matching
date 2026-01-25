@@ -7,8 +7,24 @@ import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 import { writeAuditLog } from '@/lib/audit-log';
 
 export async function POST(request: NextRequest) {
+  // レートリミット（IPアドレス単位: 1分10回・1時間50回）
+  const ipRaw = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip');
+  const ip = typeof ipRaw === 'string' ? ipRaw : '';
+  const supabase = await createClient();
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    ip,
+    'forum_comment',
+    [
+      { windowSeconds: 60, maxActions: 10 },
+      { windowSeconds: 3600, maxActions: 50 }
+    ]
+  );
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json({ error: rateLimitResult.message, retryAfter: rateLimitResult.retryAfter?.toISOString() }, { status: 429 });
+  }
+  await recordRateLimitAction(supabase, ip, 'forum_comment');
   try {
-    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
 
