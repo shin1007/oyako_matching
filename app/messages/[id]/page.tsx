@@ -5,7 +5,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter, useParams } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { linkifyText } from '@/lib/utils/linkify';
 import { MessageList } from '../components/MessageList';
@@ -49,7 +49,7 @@ export default function MessageDetailPage() {
   const params = useParams();
   const matchId = params?.id as string;
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [match, setMatch] = useState<Match | null>(null);
@@ -202,8 +202,7 @@ export default function MessageDetailPage() {
         throw new Error(res.error || 'メッセージの送信に失敗しました');
       }
 
-      const data = await response.json();
-      setMessages((prev) => [...prev, data.message]);
+      setMessages((prev) => [...prev, res.data.message]);
       setNewMessage('');
       scrollToBottom();
     } catch (err: unknown) {

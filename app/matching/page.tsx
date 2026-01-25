@@ -10,7 +10,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ProfileCard } from '@/app/components/matching/ProfileCard';
 import { calculateAge} from '@/app/components/matching/matchingUtils';
@@ -126,7 +126,7 @@ export default function MatchingPage() {
   const [creatingMap, setCreatingMap] = useState<{ [targetId: string]: string | null }>({});
   const [pendingMatchInfoMap, setPendingMatchInfoMap] = useState<{ [targetId: string]: { userId: string, score: number } | null }>({});
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
   useEffect(() => {
     checkAuth();
     checkTestMode();

@@ -9,7 +9,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TargetPeopleList } from '@/components/ui/TargetPeopleList';
@@ -52,7 +52,7 @@ export default function MessagesPage() {
   const [testModeBypassSubscription, setTestModeBypassSubscription] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
 
   useEffect(() => {
     checkAuth();

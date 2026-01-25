@@ -236,6 +236,7 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
 
 export async function GET(request: NextRequest) {
     // レートリミット（IPアドレス単位: 1分10回・1時間50回）
+    // checkRateLimit/recordRateLimitActionはuserIdがIPアドレスの場合、ip_addressカラムで判定・記録する
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const supabase = await createClient();
     const rateLimitResult = await checkRateLimit(
@@ -260,7 +261,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // レートリミットアクション記録
+    // レートリミットアクション記録（IPアドレス単位）
     await recordRateLimitAction(supabase, ip, 'matching_search');
     const authError = await checkUserAuthorization(admin, user, userData);
     if (authError) return authError;

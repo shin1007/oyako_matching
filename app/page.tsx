@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 
 function HomeContent() {
@@ -14,7 +14,7 @@ function HomeContent() {
   useEffect(() => {
     // ログイン済みならダッシュボードへリダイレクト
     const redirectIfAuthenticated = async () => {
-      const supabase = createClient();
+      // supabaseはシングルトンとしてimport
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         router.replace("/dashboard");

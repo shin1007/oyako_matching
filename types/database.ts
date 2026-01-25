@@ -1,3 +1,5 @@
+// 通報対象の種類（post: 投稿, comment: コメント）
+export type ReportContentType = 'post' | 'comment';
 // Match型をエクスポート
 export type Match = Database['public']['Tables']['matches']['Row'];
 
@@ -534,7 +536,8 @@ export type Database = {
           created_at: string | null
           id: string
           post_id: string | null
-          user_id: string
+          user_id: string | null
+          ip_address: string | null
         }
         Insert: {
           action_timestamp?: string
@@ -542,7 +545,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           post_id?: string | null
-          user_id: string
+          user_id?: string | null
+          ip_address?: string | null
         }
         Update: {
           action_timestamp?: string
@@ -550,7 +554,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           post_id?: string | null
-          user_id?: string
+          user_id?: string | null
+          ip_address?: string | null
         }
         Relationships: [
           {
@@ -623,7 +628,7 @@ export type Database = {
         }
         Relationships: []
       }
-      target-people-photos: {
+      target_people_photos: {
         Row: {
           age_at_capture: number | null
           captured_at: string | null

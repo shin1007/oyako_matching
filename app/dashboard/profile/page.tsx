@@ -5,7 +5,7 @@ import { ProfileImageUpload } from './components/ProfileImageUpload';
 import { useState, useEffect, useRef } from 'react';
 import { useRoleTheme } from '@/contexts/RoleThemeContext';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { ScoreExplanation } from '../../components/matching/ScoreExplanation';
 import { TargetPersonInfoHeader } from './components/TargetPersonInfoHeader';
 import { ProfileBasicForm } from './components/ProfileBasicForm';

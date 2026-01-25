@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 interface Category {
@@ -23,7 +23,7 @@ export default function NewPostPage() {
   const [countdown, setCountdown] = useState<string>('');
   const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
 
   useEffect(() => {
     checkAuth();

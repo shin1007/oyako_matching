@@ -5,7 +5,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function SubscribePage() {
@@ -15,7 +15,7 @@ export default function SubscribePage() {
   const notifyError = useErrorNotification(setError, { log: true });
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
 
   useEffect(() => {
     checkUserAndSubscription();

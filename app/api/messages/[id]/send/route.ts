@@ -5,7 +5,7 @@ import { rateLimit429 } from '@/lib/rate-limit429';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   // レートリミット（IPアドレス単位: 1分10回・1時間50回）
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
@@ -23,8 +23,7 @@ export async function POST(
     return rateLimit429(rateLimitResult.message, rateLimitResult.retryAfter?.toISOString());
   }
   try {
-
-    const { id: matchId } = params;
+    const { id: matchId } = await context.params;
     const { content } = await request.json();
 
     const { data: { user } } = await supabase.auth.getUser();
