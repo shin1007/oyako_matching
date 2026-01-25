@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAutoSignOut } from '@/app/components/matching/hooks/useAutoSignOut';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { apiRequest } from '@/lib/api/request';
@@ -36,6 +37,7 @@ interface Post {
 }
 
 export default function ForumPage() {
+    useAutoSignOut(15); // 15分無操作で自動サインアウト
   const [categories, setCategories] = useState<Category[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
