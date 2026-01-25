@@ -63,7 +63,7 @@ export default function ProfilePage() {
   const tempImagePathRef = useRef<string | null>(null);
   const hasSavedRef = useRef(false);
   const router = useRouter();
-  const supabase = createClient();
+  // const supabase = createClient(); // ←不要
 
     // 子ども/親情報
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([

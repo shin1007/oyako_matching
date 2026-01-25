@@ -65,19 +65,15 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
   };
 
   return (
-    <>
-      <NavigationBar
-        user={user}
-        displayName={displayName ?? ''}
-        links={user ? [
-          {
-            href: '/messages',
-            label: 'メッセージ',
-            icon: <span>💬</span>,
-            badge: totalNotifications,
-          },
-        ] : []}
-      />
+    <div className="flex items-center gap-3">
+      {user && (
+        <Link
+          href="/dashboard"
+          className="font-medium text-slate-800 hover:text-slate-600 hover:underline"
+        >
+          {displayName ?? ''}
+        </Link>
+      )}
       {user ? (
         <button
           onClick={handleSignOut}
@@ -94,6 +90,6 @@ export function HeaderNav({ user, displayName }: HeaderNavProps) {
           ログイン
         </Link>
       )}
-    </>
+    </div>
   );
 }

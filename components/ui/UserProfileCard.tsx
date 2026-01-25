@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getGenderLabel } from '@/app/components/matching/matchingUtils';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ProfileBase } from '@/types/profile';
@@ -22,21 +22,42 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
   className = '',
 }) => (
   <div className={`flex gap-4 items-center rounded-lg bg-white p-4 shadow ${className}`}>
-    {profile.profileImageUrl ? (
-      <img
-        src={profile.profileImageUrl}
-        alt={
-          (profile.lastNameKanji || '') + (profile.firstNameKanji || '') ||
-          (profile.lastNameHiragana || '') + (profile.firstNameHiragana || '') ||
-          ''
-        }
-        className="h-16 w-16 rounded-full object-cover border border-gray-200"
-      />
-    ) : (
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl">
-        {profile.role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
-      </div>
-    )}
+    {(() => {
+      const [showPreviewModal, setShowPreviewModal] = useState(false);
+      if (profile.profileImageUrl) {
+        return <>
+          <img
+            src={profile.profileImageUrl}
+            alt={
+              (profile.lastNameKanji || '') + (profile.firstNameKanji || '') ||
+              (profile.lastNameHiragana || '') + (profile.firstNameHiragana || '') ||
+              ''
+            }
+            className="h-16 w-16 rounded-full object-cover border border-gray-200 cursor-pointer"
+            onClick={() => setShowPreviewModal(true)}
+          />
+          {showPreviewModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowPreviewModal(false)}>
+              <div className="bg-white rounded-lg p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                <img
+                  src={profile.profileImageUrl}
+                  alt="拡大プロフィール画像"
+                  className="max-w-full max-h-[80vh] rounded-lg border-2 border-gray-200"
+                />
+                <button
+                  className="mt-4 px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                  onClick={() => setShowPreviewModal(false)}
+                >閉じる</button>
+              </div>
+            </div>
+          )}
+        </>;
+      } else {
+        return <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl">
+          {profile.role === 'parent' ? '👨‍👩‍👧‍👦' : '👦'}
+        </div>;
+      }
+    })()}
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-1">
         {badgeLabel && (

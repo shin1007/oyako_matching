@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 interface ProfileCardProps {
@@ -6,6 +9,8 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ userRole, profile }: ProfileCardProps) {
+  // プレビュー拡大用モーダル
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   return (
     <div className={`rounded-lg ${userRole === 'child' ? 'bg-child-100 border-2 border-child-200' : 'bg-parent-100 border-2 border-parent-200'} p-6 shadow`}>
       <div className="flex items-center justify-between mb-4">
@@ -27,11 +32,29 @@ export function ProfileCard({ userRole, profile }: ProfileCardProps) {
           {/* Profile Image */}
           <div className="flex justify-center">
             {profile.profile_image_url ? (
-              <img
-                src={profile.profile_image_url}
-                alt="プロフィール画像"
-                className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
-              />
+              <>
+                <img
+                  src={profile.profile_image_url}
+                  alt="プロフィール画像"
+                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 cursor-pointer"
+                  onClick={() => setShowPreviewModal(true)}
+                />
+                {showPreviewModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowPreviewModal(false)}>
+                    <div className="bg-white rounded-lg p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                      <img
+                        src={profile.profile_image_url}
+                        alt="拡大プロフィール画像"
+                        className="max-w-full max-h-[80vh] rounded-lg border-2 border-gray-200"
+                      />
+                      <button
+                        className="mt-4 px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                        onClick={() => setShowPreviewModal(false)}
+                      >閉じる</button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className={`w-24 h-24 rounded-full ${userRole === 'child' ? 'bg-gradient-to-br from-child-400 to-child-600' : 'bg-gradient-to-br from-parent-400 to-parent-600'} flex items-center justify-center text-white text-3xl font-bold`}>
                 {(profile.last_name_kanji?.charAt(0) || profile.first_name_kanji?.charAt(0)) ? 
