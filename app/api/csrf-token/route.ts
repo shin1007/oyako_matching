@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateCsrfToken, CSRF_COOKIE_NAME } from '@/lib/utils/csrf';
+import { createCsrfSecretAndToken, CSRF_SECRET_COOKIE_NAME } from '@/lib/utils/csrf';
 
 export async function GET(req: NextRequest) {
-  // 新しいCSRFトークンを生成
-  const token = generateCsrfToken();
+  // 新しいCSRF SecretとTokenを生成
+  const { secret, token } = createCsrfSecretAndToken();
   // httpOnly, secure属性付きでCookieにセット
   const res = NextResponse.json({ csrfToken: token });
-  res.cookies.set(CSRF_COOKIE_NAME, token, {
+  res.cookies.set(CSRF_SECRET_COOKIE_NAME, secret, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
