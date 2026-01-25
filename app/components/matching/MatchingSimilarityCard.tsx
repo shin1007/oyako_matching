@@ -105,7 +105,6 @@ export function MatchingSimilarityCard({
       const myAge = profile?.birth_date ? calculateAge(profile.birth_date) : null;
       const myRole = profile?.role;
       if (myRole === 'child' && myAge !== null && myAge < 18) {
-        setPendingMatchInfo({ userId: match.userId, score });
         setShowParentApprovalModal(true);
       } else {
         setPendingMatchInfo({ userId: match.userId, score });
@@ -153,7 +152,8 @@ export function MatchingSimilarityCard({
           open={showParentApprovalModal}
           onApprove={() => {
             setShowParentApprovalModal(false);
-            setPendingMatchInfo(null);
+            // ここでpendingMatchInfoを再セットし、useEffectで申請処理を実行
+            setPendingMatchInfo({ userId: match.userId, score });
           }}
           onCancel={() => {
             setShowParentApprovalModal(false);
