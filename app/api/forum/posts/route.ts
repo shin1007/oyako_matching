@@ -5,6 +5,8 @@ import { moderateContent } from '@/lib/openai';
 import { checkRateLimit, recordRateLimitAction, POST_RATE_LIMITS } from '@/lib/rate-limit';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
+
+import { writeAuditLog } from '@/lib/audit-log';
 import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function GET(request: NextRequest) {
@@ -13,7 +15,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const categoryId = searchParams.get('category_id');
     const userType = searchParams.get('userType'); // 'parent' or 'child'
-    console.log('API userType param:', userType);
     const page = parseInt(searchParams.get('page') || '1');
     const perPage = 20;
     const offset = (page - 1) * perPage;
@@ -36,20 +37,27 @@ export async function GET(request: NextRequest) {
       postsQuery = postsQuery.eq('user_type', userType);
     }
 
-    console.log('postsQuery params:', {
-      moderation_status: 'approved',
-      user_type: userType,
-      category_id: categoryId
-    });
     const { data: postsData, error: postsError, count } = await postsQuery;
-    console.log('postsData:', postsData);
     if (postsError) {
-      console.error('postsError:', postsError);
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_post_view',
+        detail: 'Failed to fetch posts',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { error: postsError.message },
+      });
       throw postsError;
     }
 
     // 投稿がない場合は空の結果を返す
     if (!postsData || postsData.length === 0) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_post_view',
+        detail: 'No posts found',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { page, perPage, categoryId, userType },
+      });
       return NextResponse.json({
         posts: [],
         pagination: {
@@ -61,6 +69,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_post_view',
+      detail: 'Fetched posts',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { page, perPage, categoryId, userType },
+    });
     // 投稿がある場合はデータを返す
     return NextResponse.json({
       posts: postsData,
@@ -72,7 +87,13 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error: any) {
-    console.error('Error fetching posts:', error);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_post_view',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: error?.message },
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to fetch posts' },
       { status: 500 }

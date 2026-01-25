@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+import { writeAuditLog } from '@/lib/audit-log';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -41,7 +43,14 @@ export async function GET(
 
     const { data: { user } } = await supabase.auth.getUser();
 
+
     if (!user) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'message_view',
+        detail: 'Unauthorized',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -56,17 +65,41 @@ export async function GET(
 
     console.log('[Messages API] Match result:', match, 'error:', matchError);
 
+
     if (matchError || !match) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'message_view',
+        detail: 'Match not found',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { matchId },
+      });
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
 
     // ユーザーがこのマッチに関与しているか確認
+
     if (match.parent_id !== user.id && match.child_id !== user.id) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'message_view',
+        detail: 'Forbidden',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { matchId },
+      });
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // マッチが承認済みまたはブロック状態ならメッセージ一覧を表示可能
+
     if (match.status !== 'accepted' && match.status !== 'blocked') {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'message_view',
+        detail: 'Match is not accepted or blocked',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { matchId },
+      });
       return NextResponse.json(
         { error: 'Match is not accepted or blocked' },
         { status: 400 }
@@ -140,6 +173,13 @@ export async function GET(
     const total = totalCount ?? 0;
     const hasMore = offset + limit < total;
 
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'message_view',
+      detail: 'Fetched messages',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { matchId, limit, offset },
+    });
     return NextResponse.json(
       {
         match: {
@@ -165,6 +205,13 @@ export async function GET(
     );
   } catch (error: any) {
     console.error('Failed to fetch match details:', error);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'message_view',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: error?.message },
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to fetch match details' },
       { status: 500 }

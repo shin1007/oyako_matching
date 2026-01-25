@@ -3,11 +3,19 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
+import { writeAuditLog } from '@/lib/audit-log';
+
 export async function POST(req: NextRequest) {
   // CSRFトークン検証
   const secret = getCsrfSecretFromCookie(req);
   const token = getCsrfTokenFromHeader(req);
   if (!verifyCsrfToken(secret, token)) {
+    await writeAuditLog({
+      userId: null,
+      eventType: 'matching_cancel',
+      detail: 'CSRF token invalid',
+      ip: req.headers.get('x-forwarded-for') || 'unknown',
+    });
     return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
   }
   const supabase = await createClient();
@@ -17,6 +25,12 @@ export async function POST(req: NextRequest) {
   const { data, error: authError } = await supabase.auth.getUser();
   const user = data?.user;
   if (!user) {
+    await writeAuditLog({
+      userId: null,
+      eventType: 'matching_cancel',
+      detail: 'Unauthorized',
+      ip: req.headers.get('x-forwarded-for') || 'unknown',
+    });
     return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
   }
 
@@ -48,8 +62,23 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('ブロック処理エラー:', error);
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'matching_cancel',
+      detail: 'Block failed',
+      ip: req.headers.get('x-forwarded-for') || 'unknown',
+      meta: { targetUserId },
+    });
     return NextResponse.json({ error: 'ブロック処理に失敗しました', details: error.message || error }, { status: 500 });
   }
+
+  await writeAuditLog({
+    userId: user.id,
+    eventType: 'matching_cancel',
+    detail: 'User blocked',
+    ip: req.headers.get('x-forwarded-for') || 'unknown',
+    meta: { targetUserId },
+  });
 
   return NextResponse.json({ success: true });
 }

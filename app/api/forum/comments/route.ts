@@ -4,12 +4,21 @@ import { moderateContent } from '@/lib/openai';
 import { checkRateLimit, recordRateLimitAction, COMMENT_RATE_LIMITS } from '@/lib/rate-limit';
 import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 
+import { writeAuditLog } from '@/lib/audit-log';
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+
     if (!user) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_comment_create',
+        detail: 'Unauthorized',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -20,7 +29,14 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
+
     if (userData?.role !== 'parent' && userData?.role !== 'child') {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: 'Only parents or children can create comments',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json(
         { error: 'Only parents or children can create comments' },
         { status: 403 }
@@ -32,7 +48,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { post_id, content } = body;
 
+
     if (!post_id || !content) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: 'Post ID and content are required',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json(
         { error: 'Post ID and content are required' },
         { status: 400 }
@@ -46,14 +69,30 @@ export async function POST(request: NextRequest) {
       .eq('id', post_id)
       .single();
 
+
     if (postError || !post) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: 'Post not found',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { post_id },
+      });
       return NextResponse.json(
         { error: 'Post not found' },
         { status: 404 }
       );
     }
 
+
     if (post.user_type !== userType) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: `Only ${post.user_type}s can comment on this post`,
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { post_id },
+      });
       return NextResponse.json(
         { error: `Only ${post.user_type}s can comment on this post` },
         { status: 403 }
@@ -69,7 +108,15 @@ export async function POST(request: NextRequest) {
       post_id
     );
 
+
     if (!rateLimitResult.allowed) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: 'Rate limit exceeded',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { post_id },
+      });
       return NextResponse.json(
         { 
           error: rateLimitResult.message,
@@ -81,7 +128,15 @@ export async function POST(request: NextRequest) {
 
     // Moderate content
     const moderation = await moderateContent(content);
+
     if (moderation.flagged) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: 'Moderation flagged',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { post_id },
+      });
       return NextResponse.json(
         { error: moderation.message || '不適切な内容が含まれています' },
         { status: 400 }
@@ -99,7 +154,17 @@ export async function POST(request: NextRequest) {
       .select('*')
       .single();
 
-    if (error) throw error;
+
+    if (error) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_comment_create',
+        detail: 'Failed to create comment',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { post_id, error: error.message },
+      });
+      throw error;
+    }
 
     // Record rate limit action
     await recordRateLimitAction(supabase, user.id, 'comment', post_id);
@@ -138,9 +203,23 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
       event_timestamp: new Date().toISOString(),
     });
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'forum_comment_create',
+      detail: 'Comment created',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { post_id },
+    });
     return NextResponse.json({ comment: enrichedComment }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating comment:', error);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_comment_create',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: error?.message },
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to create comment' },
       { status: 500 }

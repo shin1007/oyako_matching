@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+import { writeAuditLog } from '@/lib/audit-log';
+
 // デフォルトのページネーション設定
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
@@ -14,7 +16,14 @@ export async function GET(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
+
     if (!user) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'message_view',
+        detail: 'Unauthorized',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -38,9 +47,27 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (matchesError) throw matchesError;
+
+    if (matchesError) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'message_view',
+        detail: 'Failed to fetch matches',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { error: matchesError.message },
+      });
+      throw matchesError;
+    }
+
 
     if (!matchesData || matchesData.length === 0) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'message_view',
+        detail: 'No matches found',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { page, limit },
+      });
       return NextResponse.json({ 
         matches: [],
         pagination: {
@@ -230,7 +257,7 @@ export async function GET(request: NextRequest) {
       }
 
       // 子ども情報を取得
-      let targetPeople = [];
+      let targetPeople: any[] = [];
       if (searchingChildren && searchingChildren.length > 0) {
         // そのユーザーの子ども情報をすべて取得
         targetPeople = searchingChildren
@@ -276,6 +303,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'message_view',
+      detail: 'Fetched matches',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { page, limit },
+    });
     return NextResponse.json({ 
       matches: matchesWithProfiles,
       pagination: {
@@ -289,6 +323,13 @@ export async function GET(request: NextRequest) {
       console.log('[Messages API] matchesWithProfiles:', matchesWithProfiles);
   } catch (error: any) {
     console.error('Failed to fetch matches:', error);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'message_view',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: error?.message },
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to fetch matches' },
       { status: 500 }
