@@ -15,6 +15,8 @@ interface ImageUploadProps {
 
 export default function ImageUpload({ currentImageUrl, onImageSelect, onError, onUploadComplete, userRole }: ImageUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  // プレビュー拡大用モーダル
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
     width: 90,
@@ -152,7 +154,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
         options
       );
 
-      onImageSelect(compressedFile);
+      onImageSelect?.(compressedFile);
 
       // 即座にアップロード処理を実行
       await uploadImage(compressedFile);
@@ -173,8 +175,7 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
   const uploadImage = async (file: File) => {
     try {
       // Supabase client の取得
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
+      const { supabase } = await import('@/lib/supabase/client');
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('ユーザーが見つかりません');
@@ -238,11 +239,29 @@ export default function ImageUpload({ currentImageUrl, onImageSelect, onError, o
       {/* 現在の画像またはプレビュー */}
       <div className="flex justify-center">
         {currentImageUrl ? (
-          <img
-            src={currentImageUrl}
-            alt="プロフィール画像"
-            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
-          />
+          <>
+            <img
+              src={currentImageUrl}
+              alt="プロフィール画像"
+              className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 cursor-pointer"
+              onClick={() => setShowPreviewModal(true)}
+            />
+            {showPreviewModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowPreviewModal(false)}>
+                <div className="bg-white rounded-lg p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                  <img
+                    src={currentImageUrl}
+                    alt="拡大プロフィール画像"
+                    className="max-w-full max-h-[80vh] rounded-lg border-2 border-gray-200"
+                  />
+                  <button
+                    className="mt-4 px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                    onClick={() => setShowPreviewModal(false)}
+                  >閉じる</button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className={`w-32 h-32 rounded-full ${bgGradient} flex items-center justify-center text-white text-3xl font-bold`}>
             <span className="text-5xl">👤</span>

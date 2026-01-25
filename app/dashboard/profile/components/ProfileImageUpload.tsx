@@ -17,6 +17,8 @@ interface ProfileImageUploadProps {
 export const ProfileImageUpload = ({
   profile, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading
 }: ProfileImageUploadProps) => {
+  // プレビュー拡大用モーダル
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   // aspect=1（正方形）で初期化（aspectはpropsで指定するためCrop型には含めない）
   const [crop, setCrop] = useState<Crop>({ unit: '%', x: 10, y: 10, width: 80, height: 80 }); // 初期値は仮
@@ -134,11 +136,29 @@ export const ProfileImageUpload = ({
       {/* 現在の画像またはプレビュー */}
       <div className="flex justify-center">
         {profile.profileImageUrl ? (
-          <img
-            src={profile.profileImageUrl}
-            alt="プロフィール画像"
-            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
-          />
+          <>
+            <img
+              src={profile.profileImageUrl}
+              alt="プロフィール画像"
+              className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 cursor-pointer"
+              onClick={() => setShowPreviewModal(true)}
+            />
+            {showPreviewModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowPreviewModal(false)}>
+                <div className="bg-white rounded-lg p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                  <img
+                    src={profile.profileImageUrl}
+                    alt="拡大プロフィール画像"
+                    className="max-w-full max-h-[80vh] rounded-lg border-2 border-gray-200"
+                  />
+                  <button
+                    className="mt-4 px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                    onClick={() => setShowPreviewModal(false)}
+                  >閉じる</button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-32 h-32 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-3xl font-bold">
             <span className="text-5xl">👤</span>
