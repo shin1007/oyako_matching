@@ -1,17 +1,13 @@
-import { randomBytes, timingSafeEqual } from 'crypto';
+
+import csrf from 'csrf';
 import { NextRequest } from 'next/server';
 
-const CSRF_TOKEN_LENGTH = 32;
-const CSRF_COOKIE_NAME = 'csrf_token';
+const tokens = new csrf();
+export const CSRF_SECRET_COOKIE_NAME = 'csrfSecret';
 
-// トークン生成
-export function generateCsrfToken(): string {
-  return randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
-}
-
-// CookieからCSRFトークンを取得
-export function getCsrfTokenFromCookie(req: NextRequest): string | null {
-  const cookie = req.cookies.get(CSRF_COOKIE_NAME);
+// CookieからCSRF Secretを取得
+export function getCsrfSecretFromCookie(req: NextRequest): string | null {
+  const cookie = req.cookies.get(CSRF_SECRET_COOKIE_NAME);
   return cookie?.value || null;
 }
 
@@ -21,13 +17,18 @@ export function getCsrfTokenFromHeader(req: NextRequest): string | null {
 }
 
 // トークン検証
-export function verifyCsrfToken(cookieToken: string | null, headerToken: string | null): boolean {
-  if (!cookieToken || !headerToken) return false;
+export function verifyCsrfToken(secret: string | null, token: string | null): boolean {
+  if (!secret || !token) return false;
   try {
-    return timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken));
+    return tokens.verify(secret, token);
   } catch {
     return false;
   }
 }
 
-export { CSRF_COOKIE_NAME };
+// 新しいCSRF SecretとTokenを生成
+export function createCsrfSecretAndToken(): { secret: string; token: string } {
+  const secret = tokens.secretSync();
+  const token = tokens.create(secret);
+  return { secret, token };
+}

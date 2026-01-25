@@ -2,16 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   // CSRFトークン検証
-  const cookieToken = getCsrfTokenFromCookie(request);
-  const headerToken = getCsrfTokenFromHeader(request);
-  if (!verifyCsrfToken(cookieToken, headerToken)) {
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
     return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
   }
   try {
