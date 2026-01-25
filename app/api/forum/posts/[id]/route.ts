@@ -14,8 +14,7 @@ export async function GET(
 
     console.log('[POST DETAIL] Fetching post:', id);
 
-    // Increment view count
-    await supabase.rpc('increment_post_view_count', { post_id: id });
+    // ビュー数インクリメントはPOST APIに分離
 
     // Fetch post with basic info
     const { data: post, error: postError } = await supabase
@@ -140,7 +139,7 @@ export async function PATCH(
     }
 
     // 監査ログ記録
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null;
     const userAgent = request.headers.get('user-agent') || null;
     await logAuditEventServer({
       user_id: user.id,
@@ -238,7 +237,7 @@ export async function DELETE(
     }
 
     // 削除前に内容を記録
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null;
     const userAgent = request.headers.get('user-agent') || null;
     await logAuditEventServer({
       user_id: user.id,

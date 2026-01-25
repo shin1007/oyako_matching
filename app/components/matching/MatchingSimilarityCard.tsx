@@ -5,9 +5,10 @@ import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
 import { ParentApprovalModal } from '@/app/components/matching/ParentApprovalModal';
 
 
+
 import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface MatchingSimilarityCardProps {
   label: string;
@@ -68,6 +69,23 @@ export const MatchingSimilarityCard = (props: MatchingSimilarityCardProps) => {
   const parentPercent = 'text-green-600';
   // --- マッチング申請・承認待ち・メッセージへ等のUI ---
   const router = useRouter();
+  // CSRFトークンの状態
+  const csrfTokenRef = useRef<string | null>(null);
+
+  // 初回マウント時にCSRFトークンを取得
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const res = await fetch('/api/csrf-token');
+        const data = await res.json();
+        csrfTokenRef.current = data.csrfToken;
+      } catch {
+        csrfTokenRef.current = null;
+      }
+    };
+    fetchCsrfToken();
+  }, []);
+
   // 親の同意モーダルからpendingMatchInfoがセットされた場合の自動申請処理
   useEffect(() => {
     if (!setCreating || !setPendingMatchInfo || !pendingMatchInfo || !router) return;
@@ -79,7 +97,8 @@ export const MatchingSimilarityCard = (props: MatchingSimilarityCardProps) => {
           body: {
             targetUserId: pendingMatchInfo.userId,
             similarityScore: pendingMatchInfo.score,
-          }
+          },
+          headers: csrfTokenRef.current ? { 'x-csrf-token': csrfTokenRef.current } : undefined,
         });
         if (!res.ok) {
           if (res.status === 409) {

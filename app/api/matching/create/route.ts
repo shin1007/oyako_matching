@@ -1,11 +1,19 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(request);
+  const headerToken = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const admin = createAdminClient();

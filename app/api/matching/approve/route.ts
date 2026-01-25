@@ -1,7 +1,15 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function POST(req: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(req);
+  const headerToken = getCsrfTokenFromHeader(req);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {

@@ -1,5 +1,7 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 /**
  * DELETE /api/auth/passkey/[id]
@@ -9,6 +11,12 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(request);
+  const headerToken = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const { id } = await context.params;

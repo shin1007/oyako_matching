@@ -1,7 +1,15 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+import { createClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
+
+export async function POST(req: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(req);
+  const headerToken = getCsrfTokenFromHeader(req);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   const supabase = await createClient();
   const { targetUserId } = await req.json();
 
@@ -15,7 +23,7 @@ export async function POST(req: Request) {
   // ブロック対象レコードのparent_id/child_id/blocked_byを事前にログ出力
   const { data: matchRecords, error: fetchError } = await supabase
     .from('matches')
-    .select('id, parent_id, child_id, blocked_by')
+    .select('id, parent_id, child_id, blocked_by, status')
     .or(
       `and(parent_id.eq.${user.id},child_id.eq.${targetUserId}),and(parent_id.eq.${targetUserId},child_id.eq.${user.id})`
     );

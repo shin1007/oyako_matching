@@ -1,9 +1,11 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
 import { checkRateLimit, recordRateLimitAction, POST_RATE_LIMITS } from '@/lib/rate-limit';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
 import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,6 +81,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(request);
+  const headerToken = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

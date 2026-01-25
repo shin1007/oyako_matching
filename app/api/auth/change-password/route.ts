@@ -1,6 +1,8 @@
+
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 /**
  * POST /api/auth/change-password
@@ -22,6 +24,12 @@ import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
  */
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(request);
+  const headerToken = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const body = await request.json();
     const { currentPassword, newPassword } = body;
@@ -60,7 +68,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // レートリミット（1時間に5回まで）
-    const userIp = request.headers.get('x-forwarded-for') || request.ip || 'unknown';
+    const userIp = request.headers.get('x-forwarded-for') || 'unknown';
     const rateLimitResult = await checkRateLimit(
       supabase,
       userIp,

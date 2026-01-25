@@ -1,14 +1,22 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPasskeyAuthentication } from '@/lib/webauthn/server';
 import { logAuditEvent } from '@/lib/utils/auditLogger';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/types';
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 /**
  * POST /api/auth/passkey/login-verify
  * Verify passkey authentication and sign in the user
  */
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(request);
+  const headerToken = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const body = await request.json();
@@ -19,7 +27,7 @@ export async function POST(request: NextRequest) {
       await logAuditEvent({
         event_type: 'login_passkey_failed',
         description: '認証情報が不足しています',
-        ip_address: request.ip ?? null,
+        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
         user_agent: request.headers.get('user-agent') ?? null,
       });
       return NextResponse.json(
@@ -36,7 +44,7 @@ export async function POST(request: NextRequest) {
       await logAuditEvent({
         event_type: 'login_passkey_failed',
         description: 'チャレンジが無効です',
-        ip_address: request.ip ?? null,
+        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
         user_agent: request.headers.get('user-agent') ?? null,
       });
       return NextResponse.json(
@@ -62,7 +70,7 @@ export async function POST(request: NextRequest) {
       await logAuditEvent({
         event_type: 'login_passkey_failed',
         description: 'パスキーが見つかりません',
-        ip_address: request.ip ?? null,
+        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
         user_agent: request.headers.get('user-agent') ?? null,
       });
       return NextResponse.json(
@@ -86,7 +94,7 @@ export async function POST(request: NextRequest) {
         target_table: 'users',
         target_id: passkey.user_id,
         description: 'パスキーの検証に失敗しました',
-        ip_address: request.ip ?? null,
+        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
         user_agent: request.headers.get('user-agent') ?? null,
       });
       return NextResponse.json(
@@ -119,7 +127,7 @@ export async function POST(request: NextRequest) {
         target_table: 'users',
         target_id: passkey.user_id,
         description: 'ユーザーが見つかりません',
-        ip_address: request.ip ?? null,
+        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
         user_agent: request.headers.get('user-agent') ?? null,
       });
       return NextResponse.json(
@@ -136,7 +144,7 @@ export async function POST(request: NextRequest) {
       target_table: 'users',
       target_id: passkey.user_id,
       description: 'パスキーによるログイン成功',
-      ip_address: request.ip ?? null,
+      ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
       user_agent: request.headers.get('user-agent') ?? null,
     });
     // Currently, this endpoint only verifies the passkey but doesn't create a Supabase session

@@ -1,8 +1,16 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { ReportReason, ReportContentType } from '@/types/database';
+
+import { getCsrfTokenFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const cookieToken = getCsrfTokenFromCookie(request);
+  const headerToken = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -18,9 +26,9 @@ export async function POST(request: NextRequest) {
       report_reason, 
       report_details 
     }: {
-      reported_content_type: ReportContentType;
+      reported_content_type: string;
       reported_content_id: string;
-      report_reason: ReportReason;
+      report_reason: string;
       report_details?: string;
     } = body;
 
