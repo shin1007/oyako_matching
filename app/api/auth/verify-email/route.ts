@@ -1,3 +1,5 @@
+
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -360,16 +362,16 @@ async function handleFallbackVerification(requestUrl: URL): Promise<NextResponse
   );
 }
 
-export async function GET(request: NextRequest) {
-  // NextRequestをグローバルに一時保存（監査ログ用）
-  (globalThis as any).currentRequest = request;
+export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const requestUrl = new URL(request.url);
-    // デバッグモード時のみクエリパラメータをログ出力（機密値はマスク）
-    const allParams: Record<string, string | null> = {};
-    requestUrl.searchParams.forEach((value, key) => {
-      allParams[key] = value;
-    });
+    const allParams = Object.fromEntries(requestUrl.searchParams.entries());
     if (process.env.DEBUG_SHOW_SENSITIVE_DATA === 'true') {
       console.log('[VerifyEmail] All query parameters:', maskSensitive(allParams));
     }
@@ -414,3 +416,4 @@ export async function GET(request: NextRequest) {
     delete (globalThis as any).currentRequest;
   }
 }
+

@@ -1,3 +1,5 @@
+
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -6,26 +8,28 @@ const RATE_LIMIT_ATTEMPTS = 3;
 const RATE_LIMIT_WINDOW_HOURS = 1;
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
-    
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
     if (authError || !user) {
       return NextResponse.json(
         { error: '認証が必要です' },
         { status: 401 }
       );
     }
-
     // Check if email is already verified
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('email_verified_at')
       .eq('id', user.id)
       .single();
-
     if (userError) {
       console.error('Error fetching user data:', userError);
       return NextResponse.json(
@@ -33,7 +37,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
     if (userData?.email_verified_at) {
       return NextResponse.json(
         { error: 'メールアドレスは既に確認済みです' },
