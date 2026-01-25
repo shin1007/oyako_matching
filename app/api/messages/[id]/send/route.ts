@@ -63,22 +63,27 @@ export async function POST(
     }
 
     // 監査ログ記録
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
-    const userAgent = request.headers.get('user-agent') || null;
     const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    const { extractAuditMeta } = await import('@/lib/utils/extractAuditMeta');
     await logAuditEventServer({
       user_id: user.id,
       event_type: 'message_send',
       target_table: 'messages',
       target_id: message.id,
       description: `Message sent: ${content.trim()}`,
-      ip_address: ip,
-      user_agent: userAgent,
+      ...extractAuditMeta(request),
       event_timestamp: new Date().toISOString(),
     });
     return NextResponse.json({ message }, { status: 201 });
   } catch (error: any) {
     console.error('Failed to send message:', error);
+    const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
+    const { extractAuditMeta } = await import('@/lib/utils/extractAuditMeta');
+    await logAuditEventServer({
+      event_type: 'message_send_failed',
+      description: `メッセージ送信失敗: ${error instanceof Error ? error.message : String(error)}`,
+      ...extractAuditMeta(request),
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to send message' },
       { status: 500 }

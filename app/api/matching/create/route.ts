@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,13 +107,17 @@ export async function POST(request: NextRequest) {
       target_table: 'matches',
       target_id: newMatch?.id,
       description: 'マッチ作成',
-      ip_address: request.ip ?? null,
-      user_agent: request.headers.get('user-agent') ?? null,
+      ...extractAuditMeta(request),
     });
 
     return NextResponse.json({ match: newMatch }, { status: 201 });
   } catch (error: any) {
     console.error('Match creation error:', error);
+    await logAuditEventServer({
+      event_type: 'match_create_failed',
+      description: `マッチ作成失敗: ${error instanceof Error ? error.message : String(error)}`,
+      ...extractAuditMeta(request),
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to create match' },
       { status: 500 }

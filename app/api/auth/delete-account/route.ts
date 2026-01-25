@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
 
 /**
@@ -10,6 +11,7 @@ import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
  * Requires authentication - only logged-in users can delete their own account
  */
 export async function POST() {
+  // NextRequestがないためIP/UAはuserIdのみで記録する
   try {
     // Authenticate user using regular client
     const supabase = await createClient();
@@ -137,9 +139,15 @@ export async function POST() {
         target_table: 'users',
         target_id: userId,
         description: 'アカウント削除',
+        ...extractAuditMeta(),
       });
     } catch (deleteError) {
       console.error('Failed to delete user data:', deleteError);
+      await logAuditEventServer({
+        event_type: 'delete_account_failed',
+        description: `ユーザーデータ削除失敗: ${deleteError instanceof Error ? deleteError.message : String(deleteError)}`,
+        ...extractAuditMeta(),
+      });
       throw new Error(
         deleteError instanceof Error
           ? deleteError.message
@@ -148,6 +156,11 @@ export async function POST() {
     }
   } catch (error) {
     console.error('Delete account error:', error);
+    await logAuditEventServer({
+      event_type: 'delete_account_failed',
+      description: `アカウント削除API失敗: ${error instanceof Error ? error.message : String(error)}`,
+      ...extractAuditMeta(),
+    });
     return NextResponse.json(
       {
         error:

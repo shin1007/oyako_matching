@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
           target_table: 'subscriptions',
           target_id: subscription.id,
           description: `サブスクリプション${event.type === 'customer.subscription.created' ? '作成' : '更新'}`,
+          ...extractAuditMeta(request),
         });
         break;
       }
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
           target_table: 'subscriptions',
           target_id: subscription.id,
           description: 'サブスクリプション削除',
+          ...extractAuditMeta(request),
         });
         break;
       }
@@ -99,6 +102,7 @@ export async function POST(request: NextRequest) {
             target_table: 'subscriptions',
             target_id: subscriptionId,
             description: 'サブスクリプション支払い失敗',
+            ...extractAuditMeta(request),
           });
         }
         break;
@@ -108,6 +112,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error: any) {
     console.error('Webhook handling error:', error);
+    await logAuditEventServer({
+      event_type: 'stripe_webhook_failed',
+      description: `Stripe webhook処理失敗: ${error instanceof Error ? error.message : String(error)}`,
+      ...extractAuditMeta(request),
+    });
     return NextResponse.json(
       { error: error.message || 'Webhook handler failed' },
       { status: 500 }

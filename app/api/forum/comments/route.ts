@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
 import { checkRateLimit, recordRateLimitAction, COMMENT_RATE_LIMITS } from '@/lib/rate-limit';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
 
 export async function POST(request: NextRequest) {
   try {
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 監査ログ記録
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null;
     const userAgent = request.headers.get('user-agent') || null;
     const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
     await logAuditEventServer({
