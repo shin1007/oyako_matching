@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useState } from 'react';
-import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import imageCompression from 'browser-image-compression';
 
@@ -18,7 +18,8 @@ export const ProfileImageUpload = ({
   profile, setProfileImageUrl, selectedImageFile, setSelectedImageFile, loading
 }: ProfileImageUploadProps) => {
   const [showCropper, setShowCropper] = useState(false);
-  const [crop, setCrop] = useState<Crop>({ unit: '%', x: 10, y: 10, width: 80, height: 80 }); // aspectはReactCropのpropsで指定
+  // aspect=1（正方形）で初期化（aspectはpropsで指定するためCrop型には含めない）
+  const [crop, setCrop] = useState<Crop>({ unit: '%', x: 10, y: 10, width: 80, height: 80 }); // 初期値は仮
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -51,6 +52,23 @@ export const ProfileImageUpload = ({
   // クロップ画像のロード
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     imgRef.current = e.currentTarget;
+    // 画像サイズ取得
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    // 正方形cropを中央に初期化
+    const crop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: '%',
+          width: 80,
+        },
+        1,
+        naturalWidth,
+        naturalHeight
+      ),
+      naturalWidth,
+      naturalHeight
+    );
+    setCrop(crop);
   };
 
   // クロップ確定
@@ -175,7 +193,7 @@ export const ProfileImageUpload = ({
             <div className="mb-4 flex-1 overflow-auto" style={{ minHeight: 0 }}>
               <ReactCrop
                 crop={crop}
-                onChange={c => setCrop(c)}
+                onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={c => setCompletedCrop(c)}
                 aspect={1}
                 circularCrop={false}
