@@ -6,11 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRoleTheme } from '@/contexts/RoleThemeContext';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
 import { ScoreExplanation } from '../../components/matching/ScoreExplanation';
-import { PREFECTURES, COMMON_MUNICIPALITIES } from '@/lib/constants/prefectures';
-import ImageUpload from '@/app/components/ImageUpload';
-import { TargetPhotoManager } from './components/TargetPhotoManager';
 import { TargetPersonInfoHeader } from './components/TargetPersonInfoHeader';
 import { ProfileBasicForm } from './components/ProfileBasicForm';
 import { TargetPersonForm } from './components/TargetPersonForm';
@@ -40,7 +36,8 @@ interface SearchingChild {
 
 export default function ProfilePage() {
   // ScoreExplanationは内部でモーダル状態を持つので状態管理不要
-  const { userRole, setUserRole } = useRoleTheme();
+  const { userRole: contextUserRole, setUserRole } = useRoleTheme();
+  const userRole: 'parent' | 'child' | null = contextUserRole;
   // 親のプロフィール
   const [lastNameKanji, setLastNameKanji] = useState('');
   const [lastNameHiragana, setLastNameHiragana] = useState('');
@@ -55,7 +52,20 @@ export default function ProfilePage() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
-  // 子ども/親情報
+  const [userId, setUserId] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const tempImagePathRef = useRef<string | null>(null);
+  const hasSavedRef = useRef(false);
+  const router = useRouter();
+  const supabase = createClient();
+
+    // 子ども/親情報
   const [searchingChildren, setSearchingChildren] = useState<SearchingChild[]>([
     { 
       birthDate: '', 
@@ -71,19 +81,6 @@ export default function ProfilePage() {
     }
   ]);
   // userRole, setUserRoleは上で宣言済み
-  const [userId, setUserId] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const tempImagePathRef = useRef<string | null>(null);
-  const hasSavedRef = useRef(false);
-  const router = useRouter();
-  const supabase = createClient();
-
   useEffect(() => {
     checkAuth();
     loadProfile();
@@ -104,27 +101,53 @@ export default function ProfilePage() {
 
       setUserId(user.id);
 
-      // Load profile（roleも含む）
-      const { data, error } = await supabase
+      // usersテーブルからrole取得（最優先でセット）
+      let userRoleValue: 'parent' | 'child' | null = null;
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      if (userData && userData.role) {
+        userRoleValue = userData.role;
+        await setUserRole(userRoleValue); // ここで即時反映
+      }
+
+      // profilesテーブル取得
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      if (data) {
-        setUserRole(data.role as 'parent' | 'child');
-        setLastNameKanji((data as any).last_name_kanji || '');
-        setLastNameHiragana((data as any).last_name_hiragana || '');
-        setFirstNameKanji((data as any).first_name_kanji || '');
-        setFirstNameHiragana((data as any).first_name_hiragana || '');
-        setBirthDate(data.birth_date || '');
-        setBirthplacePrefecture((data as any).birthplace_prefecture || '');
-        setBirthplaceMunicipality((data as any).birthplace_municipality || '');
-        setBio(data.bio || '');
-        setParentGender((data as any).gender || '');
-        setForumDisplayName((data as any).forum_display_name || '');
-        setProfileImageUrl(data.profile_image_url || null);
-        // プロフィール読み込み時点で保存済みの画像を基準にする
+      if (!profileData) {
+        // profilesレコードがなければ新規作成（roleコピー）
+        if (userRoleValue) {
+          await supabase
+            .from('profiles')
+            .insert({ user_id: user.id, role: userRoleValue });
+        }
+      } else {
+        // 既存ならroleだけ更新
+        if (userRoleValue && profileData.role !== userRoleValue) {
+          await supabase
+            .from('profiles')
+            .update({ role: userRoleValue })
+            .eq('user_id', user.id);
+        }
+        // profilesテーブルのroleも反映
+        await setUserRole(profileData.role as 'parent' | 'child');
+        setLastNameKanji((profileData as any).last_name_kanji || '');
+        setLastNameHiragana((profileData as any).last_name_hiragana || '');
+        setFirstNameKanji((profileData as any).first_name_kanji || '');
+        setFirstNameHiragana((profileData as any).first_name_hiragana || '');
+        setBirthDate(profileData.birth_date || '');
+        setBirthplacePrefecture((profileData as any).birthplace_prefecture || '');
+        setBirthplaceMunicipality((profileData as any).birthplace_municipality || '');
+        setBio(profileData.bio || '');
+        setParentGender((profileData as any).gender || '');
+        setForumDisplayName((profileData as any).forum_display_name || '');
+        setProfileImageUrl(profileData.profile_image_url || null);
         tempImagePathRef.current = null;
         hasSavedRef.current = true;
       }
@@ -583,7 +606,7 @@ export default function ProfilePage() {
                   setParentGender(profile.gender as any || '');
                 }}
                 loading={loading}
-                userRole={userRole === 'parent' || userRole === 'child' ? userRole : undefined}
+                userRole={userRole || undefined}
               />
 
               <div className="border-t border-gray-200 pt-6">

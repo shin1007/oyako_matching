@@ -1,5 +1,6 @@
-import { apiRequest } from '@/lib/api/request';
+
 'use client';
+import { apiRequest } from '@/lib/api/request';
 
 import { useState, useEffect } from 'react';
 import { isValidEmail, isStrongPassword, isPasswordMatch } from '@/lib/validation/validators';
@@ -165,6 +166,15 @@ export default function RegisterForm() {
             target_table: 'users',
             target_id: data.user.id,
             description: '新規ユーザー登録'
+          }
+        });
+
+        // profilesテーブル初期化API呼び出し
+        await apiRequest('/api/auth/register_profile', {
+          method: 'POST',
+          body: {
+            userId: data.user.id,
+            role,
           }
         });
 

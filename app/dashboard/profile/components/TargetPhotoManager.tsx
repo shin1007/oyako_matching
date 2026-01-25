@@ -17,7 +17,7 @@ interface TargetPhotoManagerProps {
   photos: Photo[];
   setPhotos: (v: Photo[]) => void;
   loading: boolean;
-  userRole?: 'parent' | 'child' | undefined;
+  userRole?: 'parent' | 'child'; // undefinedは使わない
 }
 
 
@@ -155,7 +155,6 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
                         ? 'bg-parent-600 hover:bg-parent-700'
                         : 'bg-gray-400'
                 }`}
-                
               >
                 {uploading ? 'アップロード中...' : '+ 写真を追加'}
               </span>
