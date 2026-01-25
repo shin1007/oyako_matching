@@ -12,12 +12,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
   }
 
-  // matchesテーブルでstatusをblockedに更新
-  // parent_id/child_idの両方向で一致するレコードをブロック
-  // 自分がブロックしたことを記録するためblocked_byもセット
+  // ブロック対象レコードのparent_id/child_id/blocked_byを事前にログ出力
+  const { data: matchRecords, error: fetchError } = await supabase
+    .from('matches')
+    .select('id, parent_id, child_id, blocked_by')
+    .or(
+      `and(parent_id.eq.${user.id},child_id.eq.${targetUserId}),and(parent_id.eq.${targetUserId},child_id.eq.${user.id})`
+    );
+  if (fetchError) {
+    console.error('matches取得エラー:', fetchError);
+  } else {
+    console.log('ブロック対象matches:', matchRecords);
+  }
+
+  // 既存のstatusを保存し、previous_statusに格納してからblockedに
+  let currentStatus = null;
+  if (matchRecords && matchRecords.length > 0) {
+    currentStatus = matchRecords[0].status;
+  }
   const { error } = await supabase
     .from('matches')
-    .update({ status: 'blocked', blocked_by: user.id })
+    .update({ status: 'blocked', blocked_by: user.id, previous_status: currentStatus })
     .or(
       `and(parent_id.eq.${user.id},child_id.eq.${targetUserId}),and(parent_id.eq.${targetUserId},child_id.eq.${user.id})`
     )

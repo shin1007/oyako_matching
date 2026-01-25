@@ -252,6 +252,37 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .single();
     const matchDetails = await getMatchDetails(admin, user, userData, myTargetPeople);
+
+    // ★候補ごとにmatchesテーブルへpendingレコードをupsert
+    for (const candidate of matchDetails) {
+      const parentId = userData.role === 'parent' ? user.id : candidate.userId;
+      const childId = userData.role === 'parent' ? candidate.userId : user.id;
+      // 既存レコードを取得
+      const { data: existingMatch } = await supabase
+        .from('matches')
+        .select('status')
+        .eq('parent_id', parentId)
+        .eq('child_id', childId)
+        .maybeSingle();
+      // blocked状態のものはupsertしない、それ以外はpre_entryでupsert
+      if (existingMatch && existingMatch.status === 'blocked') {
+        continue;
+      }
+      const { data: upsertData, error: upsertError } = await supabase
+        .from('matches')
+        .upsert({
+          parent_id: parentId,
+          child_id: childId,
+          similarity_score: candidate.targetScores?.[0]?.totalScore || 0,
+          status: 'pre_entry',
+        }, { onConflict: ['parent_id', 'child_id'] });
+      if (upsertError) {
+        console.error('[matches upsert error]', upsertError);
+      } else {
+        console.log('[matches upsert result]', upsertData);
+      }
+    }
+
     const candidatesWithMatchStatus = await attachExistingMatchStatus(admin, user, userData, matchDetails);
     return NextResponse.json({ candidates: candidatesWithMatchStatus, userRole: userData.role, myTargetPeople, profile: myProfile });
   } catch (error: any) {

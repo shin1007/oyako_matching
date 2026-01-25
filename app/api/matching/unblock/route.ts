@@ -31,10 +31,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'ブロックを解除できるのはブロックした本人のみです' }, { status: 403 });
   }
 
-  // 解除処理（blocked_byもnullに戻す）
+
+  // 解除処理（previous_statusをstatusに戻し、previous_statusをnullに、blocked_byもnullに）
+  let newStatus = 'accepted';
+  if (matchRecords && matchRecords.length > 0 && matchRecords[0].previous_status) {
+    newStatus = matchRecords[0].previous_status;
+  }
   const { error } = await supabase
     .from('matches')
-    .update({ status: 'accepted', blocked_by: null })
+    .update({ status: newStatus, blocked_by: null, previous_status: null })
     .or(
       `and(parent_id.eq.${user.id},child_id.eq.${targetUserId}),and(parent_id.eq.${targetUserId},child_id.eq.${user.id})`
     )
