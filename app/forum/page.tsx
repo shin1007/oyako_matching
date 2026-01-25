@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAutoSignOut } from '@/app/components/matching/hooks/useAutoSignOut';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { apiRequest } from '@/lib/api/request';
 import Link from 'next/link';
 
@@ -45,7 +45,7 @@ export default function ForumPage() {
   const [error, setError] = useState('');
   const [isParent, setIsParent] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
 
   useEffect(() => {
     checkAuth();

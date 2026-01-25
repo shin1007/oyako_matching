@@ -5,12 +5,12 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export function useAutoSignOut(idleMinutes: number = 15) {
+  const router = useRouter();
   useEffect(() => {
-    const supabase = createClient();
-    const router = useRouter();
+    // supabaseはシングルトンとしてimport
     let timeoutId: NodeJS.Timeout;
 
     const resetTimer = () => {
@@ -31,5 +31,5 @@ export function useAutoSignOut(idleMinutes: number = 15) {
         window.removeEventListener(event, resetTimer);
       });
     };
-  }, [idleMinutes]);
+  }, [idleMinutes, router]);
 }

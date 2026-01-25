@@ -71,42 +71,62 @@ export async function checkRateLimit(
   postId?: string
 ): Promise<RateLimitResult> {
   try {
+    // userIdがUUIDかIPアドレスか判定（UUIDは36文字、ハイフン含む）
+    const isIpAddress = !/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(userId);
     // 各時間ウィンドウでチェック
     for (const config of configs) {
       const windowStart = new Date(Date.now() - config.windowSeconds * 1000);
-      
       // 時間ウィンドウ内のアクション数を取得
-      const query = supabase
-        .from('rate_limits')
-        .select('action_timestamp', { count: 'exact' })
-        .eq('user_id', userId)
-        .eq('action_type', actionType)
-        .gte('action_timestamp', windowStart.toISOString());
-      
+      let query;
+      if (isIpAddress) {
+        query = supabase
+          .from('rate_limits')
+          .select('action_timestamp', { count: 'exact' })
+          .eq('action_type', actionType)
+          .eq('ip_address', userId)
+          .gte('action_timestamp', windowStart.toISOString());
+      } else {
+        query = supabase
+          .from('rate_limits')
+          .select('action_timestamp', { count: 'exact' })
+          .eq('action_type', actionType)
+          .eq('user_id', userId)
+          .gte('action_timestamp', windowStart.toISOString());
+      }
       const { count, error } = await query;
-      
       if (error) {
         console.error('Rate limit check error:', error);
-        // データベースエラーの場合は制限を適用（セキュリティ優先）
-        // サービス障害時の悪用を防ぐため
         return {
           allowed: false,
           message: '現在、一時的にサービスが混み合っています。しばらくしてから再度お試しください。',
           retryAfter: new Date(Date.now() + FALLBACK_RETRY_AFTER_MS)
         };
       }
-      
       if (count !== null && count >= config.maxActions) {
         // 最も古いアクションのタイムスタンプを取得
-        const { data: oldestAction } = await supabase
-          .from('rate_limits')
-          .select('action_timestamp')
-          .eq('user_id', userId)
-          .eq('action_type', actionType)
-          .gte('action_timestamp', windowStart.toISOString())
-          .order('action_timestamp', { ascending: true })
-          .limit(1)
-          .single();
+        let oldestQuery;
+        if (isIpAddress) {
+          oldestQuery = supabase
+            .from('rate_limits')
+            .select('action_timestamp')
+            .eq('action_type', actionType)
+            .eq('ip_address', userId)
+            .gte('action_timestamp', windowStart.toISOString())
+            .order('action_timestamp', { ascending: true })
+            .limit(1)
+            .single();
+        } else {
+          oldestQuery = supabase
+            .from('rate_limits')
+            .select('action_timestamp')
+            .eq('action_type', actionType)
+            .eq('user_id', userId)
+            .gte('action_timestamp', windowStart.toISOString())
+            .order('action_timestamp', { ascending: true })
+            .limit(1)
+            .single();
+        }
+        const { data: oldestAction } = await oldestQuery;
         
         const retryAfter = oldestAction?.action_timestamp
           ? new Date(new Date(oldestAction.action_timestamp).getTime() + config.windowSeconds * 1000)
@@ -124,16 +144,29 @@ export async function checkRateLimit(
     
     // コメントの場合、同一投稿への連続コメントをチェック
     if (actionType === 'comment' && postId) {
-      const { data: lastComment, error } = await supabase
-        .from('rate_limits')
-        .select('action_timestamp')
-        .eq('user_id', userId)
-        .eq('action_type', 'comment')
-        .eq('post_id', postId)
-        .order('action_timestamp', { ascending: false })
-        .limit(1)
-        .single();
-      
+      let lastCommentQuery;
+      if (isIpAddress) {
+        lastCommentQuery = supabase
+          .from('rate_limits')
+          .select('action_timestamp')
+          .eq('action_type', 'comment')
+          .eq('post_id', postId)
+          .eq('ip_address', userId)
+          .order('action_timestamp', { ascending: false })
+          .limit(1)
+          .single();
+      } else {
+        lastCommentQuery = supabase
+          .from('rate_limits')
+          .select('action_timestamp')
+          .eq('action_type', 'comment')
+          .eq('post_id', postId)
+          .eq('user_id', userId)
+          .order('action_timestamp', { ascending: false })
+          .limit(1)
+          .single();
+      }
+      const { data: lastComment, error } = await lastCommentQuery;
       if (!error && lastComment) {
         const timeSinceLastComment = Date.now() - new Date(lastComment.action_timestamp).getTime();
         if (timeSinceLastComment < SAME_POST_COMMENT_INTERVAL_SECONDS * 1000) {
@@ -174,15 +207,22 @@ export async function recordRateLimitAction(
   postId?: string
 ): Promise<void> {
   try {
+    const isIpAddress = !/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(userId);
+    const insertObj: any = {
+      action_type: actionType,
+      post_id: postId || null,
+      action_timestamp: new Date().toISOString(),
+      user_id: null,
+      ip_address: null
+    };
+    if (isIpAddress) {
+      insertObj.ip_address = userId;
+    } else {
+      insertObj.user_id = userId;
+    }
     const { error } = await supabase
       .from('rate_limits')
-      .insert({
-        user_id: userId,
-        action_type: actionType,
-        post_id: postId || null,
-        action_timestamp: new Date().toISOString()
-      });
-    
+      .insert(insertObj);
     if (error) {
       console.error('Failed to record rate limit action:', error);
     }

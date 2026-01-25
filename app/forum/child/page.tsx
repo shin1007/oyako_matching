@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { apiRequest } from '@/lib/api/request';
 import Link from 'next/link';
 
@@ -43,7 +43,7 @@ export default function ChildForumPage() {
   const [error, setError] = useState('');
   const [isChild, setIsChild] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
 
   useEffect(() => {
     checkAuth();

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiRequest } from '@/lib/api/request';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import ReportModal from '@/app/components/forum/ReportModal';
 import type { ReportContentType } from '@/types/database';
@@ -66,7 +66,7 @@ export default function PostDetailPage() {
   const [reportContentPreview, setReportContentPreview] = useState('');
   const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
   const router = useRouter();
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
 
   useEffect(() => {
     checkAuth();

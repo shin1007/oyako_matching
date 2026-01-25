@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import imageCompression from 'browser-image-compression';
 
 interface Photo {
@@ -25,7 +25,7 @@ export const TargetPhotoManager: React.FC<TargetPhotoManagerProps> = ({ photos, 
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  // supabaseはシングルトンとしてimport
   const MAX_PHOTOS_PER_CHILD = 1;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
