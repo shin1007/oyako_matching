@@ -1,11 +1,19 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { ReportStatus } from '@/types/database';
+
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +36,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { status }: { status: ReportStatus } = body;
+    const { status }: { status: string } = body;
 
     if (!status) {
       return NextResponse.json(

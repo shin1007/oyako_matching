@@ -61,10 +61,12 @@ const FALLBACK_RETRY_AFTER_MS = 60000; // 1分
  * @param postId - コメントの場合、投稿ID（同一投稿への連続コメント防止用）
  * @returns レート制限結果
  */
+export type RateLimitActionType = 'post' | 'comment' | 'delete_account' | 'change_password' | 'reset_password_confirm' | 'reset_password_request' | 'login' | 'matching_search' | 'message_send' | 'forum_post' | 'forum_comment' | 'forum_report';
+
 export async function checkRateLimit(
   supabase: SupabaseClient,
   userId: string,
-  actionType: 'post' | 'comment',
+  actionType: RateLimitActionType,
   configs: RateLimitConfig[],
   postId?: string
 ): Promise<RateLimitResult> {
@@ -168,7 +170,7 @@ export async function checkRateLimit(
 export async function recordRateLimitAction(
   supabase: SupabaseClient,
   userId: string,
-  actionType: 'post' | 'comment',
+  actionType: RateLimitActionType,
   postId?: string
 ): Promise<void> {
   try {

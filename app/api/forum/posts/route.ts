@@ -1,8 +1,14 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { moderateContent } from '@/lib/openai';
 import { checkRateLimit, recordRateLimitAction, POST_RATE_LIMITS } from '@/lib/rate-limit';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
+
+import { writeAuditLog } from '@/lib/audit-log';
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
+import { rateLimit429 } from '@/lib/rate-limit429';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +16,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const categoryId = searchParams.get('category_id');
     const userType = searchParams.get('userType'); // 'parent' or 'child'
-    console.log('API userType param:', userType);
     const page = parseInt(searchParams.get('page') || '1');
     const perPage = 20;
     const offset = (page - 1) * perPage;
@@ -33,21 +38,28 @@ export async function GET(request: NextRequest) {
       postsQuery = postsQuery.eq('user_type', userType);
     }
 
-    console.log('postsQuery params:', {
-      moderation_status: 'approved',
-      user_type: userType,
-      category_id: categoryId
-    });
     const { data: postsData, error: postsError, count } = await postsQuery;
-    console.log('postsData:', postsData);
     if (postsError) {
-      console.error('postsError:', postsError);
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_post_view',
+        detail: 'Failed to fetch posts',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { error: postsError.message },
+      });
       throw postsError;
     }
 
     // 投稿がない場合は空の結果を返す
     if (!postsData || postsData.length === 0) {
-      return NextResponse.json({ 
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_post_view',
+        detail: 'No posts found',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { page, perPage, categoryId, userType },
+      });
+      return NextResponse.json({
         posts: [],
         pagination: {
           page,
@@ -58,86 +70,31 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 著者IDを取得してプロフィールをフェッチ
-    const authorIds = [...new Set(postsData.map(post => post.author_id))];
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('user_id, forum_display_name, last_name_kanji, first_name_kanji, profile_image_url')
-      .in('user_id', authorIds);
-    if (profilesError) {
-      console.error('profilesError:', profilesError);
-      throw profilesError;
-    }
-
-    // カテゴリIDを取得してカテゴリをフェッチ
-    const categoryIds = [...new Set(postsData.map(post => post.category_id).filter(Boolean))];
-    const { data: categories, error: categoriesError } = await supabase
-      .from('forum_categories')
-      .select('id, name, icon')
-      .in('id', categoryIds);
-    if (categoriesError) {
-      console.error('categoriesError:', categoriesError);
-      throw categoriesError;
-    }
-
-    // 各投稿のコメント数をフェッチ
-    const postIds = postsData.map(post => post.id);
-    const { data: commentCounts, error: commentsError } = await supabase
-      .from('forum_comments')
-      .select('post_id')
-      .in('post_id', postIds);
-    if (commentsError) {
-      console.error('commentsError:', commentsError);
-      throw commentsError;
-    }
-
-    // コメント数を集計
-    const commentCountMap = commentCounts?.reduce((acc, comment) => {
-      acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>) || {};
-
-    // プロフィールとカテゴリをマップに変換
-    const profileMap = profiles?.reduce((acc, profile) => {
-      // フォールバック: forum_display_nameがない場合はフルネームを使用
-      const displayName = profile.forum_display_name || 
-        `${profile.last_name_kanji || ''}${profile.first_name_kanji || '名無し'}`;
-      // role情報を取得
-      const userObj = authorIds.includes(profile.user_id)
-        ? postsData.find(p => p.author_id === profile.user_id)
-        : null;
-      acc[profile.user_id] = {
-        forum_display_name: displayName,
-        profile_image_url: profile.profile_image_url,
-        role: userObj?.user_type ?? null
-      };
-      return acc;
-    }, {} as Record<string, any>) || {};
-
-    const categoryMap = categories?.reduce((acc, category) => {
-      acc[category.id] = category;
-      return acc;
-    }, {} as Record<string, any>) || {};
-
-    // データを結合
-    const posts = postsData.map(post => ({
-      ...post,
-      author_profile: profileMap[post.author_id] || { forum_display_name: '名無し', profile_image_url: null, role: post.user_type },
-      category: categoryMap[post.category_id] || null,
-      comment_count: [{ count: commentCountMap[post.id] || 0 }]
-    }));
-
-    return NextResponse.json({ 
-      posts,
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_post_view',
+      detail: 'Fetched posts',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { page, perPage, categoryId, userType },
+    });
+    // 投稿がある場合はデータを返す
+    return NextResponse.json({
+      posts: postsData,
       pagination: {
         page,
         perPage,
         total: count || 0,
-        totalPages: Math.ceil((count || 0) / perPage)
+        totalPages: count ? Math.ceil(count / perPage) : 0
       }
     });
   } catch (error: any) {
-    console.error('Error fetching posts:', error);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_post_view',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: error?.message },
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to fetch posts' },
       { status: 500 }
@@ -146,10 +103,31 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+  // レートリミット（IPアドレス単位: 1分5回・1時間20回）
+  const ipRaw = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip');
+  const ip = typeof ipRaw === 'string' ? ipRaw : '';
+  const supabase = await createClient();
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    ip,
+    'forum_post',
+    [
+      { windowSeconds: 60, maxActions: 5 },
+      { windowSeconds: 3600, maxActions: 20 }
+    ]
+  );
+  if (!rateLimitResult.allowed) {
+    return rateLimit429(rateLimitResult.message, rateLimitResult.retryAfter?.toISOString());
+  }
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
 
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -181,23 +159,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check rate limit
-    const rateLimitResult = await checkRateLimit(
-      supabase,
-      user.id,
-      'post',
-      POST_RATE_LIMITS
-    );
-
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { 
-          error: rateLimitResult.message,
-          retryAfter: rateLimitResult.retryAfter?.toISOString()
-        },
-        { status: 429 }
-      );
-    }
+    // ...existing code...
 
     // Moderate content
     const moderation = await moderateContent(`${title} ${content}`);
@@ -227,7 +189,7 @@ export async function POST(request: NextRequest) {
     await recordRateLimitAction(supabase, user.id, 'post');
 
     // 監査ログ記録
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || null;
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null;
     const userAgent = request.headers.get('user-agent') || null;
     await logAuditEventServer({
       user_id: user.id,

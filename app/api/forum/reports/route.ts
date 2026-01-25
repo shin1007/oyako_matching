@@ -1,13 +1,55 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { ReportReason, ReportContentType } from '@/types/database';
+
+import { writeAuditLog } from '@/lib/audit-log';
+
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  // レートリミット（IPアドレス単位: 1分5回・1時間20回）
+  const ipRaw = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip');
+  const ip = typeof ipRaw === 'string' ? ipRaw : '';
+  const supabase = await createClient();
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    ip,
+    'forum_report',
+    [
+      { windowSeconds: 60, maxActions: 5 },
+      { windowSeconds: 3600, maxActions: 20 }
+    ]
+  );
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json({ error: rateLimitResult.message, retryAfter: rateLimitResult.retryAfter?.toISOString() }, { status: 429 });
+  }
+  await recordRateLimitAction(supabase, ip, 'forum_report');
+
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_report_create',
+      detail: 'CSRF token invalid',
+      ip,
+    });
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+
     if (!user) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_report_create',
+        detail: 'Unauthorized',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,13 +60,20 @@ export async function POST(request: NextRequest) {
       report_reason, 
       report_details 
     }: {
-      reported_content_type: ReportContentType;
+      reported_content_type: string;
       reported_content_id: string;
-      report_reason: ReportReason;
+      report_reason: string;
       report_details?: string;
     } = body;
 
+
     if (!reported_content_type || !reported_content_id || !report_reason) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_report_create',
+        detail: 'Missing required fields',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json(
         { error: '通報内容タイプ、ID、理由は必須です' },
         { status: 400 }
@@ -40,6 +89,13 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (postError || !post) {
+        await writeAuditLog({
+          userId: user.id,
+          eventType: 'forum_report_create',
+          detail: 'Post not found',
+          ip: request.headers.get('x-forwarded-for') || 'unknown',
+          meta: { reported_content_id },
+        });
         return NextResponse.json(
           { error: '投稿が見つかりません' },
           { status: 404 }
@@ -53,6 +109,13 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (commentError || !comment) {
+        await writeAuditLog({
+          userId: user.id,
+          eventType: 'forum_report_create',
+          detail: 'Comment not found',
+          ip: request.headers.get('x-forwarded-for') || 'unknown',
+          meta: { reported_content_id },
+        });
         return NextResponse.json(
           { error: 'コメントが見つかりません' },
           { status: 404 }
@@ -69,7 +132,15 @@ export async function POST(request: NextRequest) {
       .eq('reported_content_id', reported_content_id)
       .in('status', ['pending', 'reviewed']);
 
+
     if (existingReports && existingReports.length > 0) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_report_create',
+        detail: 'Already reported',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { reported_content_id },
+      });
       return NextResponse.json(
         { error: 'すでにこのコンテンツを通報しています' },
         { status: 400 }
@@ -90,12 +161,35 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_report_create',
+        detail: 'Failed to create report',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { reported_content_id, error: error.message },
+      });
+      throw error;
+    }
 
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'forum_report_create',
+      detail: 'Report created',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { reported_content_id },
+    });
     return NextResponse.json({ report }, { status: 201 });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Error creating report:', err);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_report_create',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: err?.message },
+    });
     return NextResponse.json(
       { error: err.message || 'Failed to create report' },
       { status: 500 }
@@ -109,6 +203,12 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'forum_report_view',
+        detail: 'Unauthorized',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -137,8 +237,24 @@ export async function GET(request: NextRequest) {
 
     const { data: reports, error, count } = await query;
 
-    if (error) throw error;
+    if (error) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'forum_report_view',
+        detail: 'Failed to fetch reports',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        meta: { error: error.message },
+      });
+      throw error;
+    }
 
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'forum_report_view',
+      detail: 'Fetched reports',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { page, perPage, status, contentType },
+    });
     return NextResponse.json({
       reports: reports || [],
       pagination: {
@@ -150,7 +266,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     const err = error as Error;
-    console.error('Error fetching reports:', err);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'forum_report_view',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: err?.message },
+    });
     return NextResponse.json(
       { error: err.message || 'Failed to fetch reports' },
       { status: 500 }

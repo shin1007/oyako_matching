@@ -1,5 +1,8 @@
+
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 /**
  * POST /api/auth/reset-password/request
@@ -19,6 +22,12 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const body = await request.json();
     const { email } = body;
@@ -42,10 +51,30 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    // レートリミット（1時間に3回まで）
+    const userIp = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      userIp,
+      'reset_password_request',
+      [
+        { windowSeconds: 3600, maxActions: 3 }
+      ]
+    );
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: rateLimitResult.message || 'リクエストが多すぎます。しばらくしてから再度お試しください。', retryAfter: rateLimitResult.retryAfter?.toISOString() },
+        { status: 429 }
+      );
+    }
+
     // パスワードリセットメールを送信
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password-confirm`,
     });
+
+    // レートリミットアクション記録
+    await recordRateLimitAction(supabase, userIp, 'reset_password_request');
 
     // 監査ログ記録
     const { logAuditEventServer } = await import('@/lib/utils/auditLoggerServer');
@@ -54,7 +83,7 @@ export async function POST(request: NextRequest) {
       target_table: 'users',
       target_id: email,
       description: 'パスワードリセットリクエスト',
-      ip_address: request.ip ?? null,
+      ip_address: request.headers.get('x-forwarded-for') ?? null,
       user_agent: request.headers.get('user-agent') ?? null,
     });
 

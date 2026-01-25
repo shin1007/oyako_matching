@@ -5,6 +5,7 @@ import { MatchingSimilarityCard } from '@/app/components/matching/MatchingSimila
 import { TheirTargetPeopleList } from '@/app/components/matching/TheirTargetPeopleList';
 
 import { useState, useEffect } from 'react';
+import { useAutoSignOut } from '@/app/components/matching/hooks/useAutoSignOut';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
@@ -112,6 +113,7 @@ function renderFindingMatch() {
 
 
 export default function MatchingPage() {
+    useAutoSignOut(15); // 15分無操作で自動サインアウト
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -232,6 +234,22 @@ export default function MatchingPage() {
                                     profile={profile}
                                     setPendingMatchInfo={setPendingMatchInfo}
                                     pendingMatchInfo={pendingMatchInfo}
+                                    onApprove={async (userId) => {
+                                      if (!match.existingMatchId) return;
+                                      await apiRequest(`/api/matching/approve`, {
+                                        method: 'POST',
+                                        body: { matchId: match.existingMatchId }
+                                      });
+                                      await loadMatches();
+                                    }}
+                                    onReject={async (userId) => {
+                                      if (!match.existingMatchId) return;
+                                      await apiRequest(`/api/matching/reject`, {
+                                        method: 'POST',
+                                        body: { matchId: match.existingMatchId }
+                                      });
+                                      await loadMatches();
+                                    }}
                                   />
                                 </div>
                               </div>

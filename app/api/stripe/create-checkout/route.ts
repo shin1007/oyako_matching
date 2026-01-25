@@ -2,12 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, createCustomer, createCheckoutSession, SUBSCRIPTION_PRICE_ID } from '@/lib/stripe';
 
+import { writeAuditLog } from '@/lib/audit-log';
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+
     if (!user) {
+      await writeAuditLog({
+        userId: null,
+        eventType: 'payment_create',
+        detail: 'Unauthorized',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -15,7 +24,14 @@ export async function POST(request: NextRequest) {
     const { userId, email } = body;
 
     // Verify the userId matches the authenticated user
+
     if (userId !== user.id) {
+      await writeAuditLog({
+        userId: user.id,
+        eventType: 'payment_create',
+        detail: 'Forbidden: userId mismatch',
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+      });
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -43,9 +59,23 @@ export async function POST(request: NextRequest) {
       `${process.env.NEXT_PUBLIC_APP_URL}/payments/subscribe?canceled=true`
     );
 
+    await writeAuditLog({
+      userId: user.id,
+      eventType: 'payment_create',
+      detail: 'Created checkout session',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { userId, email },
+    });
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
     console.error('Checkout session creation error:', error);
+    await writeAuditLog({
+      userId: null,
+      eventType: 'payment_create',
+      detail: 'Unexpected error',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      meta: { error: error?.message },
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to create checkout session' },
       { status: 500 }

@@ -1,14 +1,24 @@
-import { NextResponse } from 'next/server';
+
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 /**
  * POST /api/auth/delete-account
  * Delete user account and all related data
  * Requires authentication - only logged-in users can delete their own account
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     // Authenticate user using regular client
     const supabase = await createClient();
@@ -21,6 +31,23 @@ export async function POST() {
       return NextResponse.json(
         { error: 'ログインが必要です' },
         { status: 401 }
+      );
+    }
+
+    // レートリミット（1時間に1回まで）
+    const userIp = '' + user.id;
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      userIp,
+      'delete_account',
+      [
+        { windowSeconds: 3600, maxActions: 1 }
+      ]
+    );
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: rateLimitResult.message || 'リクエストが多すぎます。しばらくしてから再度お試しください。', retryAfter: rateLimitResult.retryAfter?.toISOString() },
+        { status: 429 }
       );
     }
 
@@ -53,6 +80,9 @@ export async function POST() {
     try {
       // Sign out the user session first (before deleting any data)
       await supabase.auth.signOut();
+
+      // レートリミットアクション記録
+      await recordRateLimitAction(supabase, userIp, 'delete_account');
 
       console.log(`[DeleteAccount] Starting deletion process for user: ${userId}`);
 
@@ -116,9 +146,15 @@ export async function POST() {
         target_table: 'users',
         target_id: userId,
         description: 'アカウント削除',
+        ...extractAuditMeta(),
       });
     } catch (deleteError) {
       console.error('Failed to delete user data:', deleteError);
+      await logAuditEventServer({
+        event_type: 'delete_account_failed',
+        description: `ユーザーデータ削除失敗: ${deleteError instanceof Error ? deleteError.message : String(deleteError)}`,
+        ...extractAuditMeta(),
+      });
       throw new Error(
         deleteError instanceof Error
           ? deleteError.message
@@ -127,6 +163,11 @@ export async function POST() {
     }
   } catch (error) {
     console.error('Delete account error:', error);
+    await logAuditEventServer({
+      event_type: 'delete_account_failed',
+      description: `アカウント削除API失敗: ${error instanceof Error ? error.message : String(error)}`,
+      ...extractAuditMeta(),
+    });
     return NextResponse.json(
       {
         error:

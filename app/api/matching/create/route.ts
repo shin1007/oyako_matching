@@ -1,10 +1,19 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTestModeBypassSubscriptionEnabled } from '@/lib/utils/testMode';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { extractAuditMeta } from '@/lib/utils/extractAuditMeta';
+import { getCsrfSecretFromCookie, getCsrfTokenFromHeader, verifyCsrfToken } from '@/lib/utils/csrf';
 
 export async function POST(request: NextRequest) {
+  // CSRFトークン検証
+  const secret = getCsrfSecretFromCookie(request);
+  const token = getCsrfTokenFromHeader(request);
+  if (!verifyCsrfToken(secret, token)) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
     const admin = createAdminClient();
@@ -79,6 +88,26 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingMatch) {
+      // pre_entryならpendingに昇格して申請扱い（requester_idもセット）
+      if (existingMatch.status === 'pre_entry') {
+        const { data: updatedMatch, error: updateError } = await supabase
+          .from('matches')
+          .update({ status: 'pending', similarity_score: similarityScore, requester_id: user.id })
+          .eq('id', existingMatch.id)
+          .select()
+          .single();
+        if (updateError) throw updateError;
+        await logAuditEventServer({
+          user_id: user.id,
+          event_type: 'match_create',
+          target_table: 'matches',
+          target_id: updatedMatch?.id,
+          description: 'pre_entry→pendingへ昇格',
+          ...extractAuditMeta(request),
+        });
+        return NextResponse.json({ match: updatedMatch }, { status: 200 });
+      }
+      // それ以外（pending/accepted/blocked等）は409
       return NextResponse.json(
         { error: 'Match already exists', match: existingMatch },
         { status: 409 }
@@ -93,6 +122,7 @@ export async function POST(request: NextRequest) {
         child_id: childId,
         similarity_score: similarityScore,
         status: 'pending',
+        requester_id: user.id,
       })
       .select()
       .single();
@@ -106,13 +136,17 @@ export async function POST(request: NextRequest) {
       target_table: 'matches',
       target_id: newMatch?.id,
       description: 'マッチ作成',
-      ip_address: request.ip ?? null,
-      user_agent: request.headers.get('user-agent') ?? null,
+      ...extractAuditMeta(request),
     });
 
     return NextResponse.json({ match: newMatch }, { status: 201 });
   } catch (error: any) {
     console.error('Match creation error:', error);
+    await logAuditEventServer({
+      event_type: 'match_create_failed',
+      description: `マッチ作成失敗: ${error instanceof Error ? error.message : String(error)}`,
+      ...extractAuditMeta(request),
+    });
     return NextResponse.json(
       { error: error.message || 'Failed to create match' },
       { status: 500 }

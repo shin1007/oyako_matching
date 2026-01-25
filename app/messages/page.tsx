@@ -4,6 +4,7 @@
 import { getGenderLabel } from '../components/matching/matchingUtils';
 
 import { useState, useEffect } from 'react';
+import { useAutoSignOut } from '@/app/components/matching/hooks/useAutoSignOut';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useErrorNotification } from '@/lib/utils/useErrorNotification';
 import { useRouter } from 'next/navigation';
@@ -42,6 +43,7 @@ interface MatchWithProfile extends Match {
 }
 
 export default function MessagesPage() {
+    useAutoSignOut(15); // 15分無操作で自動サインアウト
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

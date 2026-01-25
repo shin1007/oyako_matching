@@ -181,11 +181,44 @@ export const config = {
 
 ## 今後の改善
 
-- [ ] レート制限の実装
+- [x] ログインAPIへのレート制限実装（IPアドレス単位、1分5回・1時間20回）
+- [x] 他のAPIエンドポイントへのレート制限適用
 - [ ] 多要素認証（MFA）のサポート
-- [ ] セッションタイムアウトの設定
-- [ ] 監査ログの実装
-- [ ] CSRFトークンの追加
+- [x] セッションタイムアウトの設定
+
+#### 1. Supabase側のセッション有効期限（JWT Expiry）設定
+- Supabase管理画面 → Authentication → Policies → JWT expiry で有効期限（例: 1800秒=30分）を設定してください。
+- これにより、JWTトークンの有効期限が短縮され、サーバー側で自動的にセッションが失効します。
+- 有効期限を短くしすぎるとUXが低下するため、用途に応じて15分～1時間程度が推奨です。
+
+#### 2. クライアント側の自動サインアウト（実装済み）
+- matching/messages/forumページで、15分間無操作の場合に自動的に `supabase.auth.signOut()` を実行し、ログイン画面へ遷移します。
+- 実装はカスタムフック`useAutoSignOut`（app/components/matching/hooks/useAutoSignOut.tsx）で行っています。
+- 他の保護ページにも同様の仕組みを導入可能です。
+
+```typescript
+import { useAutoSignOut } from '@/app/components/matching/hooks/useAutoSignOut';
+
+export default function MatchingPage() {
+  useAutoSignOut(15); // 15分無操作で自動サインアウト
+  // ...
+}
+```
+
+#### 3. サーバー側の有効期限チェック
+- サーバーコンポーネントやミドルウェアで `supabase.auth.getUser()` を呼び出すと、有効期限切れの場合は自動的に未認証扱いとなります。
+- 追加の実装は不要です。
+
+#### 注意事項
+- JWT有効期限を短くしすぎると、頻繁な再ログインが必要となりUXが低下します。
+- 長すぎるとセキュリティリスクが高まります。
+- 適切なバランスを検討してください。
+
+#### 参考
+- [Supabase Auth JWT expiry 設定方法](https://supabase.com/docs/guides/auth#jwt-expiry)
+
+- [x] 監査ログの実装
+- [x] CSRFトークンの追加
 
 ## 関連ドキュメント
 
