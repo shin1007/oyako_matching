@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/reset-password/confirm
@@ -49,6 +50,23 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    // レートリミット（1時間に3回まで）
+    const userIp = request.headers.get('x-forwarded-for') || request.ip || 'unknown';
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      userIp,
+      'reset_password_confirm',
+      [
+        { windowSeconds: 3600, maxActions: 3 }
+      ]
+    );
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: rateLimitResult.message || 'リクエストが多すぎます。しばらくしてから再度お試しください。', retryAfter: rateLimitResult.retryAfter?.toISOString() },
+        { status: 429 }
+      );
+    }
+
     // リセットコードでセッションを取得
     const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -72,6 +90,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // レートリミットアクション記録
+    await recordRateLimitAction(supabase, userIp, 'reset_password_confirm');
 
     // 監査ログ記録
     // サーバーサイドなので直接logAuditEventServerを使う

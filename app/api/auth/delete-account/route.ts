@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { logAuditEventServer } from '@/lib/utils/auditLoggerServer';
+import { checkRateLimit, recordRateLimitAction } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/delete-account
@@ -21,6 +22,23 @@ export async function POST() {
       return NextResponse.json(
         { error: 'ログインが必要です' },
         { status: 401 }
+      );
+    }
+
+    // レートリミット（1時間に1回まで）
+    const userIp = '' + user.id;
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      userIp,
+      'delete_account',
+      [
+        { windowSeconds: 3600, maxActions: 1 }
+      ]
+    );
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: rateLimitResult.message || 'リクエストが多すぎます。しばらくしてから再度お試しください。', retryAfter: rateLimitResult.retryAfter?.toISOString() },
+        { status: 429 }
       );
     }
 
@@ -53,6 +71,9 @@ export async function POST() {
     try {
       // Sign out the user session first (before deleting any data)
       await supabase.auth.signOut();
+
+      // レートリミットアクション記録
+      await recordRateLimitAction(supabase, userIp, 'delete_account');
 
       console.log(`[DeleteAccount] Starting deletion process for user: ${userId}`);
 
