@@ -171,9 +171,9 @@ export async function GET(request: NextRequest) {
     // データを整形
     const matchesWithProfiles = matchesData.map((match: any) => {
       const otherUserId = match.parent_id === user.id ? match.child_id : match.parent_id;
-        // デバッグ: otherUserIdごとのプロフィール
-        console.log('[Messages API] otherUserId:', otherUserId, profilesMap.get(otherUserId));
-      const is_requester = match.parent_id === user.id;
+      // デバッグ: otherUserIdごとのプロフィール
+      console.log('[Messages API] otherUserId:', otherUserId, profilesMap.get(otherUserId));
+      const is_requester = match.requester_id === user.id;
 
       // 相手ユーザーの情報を取得
       let otherUserName = '名前なし';

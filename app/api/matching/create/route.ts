@@ -80,6 +80,26 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingMatch) {
+      // pre_entryならpendingに昇格して申請扱い（requester_idもセット）
+      if (existingMatch.status === 'pre_entry') {
+        const { data: updatedMatch, error: updateError } = await supabase
+          .from('matches')
+          .update({ status: 'pending', similarity_score: similarityScore, requester_id: user.id })
+          .eq('id', existingMatch.id)
+          .select()
+          .single();
+        if (updateError) throw updateError;
+        await logAuditEventServer({
+          user_id: user.id,
+          event_type: 'match_create',
+          target_table: 'matches',
+          target_id: updatedMatch?.id,
+          description: 'pre_entry→pendingへ昇格',
+          ...extractAuditMeta(request),
+        });
+        return NextResponse.json({ match: updatedMatch }, { status: 200 });
+      }
+      // それ以外（pending/accepted/blocked等）は409
       return NextResponse.json(
         { error: 'Match already exists', match: existingMatch },
         { status: 409 }
@@ -94,6 +114,7 @@ export async function POST(request: NextRequest) {
         child_id: childId,
         similarity_score: similarityScore,
         status: 'pending',
+        requester_id: user.id,
       })
       .select()
       .single();

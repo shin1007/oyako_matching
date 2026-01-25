@@ -1,3 +1,4 @@
+"use client";
 
 import React from 'react';
 import { ScoreExplanation } from '@/app/components/matching/ScoreExplanation';
@@ -19,22 +20,27 @@ export interface MatchingSimilarityCardProps {
   profile?: any;
   setPendingMatchInfo?: (info: { userId: string, score: number } | null) => void;
   pendingMatchInfo?: { userId: string, score: number } | null;
+  onApprove?: (userId: string) => void;
+  onReject?: (userId: string) => void;
   children?: React.ReactNode;
-}
+  }
 
-export function MatchingSimilarityCard({
-  label,
-  userRole,
-  match,
-  target,
-  creating,
-  setCreating,
-  calculateAge,
-  profile,
-  setPendingMatchInfo,
-  pendingMatchInfo,
-  children,
-}: MatchingSimilarityCardProps) {
+export const MatchingSimilarityCard = (props: MatchingSimilarityCardProps) => {
+  const {
+    label,
+    userRole,
+    match,
+    target,
+    creating,
+    setCreating,
+    calculateAge,
+    profile,
+    setPendingMatchInfo,
+    pendingMatchInfo,
+    children,
+    onApprove,
+    onReject
+  } = props;
   // childScore計算を内部で行う
   let score = 0;
   if (match && target && Array.isArray(match.targetScores)) {
@@ -75,7 +81,14 @@ export function MatchingSimilarityCard({
             similarityScore: pendingMatchInfo.score,
           }
         });
-        if (!res.ok) throw new Error(res.error || 'マッチング申請に失敗しました');
+        if (!res.ok) {
+          if (res.status === 409) {
+            alert('すでに申請済み、またはマッチが存在します');
+          } else {
+            alert(res.error || 'マッチング申請に失敗しました');
+          }
+          return;
+        }
         router.push('/messages');
       } catch (err) {
         alert('マッチング申請に失敗しました');
@@ -93,6 +106,7 @@ export function MatchingSimilarityCard({
 
   const renderMatchingAction = () => {
     if (!match || !setCreating || !calculateAge || !profile || !setPendingMatchInfo) return null;
+    // ローカル変数として定義
     const isParent = userRole === 'parent';
     const childBirthDate = match.profile?.birth_date;
     const isChild = match.role === 'child';
@@ -122,21 +136,41 @@ export function MatchingSimilarityCard({
         </div>
       );
     }
+    // pending優先: 自分が申請者なら「承認待ち」ボタン、申請者でなければ「承認」「拒否」ボタン
+    if (match.existingMatchStatus === 'pending') {
+      if (match.requesterId && match.currentUserId && match.requesterId === match.currentUserId) {
+        return (
+          <button
+            disabled
+            className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
+          >
+            承認待ち
+          </button>
+        );
+      }
+      return (
+        <div className="flex gap-2 w-full">
+          <button
+            className="flex-1 rounded-lg px-4 py-2 text-white bg-role-primary bg-role-primary-hover"
+            onClick={() => onApprove?.(match.userId)}
+          >
+            承認
+          </button>
+          <button
+            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+            onClick={() => onReject?.(match.userId)}
+          >
+            拒否
+          </button>
+        </div>
+      );
+    }
+    // 18歳未満UIはpending以外の場合のみ
     if (isParent && isChild && isUnder18) {
       return (
         <div className="w-full rounded-lg bg-green-100 px-3 py-2 text-green-800 text-sm font-semibold text-center border border-green-300">
           承認申請待ち（18歳未満のため）
         </div>
-      );
-    }
-    if (match.existingMatchStatus === 'pending') {
-      return (
-        <button
-          disabled
-          className="w-full rounded-lg bg-yellow-500 px-3 py-2 text-white text-sm font-semibold cursor-not-allowed opacity-75"
-        >
-          承認待ち
-        </button>
       );
     }
     return (
@@ -152,7 +186,6 @@ export function MatchingSimilarityCard({
           open={showParentApprovalModal}
           onApprove={() => {
             setShowParentApprovalModal(false);
-            // ここでpendingMatchInfoを再セットし、useEffectで申請処理を実行
             setPendingMatchInfo({ userId: match.userId, score });
           }}
           onCancel={() => {
@@ -198,7 +231,6 @@ export function MatchingSimilarityCard({
       setBlockLoading(false);
     }
   };
-
   return (
     <div
       className={`w-full bg-gradient-to-br p-4 flex flex-col items-center justify-center rounded-lg ${userRole === 'child' ? 'from-child-50 to-child-100 border border-child-100' : parentGradient}`}

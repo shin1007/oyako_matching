@@ -206,7 +206,7 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
       const candidateColumn = userData.role === 'parent' ? 'child_id' : 'parent_id';
       const { data: existingMatch } = await admin
         .from('matches')
-        .select('id, status, blocked_by')
+        .select('id, status, blocked_by, requester_id')
         .or(`${userColumn}.eq.${user.id},${candidateColumn}.eq.${candidate.userId}`)
         .maybeSingle();
 
@@ -222,6 +222,7 @@ async function attachExistingMatchStatus(admin: any, user: any, userData: any, m
         existingMatchId: existingMatch?.id || null,
         existingMatchStatus: existingMatch?.status || null,
         blocked_by: existingMatch?.blocked_by || null,
+        requesterId: existingMatch?.requester_id || null,
         currentUserId: user.id,
         profile: userProfile || null,
         theirTargetPeople: await getTargetPeopleInfo(admin, candidate.userId),
@@ -264,8 +265,8 @@ export async function GET(request: NextRequest) {
         .eq('parent_id', parentId)
         .eq('child_id', childId)
         .maybeSingle();
-      // blocked状態のものはupsertしない、それ以外はpre_entryでupsert
-      if (existingMatch && existingMatch.status === 'blocked') {
+      // pending/accepted/blockedがあればupsertしない（pre_entryのみupsert）
+      if (existingMatch && ['pending', 'accepted', 'blocked'].includes(existingMatch.status)) {
         continue;
       }
       const { data: upsertData, error: upsertError } = await supabase
